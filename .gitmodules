@@ -1,0 +1,4 @@
+[submodule "Custom_SokuLib"]
+	path = src/SokuLib
+	url = https://github.com/jyanf/Custom_SokuLib.git
+	branch = dev
