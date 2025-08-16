@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
-set(PROJECT_NAME ModTemplate)
+set(PROJECT_NAME ReplayInputView++)
 project("${PROJECT_NAME}" C CXX)
 set(SOKULIB_PATH src/SokuLib)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -24,7 +24,7 @@ SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEB
 SET(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
 # SokuLib
-add_subdirectory(SOKULIB_PATH)
+add_subdirectory(${SOKULIB_PATH})
 # Module
 add_library(
         "${PROJECT_NAME}"
@@ -34,7 +34,7 @@ add_library(
 target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}/")
-target_link_directories("${PROJECT_NAME}" PRIVATE SOKULIB_PATH/lib)
+target_link_directories("${PROJECT_NAME}" PRIVATE ${SOKULIB_PATH}/lib)
 target_link_libraries(
         "${PROJECT_NAME}"
         SokuLib
