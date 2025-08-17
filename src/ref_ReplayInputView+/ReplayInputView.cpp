@@ -811,7 +811,7 @@ void draw_char_bullets(void *char_addr, bool draw_all_objects = true) {
 
 	for (auto e = objects; e; e = e->next) {
 		if (e->data && is_active(e->data) || is_melee_frame(e->data))
-			draw_char_boxes(e->data, false);
+			draw_char_boxes(e->data, false);//note, true
 	}
 
 	list::free(objects);

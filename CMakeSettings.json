@@ -6,10 +6,26 @@
       "configurationType": "Debug",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "std=c++17",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x86" ]
+      "inheritEnvironments": [ "msvc_x86" ],
+      "variables": [
+        {
+          "name": "SUIT_4_PLAYERS",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "CMAKE_INSTALL_PREFIX",
+          "value": "D:/Games/Hisotensoku/th123",
+          "type": "PATH"
+        },
+        {
+          "name": "VERSION_MAJOR",
+          "value": "0.1",
+          "type": "STRING"
+        }
+      ]
     },
     {
       "name": "x86-Release",
@@ -17,10 +33,21 @@
       "configurationType": "RelWithDebInfo",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-std=c++17",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x86" ]
+      "inheritEnvironments": [ "msvc_x86" ],
+      "variables": [
+        {
+          "name": "VERSION_MAJOR",
+          "value": "0.1",
+          "type": "STRING"
+        },
+        {
+          "name": "SUIT_4_PLAYERS",
+          "value": "True",
+          "type": "BOOL"
+        }
+      ]
     }
   ]
 }

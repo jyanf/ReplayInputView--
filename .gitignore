@@ -36,3 +36,6 @@
 
 # Build directories
 /out
+/src/ReplayInputView++/ReplayInputView.aps
+/src/ref_AssistSoku/main.cpp
+/src/ref_ReplayInputView+/ReplayInputView.rc
