@@ -93,3 +93,7 @@ target_link_libraries(
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION modules/${PROJECT_NAME}/ CONFIGURATIONS ${CMAKE_BUILD_TYPE})
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
+
+#note
+#before "tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0)"
+#after "cmake --install . --config Debug"
