@@ -9,6 +9,7 @@
 namespace riv { namespace box {
 
 static const float BOXES_ALPHA = 0.25;
+static const Color Color_Orange = 0xFFf07000;
 static RectangleShape rectangle;
 void setCamera() {
 	rectangle.setCamera(&SokuLib::camera);
@@ -83,7 +84,6 @@ inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char i
 	//BulletSpecial special{ .value = interest };
 	BulletSpecial special(interest);
 
-	special.Umbrella &= 0;//
 	special.DynamicBox &= obj.customHitBox != nullptr;
 
 	if (sdata) {
@@ -92,13 +92,14 @@ inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char i
 		special.Gap = false;
 	}
 	if (fdata) {
+		special.Grab &= fdata->attackFlags.grab;
 		special.SharedBox &= fdata->frameFlags.atkAsHit;
 		special.Reflector &= fdata->frameFlags.reflectionProjectile;
 		special.Entity &= fdata->frameFlags.chOnHit;
 		//special.Effect &= !fdata->attackFlags.value && !(special.Reflector || special.Entity);
 	} else {
 		//special.value &= 0b11111111u;
-		special.SharedBox = special.Reflector = special.Entity = false;
+		special.Grab = special.SharedBox = special.Reflector = special.Entity = false;
 	}
 	special.SubBox &= obj.parentA != nullptr;
 
@@ -278,19 +279,18 @@ static bool drawHitBoxes(const GameObjectBase& object)
 	if (object.boxData.hitBoxCount > 5)
 		return false;
 	bool active = check_hitbox_active(object);
+	auto spec = determine(object, BulletSpecial::GRAB);
+	Color outline = spec.Grab ? Color_Orange: Color::Red;
+	Color fill = active ? outline : outline * bool(object.collisionType) * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0));
 	for (int i = 0; i < object.boxData.hitBoxCount; i++)
-		drawBox(
-			object.boxData.hitBoxes[i],
-			object.boxData.hitBoxesRotation[i],
-			Color::Red,
-			active ? Color::Red * BOXES_ALPHA : Color::Red * BOXES_ALPHA * bool(object.collisionType) * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)));
+		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
 	return object.boxData.hitBoxCount;
 }
 
 static bool drawBulletBoxes(const GameObject& object)
 {
 	using BS = BulletSpecial;
-	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX);
+	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::GRAB);
 	if (spec.Effect) {
 		lag_saver.erase(&object);
 		return false;
@@ -322,7 +322,7 @@ static bool drawBulletBoxes(const GameObject& object)
 			drawed = true;
 		}
 	}
-	outline = Color::Red;
+	outline = spec.Grab ? Color_Orange : Color::Red;
 	fill = hitbox_active ? outline : (object.collisionType ? outline * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)) : Color::Transparent);
 	if (object.boxData.hitBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
@@ -428,7 +428,27 @@ void drawUntechBar(Player& player) {
 	rectangle.setRect(rect); rectangle.setFillColor(color);
 	rectangle.draw();
 }
+void drawFloor() {
+	Color outline = Color::White;
+	Color fill = outline;
+	Box bound = {-5, 0, 1280, 0};
+	drawBox(bound, nullptr, outline, Color::Transparent);
+	
+	constexpr int size = sizeof(groundHeight) / sizeof(*groundHeight);
+	bound.top = -groundHeight[0]; bound.bottom = 200;
+	for (int i = 1; i < size; ++i)
+	{
+		if (*(int*)&groundHeight[i - 1] ^ *(int*)&groundHeight[i]) {
+			bound.right = i; fill = outline * min(BOXES_ALPHA, abs(bound.top) / 50);
+			drawBox(bound, nullptr, outline, fill);
+			bound.left = i; bound.top = -groundHeight[i];
+		}
+	}
+	bound.right = size; fill = outline * min(BOXES_ALPHA, abs(bound.top)/ 50);
+	drawBox(bound, nullptr, outline, fill);
 
+	
+}
 
 
 }}

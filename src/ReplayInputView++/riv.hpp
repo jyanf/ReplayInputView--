@@ -8,6 +8,8 @@ using SubMode = SokuLib::BattleSubMode;
 
 #include <VTables.hpp>
 #include <GameData.hpp>
+using SokuLib::v2::groundHeight;
+using GameDataManager = SokuLib::v2::GameDataManager;
 
 #include <filesystem>
 

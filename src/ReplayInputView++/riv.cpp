@@ -169,8 +169,9 @@ void RefleshCommandInfo(SWRCMDINFO& cmd, Player* Char) {
 
 bool check_key(unsigned int key, bool mod1, bool mod2, bool mod3) {
 	// return CheckKeyOneshot(key, mod1, mod2, mod3);
-	int* keytable = (int*)0x8998D8;
-	return keytable[key] == 1;
+	//int* keytable = (int*)0x8998D8;//only for F Keys
+	const unsigned char (&keytable)[256] = *(unsigned char(*)[256])0x8a01b8;//DIK array
+	return keytable[key] & 0x80;
 }
 //static void draw_debug_info(void* This) {
 //	static D3DCOLOR gray[] = { 0x4f909090, 0x4f909090, 0x4f909090, 0x4f909090 };
@@ -216,7 +217,7 @@ static Keys toggle_keys;
 
 
 using riv::RivControl, riv::check_key, riv::toggle_keys;
-using riv::box::drawPlayerBoxes, riv::box::drawUntechBar;
+using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 
 BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize);
@@ -274,6 +275,8 @@ BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
 
 			riv.hitboxes = GetPrivateProfileIntW(L"HitboxDisplay", L"Enabled", 0, path) != 0;
 			riv.untech = GetPrivateProfileIntW(L"JuggleMeter", L"Enabled", 0, path) != 0;
+
+			riv.paused = false;//fix failed pause problem?
 
 			//riv.show_debug = GetPrivateProfileIntW(L"Debug", L"Enabled", 0, path) != 0;
 
@@ -413,9 +416,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			else if (riv.paused) {
 				process_frame(This, riv);
 				riv::box::setDirty(true);
-				old_framestop = true;
 			}
-			old_framestop = false;
+			old_framestop = true;//fix
 		}
 
 		riv.forwardIndex += riv.forwardStep;
@@ -453,7 +455,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
 		
 		riv::box::setCamera();
-		auto manager = SokuLib::v2::GameDataManager::instance;
+		auto manager = GameDataManager::instance;
 		for (int i = 0; i<players.size(); ++i) {
 			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
 			if (riv.hitboxes) {
@@ -463,6 +465,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 				drawUntechBar(*players[i]);
 			}
 		}
+		if (riv.hitboxes) drawFloor();
 		riv::box::setDirty(false);
 
 		if (riv.show_debug) {

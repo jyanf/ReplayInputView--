@@ -14,6 +14,8 @@ using SokuLib::DrawUtils::RectangleShape;
 using SokuLib::DrawUtils::FloatRect;
 using Color = SokuLib::DrawUtils::DxSokuColor;
 
+#include <GameData.hpp>
+using SokuLib::v2::groundHeight;
 #define MAX_UNTECHBAR_SPAN 100
 
 #include <Design.hpp>
@@ -23,7 +25,7 @@ namespace riv { namespace box {
 
 	union BulletSpecial {
 		struct {
-			/* 01 */ bool Umbrella		: 1;
+			/* 01 */ bool Grab		: 1;
 			/* 02 */ bool SharedBox		: 1;
 			/* 04 */ bool DynamicBox	: 1;
 			/* 08 */ bool Gap			: 1;
@@ -36,7 +38,7 @@ namespace riv { namespace box {
 		enum : unsigned char
 		{
 			NONE=		0,
-			UMBRELLA=	0x1,
+			GRAB=		0x1,
 			SHARED_BOX=	0x2,
 			DYNAMIC_BOX=0x4,
 			GAP=		0x8,
@@ -61,8 +63,9 @@ namespace riv { namespace box {
 	extern unsigned char update_collision_shim[];
 	void __fastcall lag_watcher_updator(const GameObjectBase* object);
 
-	void drawUntechBar(Player& player);
 	void drawPlayerBoxes(const Player& player, bool hurtbreak = false);
+	void drawUntechBar(Player& player);
+	void drawFloor();
 
 
 inline static void get_collision(const GameObjectBase& object, int& colT, int& colL);
