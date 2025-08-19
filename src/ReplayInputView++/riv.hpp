@@ -7,10 +7,9 @@ using Mode = SokuLib::BattleMode;
 using SubMode = SokuLib::BattleSubMode;
 
 #include <VTables.hpp>
+#include <GameData.hpp>
 
 #include <filesystem>
-
-
 
 #include "box.hpp"
 

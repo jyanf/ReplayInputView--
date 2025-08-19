@@ -24,6 +24,11 @@
           "name": "VERSION_MAJOR",
           "value": "0.1",
           "type": "STRING"
+        },
+        {
+          "name": "VERSION_MINOR",
+          "value": "0",
+          "type": "STRING"
         }
       ]
     },

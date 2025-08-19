@@ -21,22 +21,60 @@ using SokuLib::CNumber;
 
 namespace riv { namespace box {
 
-	union SpecialBullet {
+	union BulletSpecial {
 		struct {
-			/* 01 */ bool SharedBox		: 1;
-			/* 02 */ bool DynamicBox	: 1;
-			/* 04 */ bool Gap			: 1;
-			/* 08 */ bool Reflector		: 1;
-			/* 10 */ bool Entity		: 1;
-			/* 20 */ bool SubBox		: 1;
-			/* 40 */ 
-			/* 80 */ 
+			/* 01 */ bool Umbrella		: 1;
+			/* 02 */ bool SharedBox		: 1;
+			/* 04 */ bool DynamicBox	: 1;
+			/* 08 */ bool Gap			: 1;
+			/* 10 */ bool Reflector		: 1;
+			/* 20 */ bool Entity		: 1;
+			/* 40 */ bool SubBox		: 1;
+			/* 80 */ bool Effect		: 1;
 		};
 		unsigned char value;
-		
+		enum : unsigned char
+		{
+			NONE=		0,
+			UMBRELLA=	0x1,
+			SHARED_BOX=	0x2,
+			DYNAMIC_BOX=0x4,
+			GAP=		0x8,
+			REFLECTOR=	0x10,
+			ENTITY=		0x20,
+			SUBBOX=		0x40,
+			EFFECT=		0x80,
+			ALL=		0xFF
+		};
+		inline operator unsigned char() {
+			return value;
+		}
+		BulletSpecial(int v) {
+			value = (unsigned char)v;
+		}
 	};
-	SpecialBullet determine(const GameObject& obj);
 
+	void setCamera();
+
+	bool setDirty(bool d);
+	void cleanWatcher();
+	extern unsigned char update_collision_shim[];
+	void __fastcall lag_watcher_updator(const GameObjectBase* object);
+
+	void drawUntechBar(Player& player);
+	void drawPlayerBoxes(const Player& player, bool hurtbreak = false);
+
+
+inline static void get_collision(const GameObjectBase& object, int& colT, int& colL);
+inline static bool check_hitbox_active(const GameObjectBase& object);
+
+inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char interest = BulletSpecial::ALL);
+template<bool> inline static bool check_lag(const GameObjectBase& object, BulletSpecial spec);
+	
+inline static bool check_bullet_hurtbox_active(const GameObjectBase& object, BulletSpecial spec);
+inline static bool check_bullet_hitbox_active(const GameObjectBase& object, BulletSpecial spec);
+
+template <int d>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor);
 
 
@@ -50,8 +88,4 @@ static bool drawBulletBoxes(const GameObject& object);
 static bool drawHitBoxes(const GameObjectBase& object);
 
 
-void drawPlayerBoxes(const Player& player, bool playerBoxes = true);
-
-void drawUntechBar(Player& player);
-void setCamera();
 }}

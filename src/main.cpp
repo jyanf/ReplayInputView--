@@ -58,12 +58,23 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 
 	DWORD old;
 	VirtualProtect((PVOID)TEXT_SECTION_OFFSET, TEXT_SECTION_SIZE, PAGE_EXECUTE_WRITECOPY, &old);
-	ogBattleMgrSize = SokuLib::TamperDword(SokuLib::ADDR_BATTLE_MANAGER_SIZE, SokuLib::CBattleManager_Size+sizeof(riv::RivControl));
+	ogBattleMgrSize = SokuLib::TamperDwordAdd(SokuLib::ADDR_BATTLE_MANAGER_SIZE, sizeof(riv::RivControl));
 	ogBattleMgrInit = SokuLib::TamperNearCall(SokuLib::CBattleManager_Creater, CBattleManager_OnCreate);
 
 	// combo counter show on hit 1
 	auto& op = *reinterpret_cast<byte(*)[3]>(0x4792FB);
 	if (op[0] == 0x83 && op[1] == 0xf8 && op[2] == 2) op[2] = 1;
+
+	//CBattleManager_UpdateCollision
+		//CMP dword ptr [EAX + 0x174],0x0; 0047d2c4: 83B8 74010000 00
+		//JMP shim
+	using riv::box::update_collision_shim, riv::box::lag_watcher_updator;
+	memcpy(update_collision_shim + 9, (void*)0x47d2c4, 7);//more check?
+	memset((void*)0x47d2c4, 0x90, 7);
+	SokuLib::TamperNearJmp(0x47d2c4, update_collision_shim);
+	SokuLib::TamperNearCall((DWORD)update_collision_shim + 3, lag_watcher_updator);
+	SokuLib::TamperNearJmp((DWORD)update_collision_shim + 16, 0x47d2c4 + 7);
+
 	VirtualProtect((PVOID)TEXT_SECTION_OFFSET, TEXT_SECTION_SIZE, old, &old);
 
 	VirtualProtect((PVOID)RDATA_SECTION_OFFSET, RDATA_SECTION_SIZE, PAGE_WRITECOPY, &old);

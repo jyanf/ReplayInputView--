@@ -14,10 +14,6 @@ static char s_msg[256];
 
 static int s_slowdown_method = 1;
 
-#ifndef _DEBUG
-extern "C" int _fltused = 1;
-#endif
-
 #define SHOW_DEBUG_MSG() MessageBox(NULL, s_msg, "Debug", 0)
 #define SHOW_MSG(text) MessageBox(NULL, (text), "Debug", 0)
 
@@ -226,7 +222,7 @@ BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize);
 
 #ifdef SUIT_4_PLAYERS
-	This->characterManager3 = This->characterManager4 = nullptr;
+	//This->characterManager3 = This->characterManager4 = nullptr; //gamedata manager
 #endif // SUIT_4_PLAYERS
 	
 	ogBattleMgrInit(This);
@@ -293,6 +289,8 @@ BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
 			toggle_keys.accelerate = GetPrivateProfileIntW(L"Keys", L"accelerate", 0, path);
 			toggle_keys.stop = GetPrivateProfileIntW(L"Keys", L"stop", 0, path);
 			toggle_keys.framestep = GetPrivateProfileIntW(L"Keys", L"framestep", 0, path);
+
+			riv::box::setDirty(false);
 
 		}
 		else {
@@ -414,6 +412,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			if (old_framestop) {}
 			else if (riv.paused) {
 				process_frame(This, riv);
+				riv::box::setDirty(true);
 				old_framestop = true;
 			}
 			old_framestop = false;
@@ -423,7 +422,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		if (riv.forwardIndex >= riv.forwardCount) {
 			for (int i = riv.forwardIndex / riv.forwardCount; i--;) {
 				ret = (This->*ogBattleMgrOnProcess)();
-
+				riv::box::setDirty(true);
 				if (ret > 0 && ret < 4)
 					break;
 
@@ -435,6 +434,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess)();
+		//riv::box::setDirty(true);
 	}
 
 	return ret;
@@ -453,15 +453,17 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
 		
 		riv::box::setCamera();
-		for (auto p : players) {
-			if (!p) continue;
+		auto manager = SokuLib::v2::GameDataManager::instance;
+		for (int i = 0; i<players.size(); ++i) {
+			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
 			if (riv.hitboxes) {
-				drawPlayerBoxes(*p);
+				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6);
 			}
 			if (riv.untech) {
-				drawUntechBar(*p);
+				drawUntechBar(*players[i]);
 			}
 		}
+		riv::box::setDirty(false);
 
 		if (riv.show_debug) {
 			//riv::draw_debug_info(This);
@@ -481,6 +483,7 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 		WritePrivateProfileStringW(L"Record", L"p1.Enabled", riv.cmdp1.record.enabled ? L"1" : L"0", path);
 		WritePrivateProfileStringW(L"Record", L"p2.Enabled", riv.cmdp2.record.enabled ? L"1" : L"0", path);
 	}
+	riv::box::cleanWatcher();
 	return (This->*ogBattleMgrDestruct)(dyn);
 }
 
