@@ -230,18 +230,27 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 static void drawCollisionBox(const GameObjectBase& object, bool grabInvul)
 {
 	if (!object.gameData.frameData || !object.gameData.frameData->collisionBox) return;
-	auto& box = *(object.gameData.frameData->collisionBox);
-	//auto& box = object.boxData.collisionBoxPtr ? *object.boxData.collisionBoxPtr : object.boxData.collisionBoxBuffer;//??? testing
+	const auto& box = *(object.gameData.frameData->collisionBox);
 
 	FloatRect rect{
 		std::ceil(object.position.x) + object.direction * box.left, box.top - std::ceil(object.position.y),
 		std::ceil(object.position.x) + object.direction * box.right, box.bottom - std::ceil(object.position.y)
 	};
-	rectangle.setRect(rect);
-
 	rectangle.setFillColor(object.gameData.frameData->frameFlags.grabInvincible || grabInvul ? Color::Transparent : Color::Yellow * BOXES_ALPHA);
 	rectangle.setBorderColor(Color::Yellow);
+
+	rectangle.setRect(rect);
 	rectangle.draw();
+
+#ifdef _DEBUG
+	//const auto& box2 = object.boxData.collisionBoxPtr ? *object.boxData.collisionBoxPtr : object.boxData.collisionBoxBuffer;//??? testing
+	const auto& box2 = object.boxData.collisionBoxBuffer;
+	rect = FloatRect(box2.left, box2.top, box2.right, box2.bottom);
+	rectangle.setFillColor(Color::Transparent);
+	rectangle.setRect(rect);
+	rectangle.draw();
+#endif // _DEBUG
+
 }
 
 static void drawPositionBox(const GameObjectBase& object)

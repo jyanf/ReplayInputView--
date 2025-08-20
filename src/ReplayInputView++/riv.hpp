@@ -11,12 +11,16 @@ using SubMode = SokuLib::BattleSubMode;
 using SokuLib::v2::groundHeight;
 using GameDataManager = SokuLib::v2::GameDataManager;
 
+#include <DrawUtils.hpp>
+using SokuLib::DrawUtils::Vertex;
+#include <Design.hpp>
+using SokuLib::CTile;
+
 #include <filesystem>
 
 #include "box.hpp"
 
 namespace riv {
-
 
 struct Keys {
 	UINT display_boxes;

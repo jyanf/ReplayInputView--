@@ -27,23 +27,24 @@ static int s_slowdown_method = 1;
 
 namespace riv {
 
-void __fastcall RenderMyBack(float x, float y, int cx, int cy) {
+template<int d = 2>
+static void __fastcall RenderMyBack(float x, float y, int cx, int cy) {
 	const SWRVERTEX vertices[] = {
-		{x, y, 0.0f, 1.0f, 0xa0808080, 0.0f, 0.0f},
-		{x + cx + 0, y, 0.0f, 1.0f, 0xa0808080, 1.0f, 0.0f},
-		{x + cx + 5, y + cy, 0.0f, 1.0f, 0xa0202020, 1.0f, 1.0f},
-		{x + 5, y + cy, 0.0f, 1.0f, 0xa0202020, 0.0f, 1.0f},
+		{x - d, y, 0.0f, 1.0f, 0xa0808080, 0.0f, 0.0f},
+		{x + cx - d, y, 0.0f, 1.0f, 0xa0808080, 1.0f, 0.0f},
+		{x + cx + d, y + cy, 0.0f, 1.0f, 0xa0202020, 1.0f, 1.0f},
+		{x + d, y + cy, 0.0f, 1.0f, 0xa0202020, 0.0f, 1.0f},
 	};
 	SokuLib::textureMgr.setTexture(NULL, 0);
 	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)vertices, sizeof(SWRVERTEX));
 }
 
-void __fastcall RenderQuad(SWRVERTEX quad[4]) {
+static void __fastcall RenderQuad(SWRVERTEX quad[4]) {
 	SokuLib::textureMgr.setTexture(NULL, 0);
 	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)quad, sizeof(SWRVERTEX));
 }
 
-void RenderTile(float x, float y, int u, int v, int a) {
+static void RenderTile(float x, float y, int u, int v, int a) {
 	int dif = (a << 24) | 0xFFFFFF;
 	float fu = u / 256.0f;
 	float fv = v / 64.0f;
@@ -58,39 +59,41 @@ void RenderTile(float x, float y, int u, int v, int a) {
 	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)vertices, sizeof(SWRVERTEX));
 }
 
-void RenderInputPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
+template <int d = 2>
+static void RenderInputPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
 	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
 
 	if (cmd.enabled) {
 		// Background
-		RenderMyBack(x, y, 24 * 6 + 24, 24 * 3 + 12);
+		RenderMyBack<d>(x, y, 24 * 6 + 24, 24 * 3 + 12);
 
 		SokuLib::textureMgr.setTexture(riv.texID, 0);
 
 		// Directions
-		RenderTile(x + 9, y + 6, 128, 0, (cmd.now % 16 == 5 ? 255 : 48)); /* LU */
-		RenderTile(x + 9 + 24, y + 6, 0, 0, (cmd.now % 16 == 1 ? 255 : 48)); /* NU */
-		RenderTile(x + 9 + 48, y + 6, 160, 0, (cmd.now % 16 == 9 ? 255 : 48)); /* RU */
-		RenderTile(x + 9, y + 6 + 24, 64, 0, (cmd.now % 16 == 4 ? 255 : 48)); /* LN */
-		RenderTile(x + 9 + 48, y + 6 + 24, 96, 0, (cmd.now % 16 == 8 ? 255 : 48)); /* RN */
-		RenderTile(x + 9, y + 6 + 48, 224, 0, (cmd.now % 16 == 6 ? 255 : 48)); /* LD */
-		RenderTile(x + 9 + 24, y + 6 + 48, 32, 0, (cmd.now % 16 == 2 ? 255 : 48)); /* ND */
-		RenderTile(x + 9 + 48, y + 6 + 48, 192, 0, (cmd.now % 16 == 10 ? 255 : 48)); /* RD */
+		RenderTile(x + 9 + 24,	y + 6,		0,	0,	(cmd.now % 16 == 1 ? 255 : 48)); /* ¡ü */
+		RenderTile(x + 9 + 24,	y + 6 + 48, 32,	0,	(cmd.now % 16 == 2 ? 255 : 48)); /* ¡ý */
+		RenderTile(x + 9,		y + 6 + 24, 64,	0,	(cmd.now % 16 == 4 ? 255 : 48)); /* ¡û */
+		RenderTile(x + 9 + 48,	y + 6 + 24, 96,	0,	(cmd.now % 16 == 8 ? 255 : 48)); /* ¡ú */
+		RenderTile(x + 9,		y + 6,		128,0,	(cmd.now % 16 == 5 ? 255 : 48)); /* ¨I */
+		RenderTile(x + 9 + 48,	y + 6,		160,0,	(cmd.now % 16 == 9 ? 255 : 48)); /* ¨K */
+		RenderTile(x + 9 + 48,	y + 6 + 48, 192,0,	(cmd.now % 16 ==10 ? 255 : 48)); /* ¨J */
+		RenderTile(x + 9,		y + 6 + 48, 224,0,	(cmd.now % 16 == 6 ? 255 : 48)); /* ¨L */
 		// Buttons
-		RenderTile(x + 9 + 72 + 3, y + 6 + 12, 0, 32, (cmd.now & 16 ? 255 : 48));
-		RenderTile(x + 9 + 72 + 3 + 27, y + 6 + 12, 32, 32, (cmd.now & 32 ? 255 : 48));
-		RenderTile(x + 9 + 72 + 3 + 54, y + 6 + 12, 64, 32, (cmd.now & 64 ? 255 : 48));
-		RenderTile(x + 9 + 72 + 6, y + 6 + 36, 96, 32, (cmd.now & 128 ? 255 : 48));
-		RenderTile(x + 9 + 72 + 6 + 27, y + 6 + 36, 128, 32, (cmd.now & 256 ? 255 : 48));
-		RenderTile(x + 9 + 72 + 6 + 54, y + 6 + 36, 160, 32, (cmd.now & 512 ? 255 : 48));
+		RenderTile(x + 9 + 75 - d,		y + 6 + 12, 0,	32, (cmd.now & 16 ? 255 : 48));
+		RenderTile(x + 9 + 75 - d + 27, y + 6 + 12, 32, 32, (cmd.now & 32 ? 255 : 48));
+		RenderTile(x + 9 + 75 - d + 54, y + 6 + 12, 64, 32, (cmd.now & 64 ? 255 : 48));
+		RenderTile(x + 9 + 75 + d,		y + 6 + 36, 96, 32, (cmd.now & 128? 255 : 48));
+		RenderTile(x + 9 + 75 + d + 27, y + 6 + 36, 128,32, (cmd.now & 256? 255 : 48));
+		RenderTile(x + 9 + 75 + d + 54, y + 6 + 36, 160,32, (cmd.now & 512? 255 : 48));
 	}
 }
 
-void RenderRecordPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
+template <int d = 2>
+static void RenderRecordPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
 	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
 
 	if (cmd.record.enabled) {
-		RenderMyBack(x, y, 24 * 10 + 6, 24 + 6);
+		RenderMyBack<d>(x, y, 24 * 10 + 6, 24 + 6);
 
 		SokuLib::textureMgr.setTexture( riv.texID, 0);
 		for (int i = 0; i < cmd.record.len; ++i) { // Render all the buttons in the buffer
@@ -101,15 +104,18 @@ void RenderRecordPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
 	}
 }
 
-void DetermineRecord(SWRCMDINFO& cmd, int mask, int flag, int id) // this function is called for every button: direction first, buttons after
+static void DetermineRecord(SWRCMDINFO& cmd, int mask, int flag, int id) // this function is called for every button: direction first, buttons after
 {
 	if ((cmd.prev & mask) != flag && (cmd.now & mask) == flag) {
 		int index = (cmd.record.base + cmd.record.len) % _countof(cmd.record.id);
 
 		cmd.record.id[index] = id;
+#ifdef _DEBUG
 		for (int i = 0; i < _countof(cmd.record.id); ++i) // 0-7 = directions,  8-13 = buttons
-			//std::cout << cmd.record.id[i] << " ";
-		//std::cout << std::endl;
+			printf("%d ", cmd.record.id[i]);
+		puts("");
+#endif // _DEBUG
+
 		if (cmd.record.len == _countof(cmd.record.id)) {
 			cmd.record.base = (cmd.record.base + 1) % _countof(cmd.record.id);
 		}
@@ -119,7 +125,7 @@ void DetermineRecord(SWRCMDINFO& cmd, int mask, int flag, int id) // this functi
 	}
 }
 
-void RefleshCommandInfo(SWRCMDINFO& cmd, Player* Char) {
+static void RefreshCommandInfo(SWRCMDINFO& cmd, Player* Char) {
 	auto& input = Char->inputData.keyInput;
 
 	cmd.prev = cmd.now;
@@ -170,7 +176,7 @@ void RefleshCommandInfo(SWRCMDINFO& cmd, Player* Char) {
  */
 
 
-bool check_key(unsigned int key, bool mod1, bool mod2, bool mod3) {
+static bool check_key(unsigned int key, bool mod1, bool mod2, bool mod3) {
 	// return CheckKeyOneshot(key, mod1, mod2, mod3);
 	//int* keytable = (int*)0x8998D8;//only for F Keys
 	const unsigned char (&keytable)[256] = *(unsigned char(*)[256])0x8a01b8;//DIK array
@@ -311,8 +317,8 @@ static void process_frame(BattleManager* This, RivControl& riv) {
 	if (ret > 0 && ret < 4)
 		return;
 
-	RefleshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
-	RefleshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
+	RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
+	RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
 }
 
 
@@ -444,8 +450,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 				if (ret > 0 && ret < 4)
 					break;
 
-				RefleshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
-				RefleshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
+				RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
+				RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
 			}
 			riv.forwardIndex = 0;
 		}
@@ -465,10 +471,10 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 	(This->*ogBattleMgrOnRender)();
 
 	if (riv.enabled) {
-		RenderInputPanel(This, riv.cmdp1, 60, 340);
-		RenderInputPanel(This, riv.cmdp2, 400, 340);
-		RenderRecordPanel(This, riv.cmdp1, 0, 300);
-		RenderRecordPanel(This, riv.cmdp2, 390, 300);//mirror?
+		RenderInputPanel<3>(This, riv.cmdp1, 60, 340);
+		RenderInputPanel<-3>(This, riv.cmdp2, 400, 340);
+		RenderRecordPanel<3>(This, riv.cmdp1, 0, 300);
+		RenderRecordPanel<-3>(This, riv.cmdp2, 390, 300);
 		auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
 		
 		riv::box::setCamera();
