@@ -54,7 +54,12 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	hDllModule = hMyModule;
 
 	GetModulePath(hMyModule, configPath);
+#ifdef INI_FILENAME
+	configPath /= INI_FILENAME;
+#else
 	configPath /= L"ReplayInputView++.ini";
+#endif // INI_FILENAME
+
 
 	DWORD old;
 	VirtualProtect((PVOID)TEXT_SECTION_OFFSET, TEXT_SECTION_SIZE, PAGE_EXECUTE_WRITECOPY, &old);

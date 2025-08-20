@@ -6,12 +6,17 @@ string(TIMESTAMP VERSION_YEAR "%Y" UTC)
 set(VERSION_MAJOR "0.1" CACHE STRINGS "")
 set(VERSION_MINOR "0" CACHE STRINGS "")
 set(VERSION_DOT "${VERSION_MAJOR}.${VERSION_MINOR}")
-
+set(I_DESCRIPTION "Renew of RIV+ based on SokuLib and AssistSoku" CACHE STRINGS "")
 project(ReplayInputView++
     VERSION ${VERSION_MAJOR}.${VERSION_DAY}.${VERSION_YEAR}
-    DESCRIPTION "Renew of RIV+ based on SokuLib and AssistSoku"
+    DESCRIPTION ${I_DESCRIPTION}
     LANGUAGES C CXX
 )
+
+option(SUIT_4_PLAYERS OFF)
+set(SOKULIB_PATH src/SokuLib CACHE PATH "sokulib path")
+set(I_INI_FILENAME ${PROJECT_NAME}.ini CACHE PATH "")
+
 
 string(REPLACE . , VERSION_COMMA ${VERSION_DOT},0)
 string(REPLACE . , IVERSION_COMMA ${PROJECT_VERSION})
@@ -28,17 +33,11 @@ foreach(RC_IN_FILE ${RC_IN_FILES})
     string(REGEX REPLACE "\\.in$" "" OUTPUT_FILENAME ${RC_FILENAME})
     set(OUTPUT_FILE "${OUTPUT_FILENAME}")
     list(APPEND RC_FILES ${OUTPUT_FILE})
-    configure_file(
-        ${RC_IN_FILE}
-        ${OUTPUT_FILE}
-        @ONLY  # 只替换 @VAR@ 形式的变量
+    configure_file(${RC_IN_FILE} ${OUTPUT_FILE} @ONLY
     )
-    
-    # 打印调试信息
     message(STATUS "config: ${RC_IN_FILE} -> ${OUTPUT_FILE}")
 endforeach()
 
-set(SOKULIB_PATH src/SokuLib)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
@@ -46,15 +45,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install" CACHE PATH "game folder ig")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
-option(SUIT_4_PLAYERS OFF)
 if(SUIT_4_PLAYERS)
     add_definitions(-DSUIT_4_PLAYERS)
     add_definitions(-DPLAYERS_NUMBER=4)
 else()
 	add_definitions(-DPLAYERS_NUMBER=2)
 endif()
-
-add_definitions(-DWINVER=0x0501 -D_WIN32_WINNT=0x0501)
+add_definitions(-DWINVER=0x0501 -D_WIN32_WINNT=0x0501 -DINI_FILENAME=L"${I_INI_FILENAME}")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_CXX_SIMULATE_ID}" STREQUAL "MSVC")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-narrowing -Wno-microsoft-cast")
 endif ()

@@ -29,6 +29,11 @@
           "name": "VERSION_MINOR",
           "value": "0",
           "type": "STRING"
+        },
+        {
+          "name": "I_DESCRIPTION",
+          "value": "Renew of RIV+, ref. SokuLib and AssistSoku",
+          "type": "STRING"
         }
       ]
     },
@@ -51,6 +56,16 @@
           "name": "SUIT_4_PLAYERS",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "I_DESCRIPTION",
+          "value": "Renew of RIV+, ref. SokuLib and AssistSoku",
+          "type": "STRING"
+        },
+        {
+          "name": "VERSION_MINOR",
+          "value": "0",
+          "type": "STRING"
         }
       ]
     }
