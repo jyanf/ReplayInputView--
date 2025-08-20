@@ -80,15 +80,13 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 template <int d>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor);
 
-
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul);
-
 static void drawPositionBox(const GameObjectBase& object);
 
+static void drawCollisionBox(const GameObjectBase& object, bool grabInvul);
 static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul);
-static bool drawBulletBoxes(const GameObject& object);
-
 static bool drawHitBoxes(const GameObjectBase& object);
+
+static bool drawBulletBoxes(const GameObject& object);
 
 
 }}

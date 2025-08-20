@@ -9,7 +9,7 @@
 namespace riv { namespace box {
 
 static const float BOXES_ALPHA = 0.25;
-static const Color Color_Orange = 0xFFf07000;
+static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static RectangleShape rectangle;
 void setCamera() {
 	rectangle.setCamera(&SokuLib::camera);
@@ -227,32 +227,6 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 	rectangle.draw();
 }
 
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul)
-{
-	if (!object.gameData.frameData || !object.gameData.frameData->collisionBox) return;
-	const auto& box = *(object.gameData.frameData->collisionBox);
-
-	FloatRect rect{
-		std::ceil(object.position.x) + object.direction * box.left, box.top - std::ceil(object.position.y),
-		std::ceil(object.position.x) + object.direction * box.right, box.bottom - std::ceil(object.position.y)
-	};
-	rectangle.setFillColor(object.gameData.frameData->frameFlags.grabInvincible || grabInvul ? Color::Transparent : Color::Yellow * BOXES_ALPHA);
-	rectangle.setBorderColor(Color::Yellow);
-
-	rectangle.setRect(rect);
-	rectangle.draw();
-
-#ifdef _DEBUG
-	//const auto& box2 = object.boxData.collisionBoxPtr ? *object.boxData.collisionBoxPtr : object.boxData.collisionBoxBuffer;//??? testing
-	const auto& box2 = object.boxData.collisionBoxBuffer;
-	rect = FloatRect(box2.left, box2.top, box2.right, box2.bottom);
-	rectangle.setFillColor(Color::Transparent);
-	rectangle.setRect(rect);
-	rectangle.draw();
-#endif // _DEBUG
-
-}
-
 static void drawPositionBox(const GameObjectBase& object)
 {
 	SokuLib::Vector2u size{ 5, 5 };
@@ -265,20 +239,73 @@ static void drawPositionBox(const GameObjectBase& object)
 	rectangle.draw();
 }
 
+static void drawCollisionBox(const GameObjectBase& object, bool grabInvul)
+{
+	if (!object.gameData.frameData || !object.gameData.frameData->collisionBox) return;
+	const auto& box = object.boxData.collisionBoxBuffer;
+	grabInvul |= object.gameData.frameData->frameFlags.grabInvincible || object.gameData.frameData->frameFlags.guarding;
+
+	FloatRect rect{ box.left, box.top, box.right, box.bottom };
+	rectangle.setFillColor(grabInvul ? Color::Transparent : Color::Yellow * BOXES_ALPHA);
+	rectangle.setBorderColor(Color::Yellow);
+
+	rectangle.setRect(rect);
+	rectangle.draw();
+
+#ifdef _DEBUG
+	const auto& box2 = *(object.gameData.frameData->collisionBox);
+	rect = FloatRect(std::ceil(object.position.x) + object.direction * box2.left, box2.top - std::ceil(object.position.y),
+		std::ceil(object.position.x) + object.direction * box2.right, box2.bottom - std::ceil(object.position.y));
+	rectangle.setFillColor(Color::Transparent);
+	rectangle.setRect(rect);
+	rectangle.draw();
+#endif // _DEBUG
+
+}
+
+
 static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul)
 {
 	if (object.boxData.hurtBoxCount > 5)
 		return false;
 	auto flags = object.gameData.frameData ? &object.gameData.frameData->frameFlags : nullptr;
-	Color outline = flags && flags->chOnHit ? Color::Cyan : Color::Green;
-	Color fill = (flags && flags->meleeInvincible || meleeInvul) ? Color::Transparent : outline;
-	for (int i = 0; i < object.boxData.hurtBoxCount; i++)
-		drawBox(
-			object.boxData.hurtBoxes[i],
-			object.boxData.hurtBoxesRotation[i],
-			outline,
-			fill * BOXES_ALPHA
-		);
+	Color outline = Color::Green, addline = Color::Transparent;
+	Color fill = outline;
+
+	meleeInvul |= flags && flags->meleeInvincible;
+	projnvul |= flags && flags->projectileInvincible;
+	if (flags) {//invul>guard>atemi>counter
+		bool atemiM = flags->invAirborne || flags->invLowBlow || flags->invMidBlow;
+		bool atemiB = flags->invShoot;
+		
+		if (atemiM && atemiB)
+			fill = outline = Color_Purple;
+		else if (atemiM) {//atemiwaza melee
+			outline = Color_Purple;
+			fill = Color::Red; //addline = Color::Red;
+		} else if (atemiB) {//atemiwaza bullet
+			outline = Color_Purple;
+			fill = Color::Blue; //addline = Color::Blue;
+		}
+		else if (flags->guardPoint) //guard point
+			fill = outline = Color::White;
+		else if(flags->chOnHit)
+			fill = outline = Color::Cyan;
+	}
+	if (meleeInvul || projnvul) {
+		fill *= 0.5;
+		if (meleeInvul && projnvul)
+			fill = Color::Transparent;
+		else if (meleeInvul)
+			addline = Color::Red;
+		else if (projnvul)
+			addline = Color::Blue;
+	}
+	for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
+		drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
+		if(addline)
+			drawBox<-1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
+	}
 	return object.boxData.hurtBoxCount;
 }
 

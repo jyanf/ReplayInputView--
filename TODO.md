@@ -32,6 +32,36 @@
 
 
 
+颜色微调：墨绿
+
 
 
 ~~replay倒放情况~~
+
+
+
+```cpp
+flags = atker->boxData.mFrameData->attackFlags;
+if (!flags.isBullet) {
+    if (victm->meleeInvulTimer != 0
+        || victm->gameData.frameData->frameFlags.meleeInvul)
+        return false;
+}
+else if (flags & 0x40000 == 0)
+    if (victm->projectileInvulTimer != 0
+        || victm->gameData.frameData->frameFlags.bulletInvul) {
+        return false;
+    }
+}
+
+GRAB:
+if (flags.grab) {
+    
+}
+```
+
+| isBullet\\unk40000 | y                      | n                      |
+| ------------------ | ---------------------- | ---------------------- |
+| y                  | grabInvul              | projinvuls & grabInvul |
+| n                  | meleeInvul & grabInvul | meleeInvul & grabInvul |
+
