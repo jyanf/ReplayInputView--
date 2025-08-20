@@ -75,6 +75,7 @@ struct RivControl {
 
 }
 
+void __fastcall SaveTimers(GameDataManager* This);
 
 BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This);
 int __fastcall CBattleManager_OnProcess(BattleManager* This);
@@ -88,4 +89,6 @@ extern BattleManager* (__fastcall *ogBattleMgrInit)(BattleManager*);
 extern BattleManager* (BattleManager::* ogBattleMgrDestruct)(char);
 extern int (BattleManager::* ogBattleMgrOnProcess)();
 extern void (BattleManager::* ogBattleMgrOnRender)();
+
+extern void (__fastcall *ogUpdateMovement)(GameDataManager*);
 

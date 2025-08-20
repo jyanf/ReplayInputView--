@@ -8,6 +8,9 @@ int (BattleManager::* ogBattleMgrOnProcess)();
 void (BattleManager::* ogBattleMgrOnRender)();
 int ogBattleMgrSize;
 
+static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER];
+void(__fastcall* ogUpdateMovement)(GameDataManager*);
+
 #define FVF_SWRVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 
 static char s_msg[256];
@@ -311,6 +314,18 @@ static void process_frame(BattleManager* This, RivControl& riv) {
 	RefleshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
 	RefleshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
 }
+
+
+void __fastcall SaveTimers(GameDataManager* This) {
+	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0x28);
+	for (int i = 0; i < players.size(); ++i) {
+		if (!players[i] || This && !This->enabledPlayers[i]) continue;
+		invulMelee[i] = players[i]->meleeInvulTimer;
+		invulBullet[i] = players[i]->projectileInvulTimer;
+		invulGrab[i] = players[i]->grabInvulTimer;
+	}
+	return ogUpdateMovement(This);
+}
 int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	static int fps_steps[] = { 16, 20, 24, 28, 33, 66, 100, 200 };
 
@@ -323,6 +338,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	int* delay = (int*)0x8A0FF8;
 
 	if (riv.enabled) {
+		
 		static bool old_display_boxes = false;
 		static bool old_display_info = false;
 		static bool old_display_inputs = false;
@@ -433,6 +449,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			riv.forwardIndex = 0;
 		}
+		
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess)();
@@ -459,7 +476,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		for (int i = 0; i<players.size(); ++i) {
 			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
 			if (riv.hitboxes) {
-				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6);
+				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2);
 			}
 			if (riv.untech) {
 				drawUntechBar(*players[i]);

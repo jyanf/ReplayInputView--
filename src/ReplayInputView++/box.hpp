@@ -58,12 +58,12 @@ namespace riv { namespace box {
 
 	void setCamera();
 
-	bool setDirty(bool d);
+	bool getDirty(); void setDirty(bool d);
 	void cleanWatcher();
 	extern unsigned char update_collision_shim[];
 	void __fastcall lag_watcher_updator(const GameObjectBase* object);
 
-	void drawPlayerBoxes(const Player& player, bool hurtbreak = false);
+	void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayTimers);
 	void drawUntechBar(Player& player);
 	void drawFloor();
 

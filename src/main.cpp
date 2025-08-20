@@ -65,9 +65,14 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	auto& op = *reinterpret_cast<byte(*)[3]>(0x4792FB);
 	if (op[0] == 0x83 && op[1] == 0xf8 && op[2] == 2) op[2] = 1;
 
+	//CBattleManager_UpdateMovement
+		//JMP FUN_0046e010; 004796c6: E9 4549FFFF
+		//-> CALL
+	ogUpdateMovement = SokuLib::TamperNearJmp(0x4796c6, SaveTimers);
+
 	//CBattleManager_UpdateCollision
 		//CMP dword ptr [EAX + 0x174],0x0; 0047d2c4: 83B8 74010000 00
-		//JMP shim
+		//->JMP shim
 	using riv::box::update_collision_shim, riv::box::lag_watcher_updator;
 	memcpy(update_collision_shim + 9, (void*)0x47d2c4, 7);//more check?
 	memset((void*)0x47d2c4, 0x90, 7);

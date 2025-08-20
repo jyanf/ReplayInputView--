@@ -23,9 +23,9 @@ using LagWatcher = std::map<const GameObjectBase*, bool>;
 //static LagWatcher lag_watcher, lag_buffer;
 static LagWatcher lag_saver, lag_buffer;
 static bool dirty = false;
-bool setDirty(bool d) {
-	d = dirty ^ d;
-	dirty = dirty ^ d;
+bool getDirty() { return dirty; }
+void setDirty(bool d) {
+	dirty = d;
 	if (dirty) {
 		lag_buffer.swap(lag_saver);
 		TRUE_CLEAR(lag_buffer);
@@ -34,7 +34,6 @@ bool setDirty(bool d) {
 #endif // _DEBUG
 
 	}
-	return dirty ^ d;
 }
 void cleanWatcher() {
 	//lag_watcher.clear();
@@ -338,11 +337,11 @@ static bool drawBulletBoxes(const GameObject& object)
 
 
 
-void drawPlayerBoxes(const Player& player, bool hurtbreak)
+void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayedTimers)
 {
-	drawCollisionBox(player, player.grabInvulTimer);
+	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4);
 	if (!hurtbreak) {
-		drawHurtBoxes(player, player.meleeInvulTimer, player.projectileInvulTimer);
+		drawHurtBoxes(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
 	}
 	drawHitBoxes(player);
 	drawPositionBox(player);
