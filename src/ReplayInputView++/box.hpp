@@ -14,6 +14,9 @@ using SokuLib::DrawUtils::RectangleShape;
 using SokuLib::DrawUtils::FloatRect;
 using Color = SokuLib::DrawUtils::DxSokuColor;
 
+#include <Renderer.hpp>
+using SokuLib::Renderer;
+
 #include <GameData.hpp>
 using SokuLib::v2::groundHeight;
 #define MAX_UNTECHBAR_SPAN 100
@@ -21,7 +24,10 @@ using SokuLib::v2::groundHeight;
 #include <Design.hpp>
 using SokuLib::CNumber;
 
-namespace riv { namespace box {
+namespace riv { 
+int SetRenderMode(int mode);
+
+namespace box {
 
 	union BulletSpecial {
 		struct {
@@ -89,4 +95,5 @@ static bool drawHitBoxes(const GameObjectBase& object);
 static bool drawBulletBoxes(const GameObject& object);
 
 
-}}
+}
+}

@@ -6,7 +6,19 @@
 #include <map>
 #include "box.hpp"
 
-namespace riv { namespace box {
+namespace riv { 
+static const auto setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
+static const auto renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
+int SetRenderMode(int mode) {
+	DWORD old = SokuLib::renderer.*renderMode;
+	(SokuLib::renderer.*setRenderMode)(mode);
+	//SokuLib::pd3dDev->GetRenderState(, &old);
+	//SokuLib::pd3dDev->SetRenderState(, mode);
+	return old;
+}
+	
+namespace box {
+
 
 static const float BOXES_ALPHA = 0.25;
 static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
@@ -464,7 +476,7 @@ void drawUntechBar(Player& player) {
 	rectangle.draw();
 }
 void drawFloor() {
-	Color outline = Color::White;
+	Color outline = Color_Gray;
 	Color fill = outline;
 	Box bound = {-5, 0, 1280, 0};
 	drawBox(bound, nullptr, outline, Color::Transparent);

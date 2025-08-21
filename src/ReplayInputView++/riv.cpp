@@ -2,11 +2,11 @@
 
 HMODULE hDllModule;
 std::filesystem::path configPath;
-BattleManager* (__fastcall *ogBattleMgrInit)(BattleManager*);//tamperCall
-BattleManager* (BattleManager::* ogBattleMgrDestruct)(char);
-int (BattleManager::* ogBattleMgrOnProcess)();
-void (BattleManager::* ogBattleMgrOnRender)();
-int ogBattleMgrSize;
+ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT];
+VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT];
+VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT];
+VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT];
+int ogBattleMgrSize[TARGET_MODES_COUNT];
 
 static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER];
 void(__fastcall* ogUpdateMovement)(GameDataManager*);
@@ -60,8 +60,7 @@ static void RenderTile(float x, float y, int u, int v, int a) {
 }
 
 template <int d = 2>
-static void RenderInputPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
-	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
+static void RenderInputPanel(const RivControl& riv, SWRCMDINFO& cmd, float x, float y) {
 
 	if (cmd.enabled) {
 		// Background
@@ -89,8 +88,7 @@ static void RenderInputPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
 }
 
 template <int d = 2>
-static void RenderRecordPanel(void* This, SWRCMDINFO& cmd, float x, float y) {
-	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
+static void RenderRecordPanel(const RivControl& riv, SWRCMDINFO& cmd, float x, float y) {
 
 	if (cmd.record.enabled) {
 		RenderMyBack<d>(x, y, 24 * 10 + 6, 24 + 6);
@@ -228,14 +226,15 @@ static Keys toggle_keys;
 using riv::RivControl, riv::check_key, riv::toggle_keys;
 using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 
-BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
-	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize);
+template<int i>
+BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
+	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
 
 #ifdef SUIT_4_PLAYERS
 	//This->characterManager3 = This->characterManager4 = nullptr; //gamedata manager
 #endif // SUIT_4_PLAYERS
 	
-	ogBattleMgrInit(This);
+	ogBattleMgrConstruct[i](This);
 
 	static char tmp[1024];
 
@@ -311,16 +310,7 @@ BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This) {
 	}
 	return This;
 }
-
-static void process_frame(BattleManager* This, RivControl& riv) {
-	int ret = (This->*ogBattleMgrOnProcess)();
-	if (ret > 0 && ret < 4)
-		return;
-
-	RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
-	RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
-}
-
+TC_INSTANTIATE(0); TC_INSTANTIATE(1); TC_INSTANTIATE(2); TC_INSTANTIATE(3);
 
 void __fastcall SaveTimers(GameDataManager* This) {
 	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0x28);
@@ -332,13 +322,14 @@ void __fastcall SaveTimers(GameDataManager* This) {
 	}
 	return ogUpdateMovement(This);
 }
+template<int ind>
 int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	static int fps_steps[] = { 16, 20, 24, 28, 33, 66, 100, 200 };
 
 	static int fps_index = 0;
 	static int n_steps = sizeof(fps_steps) / sizeof(*fps_steps);
 
-	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
+	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize[ind]);
 	int ret = 0;
 
 	int* delay = (int*)0x8A0FF8;
@@ -436,7 +427,13 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		else if (check_key(toggle_keys.framestep, 0, 0, 0) || (old_framestop = false)) {
 			if (old_framestop) {}
 			else if (riv.paused) {
-				process_frame(This, riv);
+				//process_frame(This, riv);
+				int ret = (This->*ogBattleMgrOnProcess[ind])();
+				if (ret <= 0 || ret >= 4) {
+					RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
+					RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
+				}
+
 				riv::box::setDirty(true);
 			}
 			old_framestop = true;//fix
@@ -445,7 +442,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		riv.forwardIndex += riv.forwardStep;
 		if (riv.forwardIndex >= riv.forwardCount) {
 			for (int i = riv.forwardIndex / riv.forwardCount; i--;) {
-				ret = (This->*ogBattleMgrOnProcess)();
+				ret = (This->*ogBattleMgrOnProcess[ind])();
 				riv::box::setDirty(true);
 				if (ret > 0 && ret < 4)
 					break;
@@ -458,30 +455,39 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		
 	}
 	else {
-		ret = (This->*ogBattleMgrOnProcess)();
+		ret = (This->*ogBattleMgrOnProcess[ind])();
 		//riv::box::setDirty(true);
 	}
 
 	return ret;
 }
+TP_INSTANTIATE(0); TP_INSTANTIATE(1); TP_INSTANTIATE(2);
 
+template<int i>
 void __fastcall CBattleManager_OnRender(BattleManager* This) {
-	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize);
+	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize[i]);
 
-	(This->*ogBattleMgrOnRender)();
+	(This->*ogBattleMgrOnRender[i])();
 
 	if (riv.enabled) {
-		RenderInputPanel<3>(This, riv.cmdp1, 60, 340);
-		RenderInputPanel<-3>(This, riv.cmdp2, 400, 340);
-		RenderRecordPanel<3>(This, riv.cmdp1, 0, 300);
-		RenderRecordPanel<-3>(This, riv.cmdp2, 390, 300);
+		// fix story blend
+		auto old = riv::SetRenderMode(1);
 		auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
-		
+
+		if (players[0]->inputData.inputType != 2) {//wait for refactor
+			RenderInputPanel<3>(riv, riv.cmdp1, 60, 340);
+			RenderRecordPanel<3>(riv, riv.cmdp1, 0, 300);
+		}
+		if (players[1]->inputData.inputType != 2) {//wait for refactor
+			RenderInputPanel<-3>(riv, riv.cmdp2, 400, 340);
+			RenderRecordPanel<-3>(riv, riv.cmdp2, 390, 300);
+		}
+		//SokuLib::ADDR_RENDERER
 		riv::box::setCamera();
 		auto manager = GameDataManager::instance;
 		for (int i = 0; i<players.size(); ++i) {
 			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
-			if (riv.hitboxes) {
+			if (riv.hitboxes && This->matchState > 0) {
 				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2);
 			}
 			if (riv.untech) {
@@ -494,11 +500,15 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		if (riv.show_debug) {
 			//riv::draw_debug_info(This);
 		}
+
+		riv::SetRenderMode(old);
 	}
 }
+TR_INSTANTIATE(0); TR_INSTANTIATE(1); TR_INSTANTIATE(2);
 
+template<int i>
 BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, char dyn) {
-	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize);
+	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
 
 	if (riv.enabled) {
 		SokuLib::textureMgr.remove(riv.texID);
@@ -510,8 +520,8 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 		WritePrivateProfileStringW(L"Record", L"p2.Enabled", riv.cmdp2.record.enabled ? L"1" : L"0", path);
 	}
 	riv::box::cleanWatcher();
-	return (This->*ogBattleMgrDestruct)(dyn);
+	return (This->*ogBattleMgrDestruct[i])(dyn);
 }
-
+TD_INSTANTIATE(0); TD_INSTANTIATE(1); TD_INSTANTIATE(2);
 
 

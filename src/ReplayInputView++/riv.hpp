@@ -80,19 +80,28 @@ struct RivControl {
 }
 
 void __fastcall SaveTimers(GameDataManager* This);
-
-BattleManager* __fastcall CBattleManager_OnCreate(BattleManager* This);
-int __fastcall CBattleManager_OnProcess(BattleManager* This);
-void __fastcall CBattleManager_OnRender(BattleManager* This);
-BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, char dyn);
+template<int> BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This);
+template<int> int __fastcall CBattleManager_OnProcess(BattleManager* This);
+template<int> void __fastcall CBattleManager_OnRender(BattleManager* This);
+template<int> BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, char dyn);
+#define TC_INSTANTIATE(n) template BattleManager* __fastcall CBattleManager_OnConstruct<(n)>(BattleManager* This)
+#define TP_INSTANTIATE(n) template int __fastcall CBattleManager_OnProcess<(n)>(BattleManager* This)
+#define TR_INSTANTIATE(n) template void __fastcall CBattleManager_OnRender<(n)>(BattleManager* This)
+#define TD_INSTANTIATE(n) template BattleManager* __fastcall CBattleManager_OnDestruct<(n)>(BattleManager* This, int _, char dyn)
 
 extern HMODULE hDllModule;
 extern std::filesystem::path configPath;
-extern int ogBattleMgrSize;
-extern BattleManager* (__fastcall *ogBattleMgrInit)(BattleManager*);
-extern BattleManager* (BattleManager::* ogBattleMgrDestruct)(char);
-extern int (BattleManager::* ogBattleMgrOnProcess)();
-extern void (BattleManager::* ogBattleMgrOnRender)();
+
+#define TARGET_MODES_COUNT (4)
+typedef BattleManager* (__fastcall *ManagerInit)(BattleManager*);
+typedef BattleManager* (BattleManager::* VManagerDestruct)(char);
+typedef int (BattleManager::* VManagerOnProcess)();
+typedef void (BattleManager::* VManagerOnRender)();
+extern ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT];
+extern VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT];
+extern VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT];
+extern VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT];
+extern int ogBattleMgrSize[TARGET_MODES_COUNT];
 
 extern void (__fastcall *ogUpdateMovement)(GameDataManager*);
 
