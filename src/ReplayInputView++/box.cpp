@@ -253,28 +253,29 @@ static void drawPositionBox(const GameObjectBase& object)
 	rectangle.draw();
 }
 
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul)
+static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak)
 {
+	
 	if (!object.gameData.frameData || !object.gameData.frameData->collisionBox) return;
-	const auto& box = object.boxData.collisionBoxBuffer;
 	grabInvul |= object.gameData.frameData->frameFlags.grabInvincible || object.gameData.frameData->frameFlags.guarding;
-
-	FloatRect rect{ box.left, box.top, box.right, box.bottom };
+	FloatRect rect;
+	
+	if (hurtbreak)//unbuffered state
+	{
+		const auto& box2 = *(object.gameData.frameData->collisionBox);
+		rect = FloatRect(std::ceil(object.position.x) + object.direction * box2.left, box2.top - std::ceil(object.position.y),
+			std::ceil(object.position.x) + object.direction * box2.right, box2.bottom - std::ceil(object.position.y));
+		//rectangle.setFillColor(Color::Transparent);
+		
+	}
+	else {//correct but require matchState
+		const auto& box = object.boxData.collisionBoxBuffer;
+		rect = FloatRect( box.left, box.top, box.right, box.bottom );
+	}
+	rectangle.setRect(rect);
 	rectangle.setFillColor(grabInvul ? Color::Transparent : Color::Yellow * BOXES_ALPHA);
 	rectangle.setBorderColor(Color::Yellow);
-
-	rectangle.setRect(rect);
 	rectangle.draw();
-
-#ifdef _DEBUG
-	const auto& box2 = *(object.gameData.frameData->collisionBox);
-	rect = FloatRect(std::ceil(object.position.x) + object.direction * box2.left, box2.top - std::ceil(object.position.y),
-		std::ceil(object.position.x) + object.direction * box2.right, box2.bottom - std::ceil(object.position.y));
-	rectangle.setFillColor(Color::Transparent);
-	rectangle.setRect(rect);
-	rectangle.draw();
-#endif // _DEBUG
-
 }
 
 static void drawArmor(const Player& player, bool blockable) {
@@ -282,7 +283,7 @@ static void drawArmor(const Player& player, bool blockable) {
 	if (!player.boxData.frameData) return;
 	const auto& powerMultiplier = player.unknown538;
 	bool superArmored = powerMultiplier == 0.0f || player.boxData.frameData->frameFlags.superArmor;
-	bool normalArmored = powerMultiplier < 1.0f || player.boxData.frameData->frameFlags.extendedArmor;
+	bool normalArmored = 0.0f < powerMultiplier && powerMultiplier < 1.0f || player.boxData.frameData->frameFlags.extendedArmor;
 	if (!superArmored && !normalArmored) return;
 	const auto& armorTimer = player.unknown4BC;
 	auto pos = SokuLib::Vector2f{
@@ -290,8 +291,10 @@ static void drawArmor(const Player& player, bool blockable) {
 				(-player.position.y - 100 + SokuLib::camera.translate.y) * SokuLib::camera.scale };
 	auto radius = 100 * SokuLib::camera.scale;
 	auto old = SetRenderMode(2);
-	if (superArmored && SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON)
-	{
+	if (superArmored 
+		&& SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON 
+		//&& !(700 <= player.frameState.actionId && player.frameState.actionId < 800)//in story
+	) {
 		SokuLib::textureMgr.setTexture(Texture_armorBar, 0);
 		float u1 = (player.frameState.currentFrame / 3 % 3) / 3.0, u2 = (player.frameState.currentFrame / 3 % 3 + 1) / 3.0, v1 = (blockable ? 3 : 2) / 4.0, v2 = (blockable ? 4 : 3) / 4.0;
 		//const auto& dmg = player.superArmorDamageTaken;
@@ -434,7 +437,7 @@ static bool drawBulletBoxes(const GameObject& object)
 
 void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayedTimers)
 {
-	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4);
+	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4, hurtbreak);
 	if (!hurtbreak) {
 		drawHurtBoxes(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
 	}

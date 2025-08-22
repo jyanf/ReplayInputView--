@@ -89,7 +89,7 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 
 static void drawPositionBox(const GameObjectBase& object);
 
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul);
+static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak = false);
 static void drawArmor(const Player& player, bool blockable = true);
 static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul);
 static bool drawHitBoxes(const GameObjectBase& object);

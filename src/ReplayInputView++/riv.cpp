@@ -499,7 +499,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		for (int i = 0; i<players.size(); ++i) {
 			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
 			if (riv.hitboxes && This->matchState > 0) {
-				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2 | unblockable[i]<<3);
+				drawPlayerBoxes(*players[i], This->matchState <= 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2 | unblockable[i]<<3);
 			}
 			if (riv.untech) {
 				drawUntechBar(*players[i]);
