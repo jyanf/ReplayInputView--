@@ -27,7 +27,7 @@ set(RC_FILES "")
 file(GLOB RC_IN_FILES src/${PROJECT_NAME}/*.rc.in)
 #set(RC_IN_FILES src/${PROJECT_NAME}/ReplayInputView.rc)
 #message(${RC_FILES})
-set(PNG_PATH "ReplayInputView.png")
+
 foreach(RC_IN_FILE ${RC_IN_FILES})
     get_filename_component(RC_FILENAME ${RC_IN_FILE} NAME)
     string(REGEX REPLACE "\\.in$" "" OUTPUT_FILENAME ${RC_FILENAME})

@@ -5,10 +5,11 @@ using RotationBox = SokuLib::RotationBox;
 
 #include <GameObject.hpp>
 #include <Player.hpp>
-using GameObjectBase = SokuLib::v2::GameObjectBase;
-using GameObject = SokuLib::v2::GameObject;
-using Player = SokuLib::v2::Player;
+using SokuLib::v2::GameObjectBase;
+using SokuLib::v2::GameObject;
+using SokuLib::v2::Player;
 
+#include <TextureManager.hpp>
 #include <DrawUtils.hpp>
 using SokuLib::DrawUtils::RectangleShape;
 using SokuLib::DrawUtils::FloatRect;
@@ -28,10 +29,10 @@ namespace riv {
 int SetRenderMode(int mode);
 
 namespace box {
-
+	extern int Texture_armorBar;
 	union BulletSpecial {
 		struct {
-			/* 01 */ bool Grab		: 1;
+			/* 01 */ bool Melee			: 1;
 			/* 02 */ bool SharedBox		: 1;
 			/* 04 */ bool DynamicBox	: 1;
 			/* 08 */ bool Gap			: 1;
@@ -44,7 +45,7 @@ namespace box {
 		enum : unsigned char
 		{
 			NONE=		0,
-			GRAB=		0x1,
+			MELEE=		0x1,
 			SHARED_BOX=	0x2,
 			DYNAMIC_BOX=0x4,
 			GAP=		0x8,
@@ -89,6 +90,7 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 static void drawPositionBox(const GameObjectBase& object);
 
 static void drawCollisionBox(const GameObjectBase& object, bool grabInvul);
+static void drawArmor(const Player& player, bool blockable = true);
 static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul);
 static bool drawHitBoxes(const GameObjectBase& object);
 

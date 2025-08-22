@@ -5,6 +5,7 @@
 #include <cmath>
 #include <map>
 #include "box.hpp"
+#include "DrawCircle.hpp"
 
 namespace riv { 
 static const auto setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
@@ -18,7 +19,7 @@ int SetRenderMode(int mode) {
 }
 	
 namespace box {
-
+	int Texture_armorBar;
 
 static const float BOXES_ALPHA = 0.25;
 static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
@@ -103,14 +104,14 @@ inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char i
 		special.Gap = false;
 	}
 	if (fdata) {
-		special.Grab &= fdata->attackFlags.grab;
+		special.Melee &= !fdata->attackFlags.grazable;//wrong flag name but nah
 		special.SharedBox &= fdata->frameFlags.atkAsHit;
 		special.Reflector &= fdata->frameFlags.reflectionProjectile;
 		special.Entity &= fdata->frameFlags.chOnHit;
 		//special.Effect &= !fdata->attackFlags.value && !(special.Reflector || special.Entity);
 	} else {
 		//special.value &= 0b11111111u;
-		special.Grab = special.SharedBox = special.Reflector = special.Entity = false;
+		special.Melee = special.SharedBox = special.Reflector = special.Entity = false;
 	}
 	special.SubBox &= obj.parentA != nullptr;
 
@@ -275,12 +276,54 @@ static void drawCollisionBox(const GameObjectBase& object, bool grabInvul)
 
 }
 
+static void drawArmor(const Player& player, bool blockable) {
+	constexpr int threshold = 100;
+	if (!player.boxData.frameData) return;
+	const auto& powerMultiplier = player.unknown538;
+	bool superArmored = powerMultiplier == 0.0f || player.boxData.frameData->frameFlags.superArmor;
+	bool normalArmored = powerMultiplier < 1.0f || player.boxData.frameData->frameFlags.extendedArmor;
+	if (!superArmored && !normalArmored) return;
+	const auto& armorTimer = player.unknown4BC;
+	auto pos = SokuLib::Vector2f{
+				(player.position.x + SokuLib::camera.translate.x) * SokuLib::camera.scale,
+				(-player.position.y - 100 + SokuLib::camera.translate.y) * SokuLib::camera.scale };
+	auto radius = (120 + player.frameState.currentFrame % 2 * 2) * SokuLib::camera.scale;
+	auto old = SetRenderMode(2);
+	SokuLib::textureMgr.setTexture(Texture_armorBar, 0);
+	if (superArmored && SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON)
+	{
+		float u1 = (player.frameState.currentFrame / 3 % 3) / 3.0, u2 = (player.frameState.currentFrame / 3 % 3 + 1) / 3.0, v1 = (blockable ? 3 : 2) / 4.0, v2 = (blockable ? 4 : 3) / 4.0;
+		//const auto& dmg = player.superArmorDamageTaken;
+		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius, 
+			25.0f, SokuLib::Vector2f{  15.0f , 345.0f } * -player.direction,
+			{ u1,v1,u2,v2 }, 12/11.0f);
+	} else if (normalArmored) {
+		float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
+		float step = threshold * powerMultiplier;
+		for (int i = threshold, j = 0; i > 0; i-= step, ++j)
+		{
+			Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius + j*20, 25.0f, 
+				SokuLib::Vector2f{0, 360}* -player.direction, 
+				{ u1,v1,u2,v2 }, 1, Color_Gray*0.3);
+			if (!(50 <= player.frameState.actionId && player.frameState.actionId < 150) && armorTimer < threshold) {
+				Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius+j*20, 25.0f, 
+					SokuLib::Vector2f{ 0, max(min((i-armorTimer)/min(step, i), 1), 0) * 360.0f }*-player.direction,
+					{ u1,v1,u2,v2 }, 1);
+			}
 
-static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul)
+		}
+
+	}
+	SokuLib::textureMgr.setTexture(NULL, 0);
+	SetRenderMode(old);
+
+}
+
+static bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
 {
-	if (object.boxData.hurtBoxCount > 5)
+	if (player.boxData.hurtBoxCount > 5)
 		return false;
-	auto flags = object.gameData.frameData ? &object.gameData.frameData->frameFlags : nullptr;
+	auto flags = player.gameData.frameData ? &player.gameData.frameData->frameFlags : nullptr;
 	Color outline = Color::Green, addline = Color::Transparent;
 	Color fill = outline;
 
@@ -313,12 +356,12 @@ static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool pr
 		else if (projnvul)
 			addline = Color::Blue;
 	}
-	for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
-		drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
+	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
+		drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
 		if(addline)
-			drawBox<-1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
+			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
 	}
-	return object.boxData.hurtBoxCount;
+	return player.boxData.hurtBoxCount;
 }
 
 static bool drawHitBoxes(const GameObjectBase& object)
@@ -326,8 +369,7 @@ static bool drawHitBoxes(const GameObjectBase& object)
 	if (object.boxData.hitBoxCount > 5)
 		return false;
 	bool active = check_hitbox_active(object);
-	auto spec = determine(object, BulletSpecial::GRAB);
-	Color outline = spec.Grab ? Color_Orange: Color::Red;
+	Color outline = object.boxData.frameData && object.boxData.frameData->attackFlags.grab ? Color_Orange: Color::Red;
 	Color fill = active ? outline : outline * bool(object.collisionType) * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0));
 	for (int i = 0; i < object.boxData.hitBoxCount; i++)
 		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
@@ -337,7 +379,7 @@ static bool drawHitBoxes(const GameObjectBase& object)
 static bool drawBulletBoxes(const GameObject& object)
 {
 	using BS = BulletSpecial;
-	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::GRAB);
+	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::MELEE);
 	if (spec.Effect) {
 		lag_saver.erase(&object);
 		return false;
@@ -369,8 +411,8 @@ static bool drawBulletBoxes(const GameObject& object)
 			drawed = true;
 		}
 	}
-	outline = spec.Grab ? Color_Orange : Color::Red;
-	fill = hitbox_active ? outline : (object.collisionType ? outline * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)) : Color::Transparent);
+	outline = object.boxData.frameData && object.boxData.frameData->attackFlags.grab ? Color_Orange : Color::Red;
+	fill = hitbox_active ? outline : (object.collisionType && spec.Melee ? outline * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)) : Color::Transparent);
 	if (object.boxData.hitBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
 			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
@@ -393,6 +435,8 @@ void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayed
 	}
 	drawHitBoxes(player);
 	drawPositionBox(player);
+
+	drawArmor(player, !(player.unknown4AA || delayedTimers & 8) && player.boxData.frameData && player.boxData.frameData->frameFlags.guardAvailable);
 
 	if (!player.objectList) return;
 	const auto& list = player.objectList->getList();//manager.objects.list.vector();

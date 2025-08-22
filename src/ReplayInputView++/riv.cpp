@@ -8,17 +8,11 @@ VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT];
 VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT];
 int ogBattleMgrSize[TARGET_MODES_COUNT];
 
-static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER];
+static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER], unblockable[PLAYERS_NUMBER];
 void(__fastcall* ogUpdateMovement)(GameDataManager*);
-
-#define FVF_SWRVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
-
-static char s_msg[256];
 
 static int s_slowdown_method = 1;
 
-#define SHOW_DEBUG_MSG() MessageBox(NULL, s_msg, "Debug", 0)
-#define SHOW_MSG(text) MessageBox(NULL, (text), "Debug", 0)
 
 /*
  * ReplayInputView functions
@@ -67,6 +61,12 @@ static void RenderInputPanel(const RivControl& riv, SWRCMDINFO& cmd, float x, fl
 		RenderMyBack<d>(x, y, 24 * 6 + 24, 24 * 3 + 12);
 
 		SokuLib::textureMgr.setTexture(riv.texID, 0);
+#ifdef _DEBUG
+		DWORD old;
+		SokuLib::pd3dDev->GetFVF(&old);
+		printf("%#x\n", old);
+#endif // _DEBUG
+
 
 		// Directions
 		RenderTile(x + 9 + 24,	y + 6,		0,	0,	(cmd.now % 16 == 1 ? 255 : 48)); /* ¡ü */
@@ -226,6 +226,20 @@ static Keys toggle_keys;
 using riv::RivControl, riv::check_key, riv::toggle_keys;
 using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 
+static int create_texture(int offset) {
+	//SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(8), pphandle)
+	int id;
+	auto pphandle = SokuLib::textureMgr.allocate(&id);
+	if (pphandle)
+		*pphandle = NULL;
+	if (SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(offset), pphandle))) {
+		return id;
+	}
+	else {
+		SokuLib::textureMgr.deallocate(id);
+		return 0;
+	}
+}
 template<int i>
 BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
@@ -250,16 +264,8 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 
 	if (riv.enabled) {
 		//CTextureManager_LoadTextureFromResource(g_textureMgr, &riv.texID, s_hDllModule, );
-		int id = 0;
-		auto pphandle = SokuLib::textureMgr.allocate(&id);
-		*pphandle = NULL;
-		if (SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(4), pphandle))) {
-			riv.texID = id;
-		}
-		else {
-			SokuLib::textureMgr.deallocate(id);
-			riv.texID = 0;
-		}
+		riv.texID = create_texture(4);
+		riv::box::Texture_armorBar = create_texture(8);
 
 		//text::LoadSettings(ini, "Debug");
 		//text::OnCreate(This);
@@ -319,6 +325,7 @@ void __fastcall SaveTimers(GameDataManager* This) {
 		invulMelee[i] = players[i]->meleeInvulTimer;
 		invulBullet[i] = players[i]->projectileInvulTimer;
 		invulGrab[i] = players[i]->grabInvulTimer;
+		unblockable[i] = players[i]->unknown4AA;//blockDisabled
 	}
 	return ogUpdateMovement(This);
 }
@@ -366,7 +373,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_display_inputs = true;
 		}
-		else if (check_key(toggle_keys.decelerate, 0, 0, 0) || (old_decelerate = false)) {
+		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
+			&& check_key(toggle_keys.decelerate, 0, 0, 0) || (old_decelerate = false)) {
 			if (old_decelerate) {}
 			else if (s_slowdown_method) {//
 				if (riv.forwardStep > 1) {
@@ -387,7 +395,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_decelerate = true;
 		}
-		else if (check_key(toggle_keys.accelerate, 0, 0, 0) || (old_accelerate = false)) {
+		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
+			&& check_key(toggle_keys.accelerate, 0, 0, 0) || (old_accelerate = false)) {
 			if (old_accelerate) {}
 			else if (s_slowdown_method) {
 				if (riv.forwardCount > 1) {
@@ -408,7 +417,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_accelerate = true;
 		}
-		else if (check_key(toggle_keys.stop, 0, 0, 0) || (old_stop = false)) {
+		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH
+			&& check_key(toggle_keys.stop, 0, 0, 0) || (old_stop = false)) {
 			if (old_stop) {}
 			else if (!riv.paused) {
 				riv.forwardCount = -1;
@@ -488,7 +498,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 		for (int i = 0; i<players.size(); ++i) {
 			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
 			if (riv.hitboxes && This->matchState > 0) {
-				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2);
+				drawPlayerBoxes(*players[i], This->matchState == 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2 | unblockable[i]<<3);
 			}
 			if (riv.untech) {
 				drawUntechBar(*players[i]);
@@ -512,6 +522,7 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 
 	if (riv.enabled) {
 		SokuLib::textureMgr.remove(riv.texID);
+		SokuLib::textureMgr.remove(riv::box::Texture_armorBar);
 		//text::OnDestruct(This, _, dyn);
 		auto path = configPath.c_str();
 		WritePrivateProfileStringW(L"Input", L"p1.Enabled", riv.cmdp1.enabled ? L"1" : L"0", path);

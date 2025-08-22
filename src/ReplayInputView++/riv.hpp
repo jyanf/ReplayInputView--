@@ -32,23 +32,7 @@ struct Keys {
 	UINT framestep;
 };
 
-struct SWRVERTEX {
-	float x, y, z;
-	float rhw; // RHW = reciprocal of the homogeneous (clip space) w coordinate of a vertex (the 4th dimension for computing the scaling and translating)
-	D3DCOLOR color;
-	float u, v;
-
-	void set(float _x, float _y, float _z) {
-		x = _x;
-		y = _y;
-		z = _z;
-	}
-
-	void set_xy(float _x, float _y) {
-		x = _x;
-		y = _y;
-	}
-};
+using SWRVERTEX = SokuLib::DxVertex;
 
 struct SWRCMDINFO {
 	bool enabled;
