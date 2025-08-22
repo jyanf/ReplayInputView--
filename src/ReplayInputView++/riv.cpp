@@ -266,6 +266,7 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 		//CTextureManager_LoadTextureFromResource(g_textureMgr, &riv.texID, s_hDllModule, );
 		riv.texID = create_texture(4);
 		riv::box::Texture_armorBar = create_texture(8);
+		riv::box::Texture_armorLifebar = create_texture(12);
 
 		//text::LoadSettings(ini, "Debug");
 		//text::OnCreate(This);
@@ -523,6 +524,7 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 	if (riv.enabled) {
 		SokuLib::textureMgr.remove(riv.texID);
 		SokuLib::textureMgr.remove(riv::box::Texture_armorBar);
+		SokuLib::textureMgr.remove(riv::box::Texture_armorLifebar);
 		//text::OnDestruct(This, _, dyn);
 		auto path = configPath.c_str();
 		WritePrivateProfileStringW(L"Input", L"p1.Enabled", riv.cmdp1.enabled ? L"1" : L"0", path);

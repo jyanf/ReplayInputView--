@@ -29,7 +29,7 @@ namespace riv {
 int SetRenderMode(int mode);
 
 namespace box {
-	extern int Texture_armorBar;
+	extern int Texture_armorBar, Texture_armorLifebar;
 	union BulletSpecial {
 		struct {
 			/* 01 */ bool Melee			: 1;

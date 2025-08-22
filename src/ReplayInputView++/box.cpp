@@ -20,6 +20,7 @@ int SetRenderMode(int mode) {
 	
 namespace box {
 	int Texture_armorBar;
+	int Texture_armorLifebar;
 
 static const float BOXES_ALPHA = 0.25;
 static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
@@ -287,29 +288,33 @@ static void drawArmor(const Player& player, bool blockable) {
 	auto pos = SokuLib::Vector2f{
 				(player.position.x + SokuLib::camera.translate.x) * SokuLib::camera.scale,
 				(-player.position.y - 100 + SokuLib::camera.translate.y) * SokuLib::camera.scale };
-	auto radius = (120 + player.frameState.currentFrame % 2 * 2) * SokuLib::camera.scale;
+	auto radius = 100 * SokuLib::camera.scale;
 	auto old = SetRenderMode(2);
-	SokuLib::textureMgr.setTexture(Texture_armorBar, 0);
 	if (superArmored && SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON)
 	{
+		SokuLib::textureMgr.setTexture(Texture_armorBar, 0);
 		float u1 = (player.frameState.currentFrame / 3 % 3) / 3.0, u2 = (player.frameState.currentFrame / 3 % 3 + 1) / 3.0, v1 = (blockable ? 3 : 2) / 4.0, v2 = (blockable ? 4 : 3) / 4.0;
 		//const auto& dmg = player.superArmorDamageTaken;
-		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius, 
+		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius + player.frameState.currentFrame % 2 * 2,
 			25.0f, SokuLib::Vector2f{  15.0f , 345.0f } * -player.direction,
 			{ u1,v1,u2,v2 }, 12/11.0f);
 	} else if (normalArmored) {
-		float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
+		SokuLib::textureMgr.setTexture(Texture_armorLifebar, 0);
+		//float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
+		float u1 = 0.01, u2 = 1, v1 = 0, v2 = 1;
 		float step = threshold * powerMultiplier;
+
 		for (int i = threshold, j = 0; i > 0; i-= step, ++j)
 		{
-			Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius + j*20, 25.0f, 
-				SokuLib::Vector2f{0, 360}* -player.direction, 
+			SetRenderMode(2);
+			Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius + j*15, 20.0f, 
+				SokuLib::Vector2f{-1, 359}* -player.direction, 
 				{ u1,v1,u2,v2 }, 1, Color_Gray*0.3);
-			if (!(50 <= player.frameState.actionId && player.frameState.actionId < 150) && armorTimer < threshold) {
-				Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius+j*20, 25.0f, 
-					SokuLib::Vector2f{ 0, max(min((i-armorTimer)/min(step, i), 1), 0) * 360.0f }*-player.direction,
-					{ u1,v1,u2,v2 }, 1);
-			}
+			SetRenderMode(1);
+			//if (!(50 <= player.frameState.actionId && player.frameState.actionId < 150) && armorTimer < threshold)
+				Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius+j*15, 20.0f, 
+					SokuLib::Vector2f{ -1, -1+max(min((i-armorTimer)/min(step, i), 1), 0) * 360.0f }*-player.direction,
+					{ u1,v1,u2,v2 });
 
 		}
 

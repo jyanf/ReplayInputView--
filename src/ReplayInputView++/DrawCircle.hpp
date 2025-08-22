@@ -47,7 +47,7 @@ inline void Draw2DCircle(LPDIRECT3DDEVICE9 dev, Vector2f pos, float radius, floa
 	for (int i = a1; (a2 - i)*dir > 0; i+= dir * step)//curves
 	{
 		float theta, x, y;
-		theta = D3DXToRadian(i * dAngle + 90.0f);
+		theta = D3DXToRadian((dir * i) * dAngle + 90.0f - dir * 1.5f);
 		x = (float)(pos.x + (radius + width / 2) * cos(theta));
 		y = (float)(pos.y - leanby10 / 10.0f * (radius + width / 2) * sin(theta));
 		CurvePts[0][0] = { x, y, 0.0f, 1.0f, color, uvBorder.x1, uvBorder.y1 };
@@ -57,7 +57,7 @@ inline void Draw2DCircle(LPDIRECT3DDEVICE9 dev, Vector2f pos, float radius, floa
 		int limit = min(step, (a2 - i) * dir);
 		for (int j = 1; j <= limit; ++j)
 		{
-			theta = D3DXToRadian((dir * j + i) * dAngle + 90.0f);
+			theta = D3DXToRadian((dir * j + i) * dAngle + 90.0f - dir * 1.5f);
 			float u = j * 1.0f/step * (uvBorder.x2 - uvBorder.x1) + uvBorder.x1;
 			x = (float)(pos.x + (radius + width / 2) * cos(theta));
 			y = (float)(pos.y - leanby10 / 10.0f * (radius + width / 2) * sin(theta));
