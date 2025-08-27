@@ -42,7 +42,8 @@ endforeach()
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install" CACHE PATH "game folder ig")
+set(GAME_FOLDER_TH123 "th123" CACHE PATH "game folder ig")
+set(CMAKE_INSTALL_PREFIX ${GAME_FOLDER_TH123})
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 if(SUIT_4_PLAYERS)
@@ -65,7 +66,10 @@ SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEB
 SET(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
 # SokuLib
-add_subdirectory(${SOKULIB_PATH} src/${PROJECT_NAME})
+add_subdirectory(
+    ${SOKULIB_PATH}
+    src/${PROJECT_NAME}
+)
 
 
 # Module
@@ -73,10 +77,12 @@ add_library("${PROJECT_NAME}"
         MODULE
         src/main.cpp
         ${RC_FILES}
-        "src/${PROJECT_NAME}/riv.cpp"
-        "src/${PROJECT_NAME}/box.cpp"
-        "src/${PROJECT_NAME}/panel.cpp"
-        "src/${PROJECT_NAME}/tex.cpp")
+        src/${PROJECT_NAME}/riv.cpp
+        src/${PROJECT_NAME}/box.cpp
+        src/${PROJECT_NAME}/panel.cpp
+        src/${PROJECT_NAME}/tex.cpp
+        src/${PROJECT_NAME}/info.cpp
+)
 target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}")
@@ -92,10 +98,16 @@ target_link_libraries(
 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION modules/${PROJECT_NAME}/)
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/${I_INI_FILENAME} DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
 
 #note
 #before "tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0)"
 #after "cmake --install . --config Debug"
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0))
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND cmake --install . --config $<CONFIG>)
+
+if(MSVC)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND "${GAME_FOLDER_TH123}/th123.exe")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${GAME_FOLDER_TH123}")
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+endif()

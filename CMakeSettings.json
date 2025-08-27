@@ -16,11 +16,6 @@
           "type": "BOOL"
         },
         {
-          "name": "CMAKE_INSTALL_PREFIX",
-          "value": "D:/Games/Hisotensoku/th123",
-          "type": "PATH"
-        },
-        {
           "name": "VERSION_MAJOR",
           "value": "0.1",
           "type": "STRING"
@@ -34,13 +29,18 @@
           "name": "I_DESCRIPTION",
           "value": "Renew of RIV+, ref. SokuLib and AssistSoku",
           "type": "STRING"
+        },
+        {
+          "name": "GAME_FOLDER_TH123",
+          "value": "D:/Games/Hisotensoku/th123",
+          "type": "PATH"
         }
       ]
     },
     {
       "name": "x86-Release",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "Release",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
       "buildCommandArgs": "",
@@ -66,6 +66,11 @@
           "name": "VERSION_MINOR",
           "value": "0",
           "type": "STRING"
+        },
+        {
+          "name": "GAME_FOLDER_TH123",
+          "value": "D:/Games/Hisotensoku/th123",
+          "type": "PATH"
         }
       ]
     }

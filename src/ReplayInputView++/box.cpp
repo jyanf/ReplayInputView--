@@ -10,13 +10,13 @@
 namespace riv { 
 static const auto _setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
 static const auto _renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
-int SetRenderMode(int mode) {
-	DWORD old = SokuLib::renderer.*_renderMode;
-	(SokuLib::renderer.*_setRenderMode)(mode);
-	//SokuLib::pd3dDev->GetRenderState(, &old);
-	//SokuLib::pd3dDev->SetRenderState(, mode);
-	return old;
-}
+	int SetRenderMode(int mode) {
+		DWORD old = SokuLib::renderer.*_renderMode;
+		(SokuLib::renderer.*_setRenderMode)(mode);
+		//SokuLib::pd3dDev->GetRenderState(, &old);
+		//SokuLib::pd3dDev->SetRenderState(, mode);
+		return old;
+	}
 	
 namespace box {
 	//int Texture_armorBar;
@@ -27,9 +27,9 @@ namespace box {
 static const float BOXES_ALPHA = 0.25;
 static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static RectangleShape rectangle;
-void setCamera() {
-	rectangle.setCamera(&SokuLib::camera);
-}
+	void setCamera() {
+		rectangle.setCamera(&SokuLib::camera);
+	}
 
 using LagWatcher = std::unordered_map<const GameObjectBase*, bool>;
 #define CODEC_COL(o) ((o).collisionType + 100 * (o).collisionLimit)
@@ -248,8 +248,8 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 		old = SetRenderMode(2);
 		rectangle.setFillColor(Color::Transparent);
 		rectangle.draw();
-		SetRenderMode(old);*/
-	}
+		SetRenderMode(old);
+	}*/
 }
 
 static void drawPositionBox(const GameObjectBase& object)
