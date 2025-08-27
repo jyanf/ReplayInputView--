@@ -1,185 +1,98 @@
 #include "riv.hpp"
 
-HMODULE hDllModule;
-std::filesystem::path configPath;
 ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT];
 VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT];
 VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT];
 VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT];
 int ogBattleMgrSize[TARGET_MODES_COUNT];
 
-static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER], unblockable[PLAYERS_NUMBER];
 void(__fastcall* ogUpdateMovement)(GameDataManager*);
 
-static int s_slowdown_method = 1;
-
-
-/*
- * ReplayInputView functions
- * Displays the inputted buttons and create a history from it.
- */
 
 namespace riv {
+static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER], unblockable[PLAYERS_NUMBER];
+static int slowdown_method = 1;
+static HotKeys toggle_keys;
 
-template<int d = 2>
-static void __fastcall RenderMyBack(float x, float y, int cx, int cy) {
-	const SWRVERTEX vertices[] = {
-		{x - d, y, 0.0f, 1.0f, 0xa0808080, 0.0f, 0.0f},
-		{x + cx - d, y, 0.0f, 1.0f, 0xa0808080, 1.0f, 0.0f},
-		{x + cx + d, y + cy, 0.0f, 1.0f, 0xa0202020, 1.0f, 1.0f},
-		{x + d, y + cy, 0.0f, 1.0f, 0xa0202020, 0.0f, 1.0f},
-	};
-	SokuLib::textureMgr.setTexture(NULL, 0);
-	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)vertices, sizeof(SWRVERTEX));
-}
-
-static void __fastcall RenderQuad(SWRVERTEX quad[4]) {
-	SokuLib::textureMgr.setTexture(NULL, 0);
-	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)quad, sizeof(SWRVERTEX));
-}
-
-static void RenderTile(float x, float y, int u, int v, int a) {
-	int dif = (a << 24) | 0xFFFFFF;
-	float fu = u / 256.0f;
-	float fv = v / 64.0f;
-
-	// ¥Ç¥Ð¥Ã¥°¥Ó¥ë¥É¤À¤È¥°¥À¥°¥À¤Ë¤Ê¤ë¤Î¤ÏºÎ¤Ê¤Î£¿°³ËÀ¤Ì¤Î£¿
-	const SWRVERTEX vertices[] = {
-		{x, y, 0.0f, 1.0f, dif, fu, fv},
-		{x + 32.0f, y, 0.0f, 1.0f, dif, fu + 0.125f, fv},
-		{x + 32.0f, y + 32.0f, 0.0f, 1.0f, dif, fu + 0.125f, fv + 0.5f},
-		{x, y + 32.0f, 0.0f, 1.0f, dif, fu, fv + 0.5f},
-	};
-	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, (const void*)vertices, sizeof(SWRVERTEX));
-}
-
-template <int d = 2>
-static void RenderInputPanel(const RivControl& riv, SWRCMDINFO& cmd, float x, float y) {
-
-	if (cmd.enabled) {
-		// Background
-		RenderMyBack<d>(x, y, 24 * 6 + 24, 24 * 3 + 12);
-
-		SokuLib::textureMgr.setTexture(riv.texID, 0);
-#ifdef _DEBUG
-		DWORD old;
-		SokuLib::pd3dDev->GetFVF(&old);
-		printf("%#x\n", old);
-#endif // _DEBUG
-
-
-		// Directions
-		RenderTile(x + 9 + 24,	y + 6,		0,	0,	(cmd.now % 16 == 1 ? 255 : 48)); /* ¡ü */
-		RenderTile(x + 9 + 24,	y + 6 + 48, 32,	0,	(cmd.now % 16 == 2 ? 255 : 48)); /* ¡ý */
-		RenderTile(x + 9,		y + 6 + 24, 64,	0,	(cmd.now % 16 == 4 ? 255 : 48)); /* ¡û */
-		RenderTile(x + 9 + 48,	y + 6 + 24, 96,	0,	(cmd.now % 16 == 8 ? 255 : 48)); /* ¡ú */
-		RenderTile(x + 9,		y + 6,		128,0,	(cmd.now % 16 == 5 ? 255 : 48)); /* ¨I */
-		RenderTile(x + 9 + 48,	y + 6,		160,0,	(cmd.now % 16 == 9 ? 255 : 48)); /* ¨K */
-		RenderTile(x + 9 + 48,	y + 6 + 48, 192,0,	(cmd.now % 16 ==10 ? 255 : 48)); /* ¨J */
-		RenderTile(x + 9,		y + 6 + 48, 224,0,	(cmd.now % 16 == 6 ? 255 : 48)); /* ¨L */
-		// Buttons
-		RenderTile(x + 9 + 75 - d,		y + 6 + 12, 0,	32, (cmd.now & 16 ? 255 : 48));
-		RenderTile(x + 9 + 75 - d + 27, y + 6 + 12, 32, 32, (cmd.now & 32 ? 255 : 48));
-		RenderTile(x + 9 + 75 - d + 54, y + 6 + 12, 64, 32, (cmd.now & 64 ? 255 : 48));
-		RenderTile(x + 9 + 75 + d,		y + 6 + 36, 96, 32, (cmd.now & 128? 255 : 48));
-		RenderTile(x + 9 + 75 + d + 27, y + 6 + 36, 128,32, (cmd.now & 256? 255 : 48));
-		RenderTile(x + 9 + 75 + d + 54, y + 6 + 36, 160,32, (cmd.now & 512? 255 : 48));
-	}
-}
-
-template <int d = 2>
-static void RenderRecordPanel(const RivControl& riv, SWRCMDINFO& cmd, float x, float y) {
-
-	if (cmd.record.enabled) {
-		RenderMyBack<d>(x, y, 24 * 10 + 6, 24 + 6);
-
-		SokuLib::textureMgr.setTexture( riv.texID, 0);
-		for (int i = 0; i < cmd.record.len; ++i) { // Render all the buttons in the buffer
-			int j = (i + cmd.record.base) % _countof(cmd.record.id);
-			int id = cmd.record.id[j];
-			RenderTile(x + 3 + i * 24, y + 3, (id % 8) * 32, (id / 8) * 32, 255); // x, y, width of image, height of image, alpha
-		}
-	}
-}
-
-static void DetermineRecord(SWRCMDINFO& cmd, int mask, int flag, int id) // this function is called for every button: direction first, buttons after
-{
-	if ((cmd.prev & mask) != flag && (cmd.now & mask) == flag) {
-		int index = (cmd.record.base + cmd.record.len) % _countof(cmd.record.id);
-
-		cmd.record.id[index] = id;
-#ifdef _DEBUG
-		for (int i = 0; i < _countof(cmd.record.id); ++i) // 0-7 = directions,  8-13 = buttons
-			printf("%d ", cmd.record.id[i]);
-		puts("");
-#endif // _DEBUG
-
-		if (cmd.record.len == _countof(cmd.record.id)) {
-			cmd.record.base = (cmd.record.base + 1) % _countof(cmd.record.id);
-		}
-		else {
-			cmd.record.len++;
-		}
-	}
-}
-
-static void RefreshCommandInfo(SWRCMDINFO& cmd, Player* Char) {
-	auto& input = Char->inputData.keyInput;
-
-	cmd.prev = cmd.now;
-	cmd.now = 0;
-	if (input.verticalAxis < 0)
-		cmd.now |= 1;
-	if (input.verticalAxis > 0)
-		cmd.now |= 2;
-	if (input.horizontalAxis < 0)
-		cmd.now |= 4;
-	if (input.horizontalAxis > 0)
-		cmd.now |= 8;
-	if (input.a > 0)
-		cmd.now |= 16;
-	if (input.b > 0)
-		cmd.now |= 32;
-	if (input.c > 0)
-		cmd.now |= 64;
-	if (input.d > 0)
-		cmd.now |= 128;
-	if (input.changeCard > 0)
-		cmd.now |= 256;
-	if (input.spellcard > 0)
-		cmd.now |= 512;
-
-	if (cmd.record.enabled) {
-		DetermineRecord(cmd, 15, 5, 4);
-		DetermineRecord(cmd, 15, 1, 0);
-		DetermineRecord(cmd, 15, 9, 5);
-		DetermineRecord(cmd, 15, 4, 2);
-		DetermineRecord(cmd, 15, 8, 3);
-		DetermineRecord(cmd, 15, 6, 7);
-		DetermineRecord(cmd, 15, 2, 1);
-		DetermineRecord(cmd, 15, 10, 6);
-
-		DetermineRecord(cmd, 16, 16, 8);
-		DetermineRecord(cmd, 32, 32, 9);
-		DetermineRecord(cmd, 64, 64, 10);
-		DetermineRecord(cmd, 128, 128, 11);
-		DetermineRecord(cmd, 256, 256, 12);
-		DetermineRecord(cmd, 512, 512, 13);
-	}
-}
-
-/*
- * ReplayInputView+ functions
- * Displays the hitboxes of characters and attacks, and manipulates the refresh rate of the game.
- */
-
-
-static bool check_key(unsigned int key, bool mod1, bool mod2, bool mod3) {
+static bool check_key(unsigned int key) {
 	// return CheckKeyOneshot(key, mod1, mod2, mod3);
 	//int* keytable = (int*)0x8998D8;//only for F Keys
-	const unsigned char (&keytable)[256] = *(unsigned char(*)[256])0x8a01b8;//DIK array
+	if (!key) return false;
+	const unsigned char(&keytable)[256] = *(unsigned char(*)[256])0x8a01b8;//DIK array
 	return keytable[key] & 0x80;
 }
+inline static Player* get_player(const GameDataManager* This, int index) {
+	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
+	//auto& players = *reinterpret_cast<std::array<SokuLib::v2::Player*, PLAYERS_NUMBER>*>((DWORD)This + 0x28);
+	return This && This->enabledPlayers[index] ? This->players[index] : nullptr;
+}
+inline static Player* get_player(const BattleManager* This, int index) {
+	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
+	auto& players = *reinterpret_cast<std::array<SokuLib::v2::Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
+	auto manager = GameDataManager::instance;
+	return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
+}
+
+	RivControl::RivControl() {
+		auto path = configPath.c_str();
+		for (int i = 0; i < PLAYERS_NUMBER; ++i) {
+			//if (!manager->enabledPlayers[i]) continue;
+			panels[i] = new pnl::Panel(i%2 ? -1 : 1);
+
+			WCHAR buf[24], buf2[32];
+			wsprintfW(buf, L"p%d.Enabled", i + 1);
+			bool eni = GetPrivateProfileIntW(L"InputPanel", buf, 0, path) != 0;
+			bool enr = GetPrivateProfileIntW(L"RecordPanel", buf, 0, path) != 0;
+			panels[i]->enableState = (eni^enr ? 1 : 0) + enr * 2;//0, 1, 3, 2
+
+			float x, y;
+			wsprintfW(buf, L"p%d.Position", i + 1);
+			GetPrivateProfileStringW(L"InputPanel", buf, L"", buf2, 24, path);//
+			if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
+				panels[i]->setPosI(SokuLib::Vector2f{ x, y });
+			GetPrivateProfileStringW(L"RecordPanel", buf, L"", buf2, 24, path);//
+			if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
+				panels[i]->setPosR(SokuLib::Vector2f{ x, y });
+				
+		}
+		forwardCount = 1;
+		forwardStep = 1;
+		forwardIndex = 0;
+
+		hitboxes = GetPrivateProfileIntW(L"HitboxDisplay", L"Enabled", 0, path) != 0;
+		untech = GetPrivateProfileIntW(L"JuggleMeter", L"Enabled", 0, path) != 0;
+
+		paused = false;
+
+		
+	}
+
+	int RivControl::update(BattleManager* This, int ind) {
+		int ret = (This->*ogBattleMgrOnProcess[ind])();
+		riv::box::setDirty(true);
+		if (ret > 0 && ret < 4)
+			return ret;
+
+		for (int i = 0; i < panels.size(); ++i) {
+			auto player = get_player(This, i);
+			if (!player || !panels[i]) continue;
+			if (*(int*)0x8985d8<=1) panels[i]->input.reset();
+			panels[i]->update(*player);
+		}
+		return ret;
+	}
+
+	void __fastcall SaveTimers(GameDataManager* This) {
+		for (int i = 0; i < PLAYERS_NUMBER; ++i) {
+			auto player = get_player(This, i);
+			if (!player) continue;
+			invulMelee[i] = player->meleeInvulTimer;
+			invulBullet[i] = player->projectileInvulTimer;
+			invulGrab[i] = player->grabInvulTimer;
+			unblockable[i] = player->unknown4AA;//blockDisabled
+		}
+		return ogUpdateMovement(This);
+	}
 //static void draw_debug_info(void* This) {
 //	static D3DCOLOR gray[] = { 0x4f909090, 0x4f909090, 0x4f909090, 0x4f909090 };
 //	CustomQuad quad = {};
@@ -218,28 +131,13 @@ static bool check_key(unsigned int key, bool mod1, bool mod2, bool mod3) {
 //	text::OnRender(This);
 //}
 
-static Keys toggle_keys;
 
 }
 
 
-using riv::RivControl, riv::check_key, riv::toggle_keys;
+using riv::slowdown_method, riv::RivControl, riv::check_key, riv::toggle_keys, riv::Mode, riv::SubMode;
 using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 
-static int create_texture(int offset) {
-	//SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(8), pphandle)
-	int id;
-	auto pphandle = SokuLib::textureMgr.allocate(&id);
-	if (pphandle)
-		*pphandle = NULL;
-	if (SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(offset), pphandle))) {
-		return id;
-	}
-	else {
-		SokuLib::textureMgr.deallocate(id);
-		return 0;
-	}
-}
 template<int i>
 BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
@@ -256,80 +154,41 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	auto& mode = SokuLib::mainMode;
 	if (submode == SubMode::BATTLE_SUBMODE_REPLAY
 		|| mode != Mode::BATTLE_MODE_VSCLIENT && mode != Mode::BATTLE_MODE_VSSERVER
-		) {
+	) {
 		riv.enabled = true;
 	}
 	else
 		riv.enabled = false;
 
 	if (riv.enabled) {
-		//CTextureManager_LoadTextureFromResource(g_textureMgr, &riv.texID, s_hDllModule, );
-		riv.texID = create_texture(4);
-		riv::box::Texture_armorBar = create_texture(8);
-		riv::box::Texture_armorLifebar = create_texture(12);
+		//riv::box::Texture_armorBar = riv::tex::create_texture_byid(8);
+		riv::box::ArmorBar.create(8);
+		riv::box::Texture_armorLifebar = riv::tex::create_texture_byid(12);
+		//riv.texID = create_texture(4);
 
-		//text::LoadSettings(ini, "Debug");
-		//text::OnCreate(This);
+		new(&riv)RivControl();//placement new
 
-		if (riv.texID != 0) {
-			riv.forwardCount = 1;
-			riv.forwardStep = 1;
-			riv.forwardIndex = 0;
+		//riv.show_debug = GetPrivateProfileIntW(L"Debug", L"Enabled", 0, path) != 0;
 
-			auto path = configPath.c_str();
-
-			riv.cmdp1.enabled = GetPrivateProfileIntW(L"Input", L"p1.Enabled", 1, path) != 0;
-			riv.cmdp1.prev = 0;
-			riv.cmdp1.record.base = riv.cmdp1.record.len = 0;
-			riv.cmdp1.record.enabled = GetPrivateProfileIntW(L"Record", L"p1.Enabled", 0, path) != 0;
-
-			riv.cmdp2.enabled = GetPrivateProfileIntW(L"Input", L"p2.Enabled", 1, path) != 0;
-			riv.cmdp2.prev = 0;
-			riv.cmdp2.record.base = riv.cmdp2.record.len = 0;
-			riv.cmdp2.record.enabled = GetPrivateProfileIntW(L"Record", L"p2.Enabled", 0, path) != 0;
-
-			riv.hitboxes = GetPrivateProfileIntW(L"HitboxDisplay", L"Enabled", 0, path) != 0;
-			riv.untech = GetPrivateProfileIntW(L"JuggleMeter", L"Enabled", 0, path) != 0;
-
-			riv.paused = false;//fix failed pause problem?
-
-			//riv.show_debug = GetPrivateProfileIntW(L"Debug", L"Enabled", 0, path) != 0;
-
-			s_slowdown_method = GetPrivateProfileIntW(L"Framerate", L"AdjustmentMethod", 0, path);
-			if (s_slowdown_method != 0 && s_slowdown_method != 1) {
-				s_slowdown_method = 1;
-			}
-
-			toggle_keys.display_boxes = GetPrivateProfileIntW(L"Keys", L"display_boxes", 0, path);
-			toggle_keys.display_info = GetPrivateProfileIntW(L"Keys", L"display_info", 0, path);
-			toggle_keys.display_inputs = GetPrivateProfileIntW(L"Keys", L"display_inputs", 0, path);
-			toggle_keys.decelerate = GetPrivateProfileIntW(L"Keys", L"decelerate", 0, path);
-			toggle_keys.accelerate = GetPrivateProfileIntW(L"Keys", L"accelerate", 0, path);
-			toggle_keys.stop = GetPrivateProfileIntW(L"Keys", L"stop", 0, path);
-			toggle_keys.framestep = GetPrivateProfileIntW(L"Keys", L"framestep", 0, path);
-
-			riv::box::setDirty(false);
-
+		auto path = configPath.c_str();
+		slowdown_method = GetPrivateProfileIntW(L"Framerate", L"AdjustmentMethod", 1, path);
+		if (slowdown_method != 0 && slowdown_method != 1) {
+			slowdown_method = 1;
 		}
-		else {
-			riv.enabled = false;
-		}
+		toggle_keys.display_boxes = GetPrivateProfileIntW(L"Keys", L"display_boxes", 0, path);
+		toggle_keys.display_info = GetPrivateProfileIntW(L"Keys", L"display_info", 0, path);
+		toggle_keys.display_inputs = GetPrivateProfileIntW(L"Keys", L"display_inputs", 0, path);
+		toggle_keys.decelerate = GetPrivateProfileIntW(L"Keys", L"decelerate", 0, path);
+		toggle_keys.accelerate = GetPrivateProfileIntW(L"Keys", L"accelerate", 0, path);
+		toggle_keys.stop = GetPrivateProfileIntW(L"Keys", L"stop", 0, path);
+		toggle_keys.framestep = GetPrivateProfileIntW(L"Keys", L"framestep", 0, path);
+
+		riv::box::setDirty(false);
 	}
 	return This;
 }
 TC_INSTANTIATE(0); TC_INSTANTIATE(1); TC_INSTANTIATE(2); TC_INSTANTIATE(3);
 
-void __fastcall SaveTimers(GameDataManager* This) {
-	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0x28);
-	for (int i = 0; i < players.size(); ++i) {
-		if (!players[i] || This && !This->enabledPlayers[i]) continue;
-		invulMelee[i] = players[i]->meleeInvulTimer;
-		invulBullet[i] = players[i]->projectileInvulTimer;
-		invulGrab[i] = players[i]->grabInvulTimer;
-		unblockable[i] = players[i]->unknown4AA;//blockDisabled
-	}
-	return ogUpdateMovement(This);
-}
 template<int ind>
 int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	static int fps_steps[] = { 16, 20, 24, 28, 33, 66, 100, 200 };
@@ -351,33 +210,34 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		static bool old_accelerate = false;
 		static bool old_framestop = false;
 		static bool old_stop = false;
-		if (check_key(toggle_keys.display_boxes, 0, 0, 0) || (old_display_boxes = false)) {
+		if (check_key(toggle_keys.display_boxes) || (old_display_boxes = false)) {
 			if (!old_display_boxes) {
 				riv.hitboxes = !riv.hitboxes;
 				riv.untech = !riv.untech;
 			}
 			old_display_boxes = true;
 		}
-		else if (check_key(toggle_keys.display_info, 0, 0, 0) || (old_display_info = false)) {
+		else if (check_key(toggle_keys.display_info) || (old_display_info = false)) {
 			if (!old_display_info)
 				riv.show_debug = !riv.show_debug;
 			old_display_info = true;
 		}
-		else if (check_key(toggle_keys.display_inputs, 0, 0, 0) || (old_display_inputs = false)) {
+		else if (check_key(toggle_keys.display_inputs) || (old_display_inputs = false)) {
 			if (!old_display_inputs) {
-				bool cmdEnabled = riv.cmdp1.enabled;
-				bool recordEnabled = riv.cmdp1.record.enabled;
-				riv.cmdp1.enabled = !recordEnabled;
-				riv.cmdp1.record.enabled = cmdEnabled;
-				riv.cmdp2.enabled = riv.cmdp1.enabled;
-				riv.cmdp2.record.enabled = riv.cmdp1.record.enabled;
+				int i=-1;
+				for (auto p : riv.panels)
+				{
+					if (!p) continue;
+					p->switchState(i);
+					i = p->enableState;
+				}
 			}
 			old_display_inputs = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
-			&& check_key(toggle_keys.decelerate, 0, 0, 0) || (old_decelerate = false)) {
+			&& check_key(toggle_keys.decelerate) || (old_decelerate = false)) {
 			if (old_decelerate) {}
-			else if (s_slowdown_method) {//
+			else if (slowdown_method) {//
 				if (riv.forwardStep > 1) {
 					riv.forwardCount = 1;
 					riv.forwardStep -= 1;
@@ -397,9 +257,9 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_decelerate = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
-			&& check_key(toggle_keys.accelerate, 0, 0, 0) || (old_accelerate = false)) {
+			&& check_key(toggle_keys.accelerate) || (old_accelerate = false)) {
 			if (old_accelerate) {}
-			else if (s_slowdown_method) {
+			else if (slowdown_method) {
 				if (riv.forwardCount > 1) {
 					riv.forwardCount -= 1;
 					riv.forwardStep = 1;
@@ -419,7 +279,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_accelerate = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH
-			&& check_key(toggle_keys.stop, 0, 0, 0) || (old_stop = false)) {
+			&& check_key(toggle_keys.stop) || (old_stop = false)) {
 			if (old_stop) {}
 			else if (!riv.paused) {
 				riv.forwardCount = -1;
@@ -435,31 +295,20 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_stop = true;
 		}
-		else if (check_key(toggle_keys.framestep, 0, 0, 0) || (old_framestop = false)) {
+		else if (check_key(toggle_keys.framestep) || (old_framestop = false)) {
 			if (old_framestop) {}
 			else if (riv.paused) {
 				//process_frame(This, riv);
-				int ret = (This->*ogBattleMgrOnProcess[ind])();
-				if (ret <= 0 || ret >= 4) {
-					RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
-					RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
-				}
-
-				riv::box::setDirty(true);
+				//int ret = (This->*ogBattleMgrOnProcess[ind])();
+				ret = riv.update(This, ind);
 			}
 			old_framestop = true;//fix
 		}
 
 		riv.forwardIndex += riv.forwardStep;
 		if (riv.forwardIndex >= riv.forwardCount) {
-			for (int i = riv.forwardIndex / riv.forwardCount; i--;) {
-				ret = (This->*ogBattleMgrOnProcess[ind])();
-				riv::box::setDirty(true);
-				if (ret > 0 && ret < 4)
-					break;
-
-				RefreshCommandInfo(riv.cmdp1, (Player*)&This->leftCharacterManager);
-				RefreshCommandInfo(riv.cmdp2, (Player*)&This->rightCharacterManager);
+			for (int i = riv.forwardIndex / riv.forwardCount; i > 0; --i) {
+				ret = riv.update(This, ind);
 			}
 			riv.forwardIndex = 0;
 		}
@@ -483,29 +332,24 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 	if (riv.enabled) {
 		// fix story blend
 		auto old = riv::SetRenderMode(1);
-		auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
+		
 
-		if (players[0]->inputData.inputType != 2) {//wait for refactor
-			RenderInputPanel<3>(riv, riv.cmdp1, 60, 340);
-			RenderRecordPanel<3>(riv, riv.cmdp1, 0, 300);
-		}
-		if (players[1]->inputData.inputType != 2) {//wait for refactor
-			RenderInputPanel<-3>(riv, riv.cmdp2, 400, 340);
-			RenderRecordPanel<-3>(riv, riv.cmdp2, 390, 300);
-		}
-		//SokuLib::ADDR_RENDERER
 		riv::box::setCamera();
-		auto manager = GameDataManager::instance;
-		for (int i = 0; i<players.size(); ++i) {
-			if (!players[i] || manager && !manager->enabledPlayers[i]) continue;
+		if (riv.hitboxes) drawFloor();
+		for (int i = 0; i<PLAYERS_NUMBER; ++i) {
+			auto player = riv::get_player(This, i);
+			if (!player) continue;
 			if (riv.hitboxes && This->matchState > 0) {
-				drawPlayerBoxes(*players[i], This->matchState <= 1 || This->matchState >= 6, invulMelee[i]<<0 | invulBullet[i]<<1 | invulGrab[i]<<2 | unblockable[i]<<3);
+				drawPlayerBoxes(*player, 
+					This->matchState <= 1 || This->matchState >= 6 
+						|| This->matchState==2 && This->frameCount==0, 
+					riv::invulMelee[i]<<0 | riv::invulBullet[i]<<1 | riv::invulGrab[i]<<2 | riv::unblockable[i]<<3);
 			}
 			if (riv.untech) {
-				drawUntechBar(*players[i]);
+				drawUntechBar(*player);
 			}
+			if (riv.panels[i]) riv.panels[i]->render();
 		}
-		if (riv.hitboxes) drawFloor();
 		riv::box::setDirty(false);
 
 		if (riv.show_debug) {
@@ -522,16 +366,23 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
 
 	if (riv.enabled) {
-		SokuLib::textureMgr.remove(riv.texID);
-		SokuLib::textureMgr.remove(riv::box::Texture_armorBar);
+		//SokuLib::textureMgr.remove(riv.texID);
+		//SokuLib::textureMgr.remove(riv::box::Texture_armorBar);
+		riv::box::ArmorBar.cancel();
 		SokuLib::textureMgr.remove(riv::box::Texture_armorLifebar);
 		//text::OnDestruct(This, _, dyn);
-		auto path = configPath.c_str();
-		WritePrivateProfileStringW(L"Input", L"p1.Enabled", riv.cmdp1.enabled ? L"1" : L"0", path);
-		WritePrivateProfileStringW(L"Input", L"p2.Enabled", riv.cmdp2.enabled ? L"1" : L"0", path);
-		WritePrivateProfileStringW(L"Record", L"p1.Enabled", riv.cmdp1.record.enabled ? L"1" : L"0", path);
-		WritePrivateProfileStringW(L"Record", L"p2.Enabled", riv.cmdp2.record.enabled ? L"1" : L"0", path);
+		/*auto path = configPath.c_str();
+		for (int i = 0; i < PLAYERS_NUMBER; i++)
+		{
+			WCHAR buf[24];
+			if (!riv::get_player(This, i) || !riv.panels[i]) continue;
+			wsprintfW(buf, L"p%d.Enabled", i+1);
+			auto state = riv.panels[i]->enableState;
+			WritePrivateProfileStringW(L"InputPanel", buf, 1<=state && state<=2  ? L"1" : L"0", path);
+			WritePrivateProfileStringW(L"RecordPanel", buf, 2<=state && state<=3 ? L"1" : L"0", path);
+		}*/
 	}
+	riv.~RivControl();
 	riv::box::cleanWatcher();
 	return (This->*ogBattleMgrDestruct[i])(dyn);
 }

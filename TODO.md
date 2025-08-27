@@ -1,8 +1,8 @@
 显示胜方无敌？
 
-颜色微调：墨绿
+颜色微调：墨绿×?
 
-
+第一帧仍然需要break
 
 ~~replay倒放情况~~
 
@@ -35,7 +35,21 @@ if (flags.grab) {
 
 noSuperArmor→powerMultiplier
 
-## Tag
+## record
+
+~~重进刷新~~
+
+
+
+~~镜像从左到右~~
+
+## CommandFade
+
+
+
+## F6-MouseTag
+
+AlwaysShown框，另开窗口？
 
 弹幕等级、擦弹状态、
 
@@ -48,3 +62,51 @@ CtCl
 数值：身代HP、damage、lv、ProjCollideCounter、GrazeTimer
 
 标签：体术/弹幕；
+
+友伤
+
+## [ColorProfile] .A .R .G .B .RenderMode？
+
+Panel.LU
+
+Panel.LD
+
+Panel.RU
+
+Panel.RD
+
+HurtBox.Entity
+
+HitBox.Bullet
+
+Hitbox.Melee
+
+Hitbox.Grab
+
+Hitbox.
+
+
+
+Hurtbox.Bullet
+
+Hurtbox.Reflector
+
+Hurtbox.Gap
+
+HurtBox.Guard
+
+Hurtbox.Parry = true;当身
+
+CollisionBox
+
+[Extra]
+
+GroundBox
+
+## [Settings]
+
+HollowLight
+
+Hitbox.ShadeByHitstop = true
+
+accer method = default

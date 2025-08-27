@@ -74,7 +74,9 @@ add_library("${PROJECT_NAME}"
         src/main.cpp
         ${RC_FILES}
         "src/${PROJECT_NAME}/riv.cpp"
-        "src/${PROJECT_NAME}/box.cpp")
+        "src/${PROJECT_NAME}/box.cpp"
+        "src/${PROJECT_NAME}/panel.cpp"
+        "src/${PROJECT_NAME}/tex.cpp")
 target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}")

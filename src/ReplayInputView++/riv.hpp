@@ -1,69 +1,73 @@
 #include <TextureManager.hpp>
 #include <BattleManager.hpp>
-using BattleManager = SokuLib::BattleManager;
-
 #include <BattleMode.hpp>
-using Mode = SokuLib::BattleMode;
-using SubMode = SokuLib::BattleSubMode;
-
 #include <VTables.hpp>
 #include <GameData.hpp>
-using SokuLib::v2::groundHeight;
+#include <DrawUtils.hpp>
+using BattleManager = SokuLib::BattleManager;
 using GameDataManager = SokuLib::v2::GameDataManager;
 
-#include <DrawUtils.hpp>
-using SokuLib::DrawUtils::Vertex;
-#include <Design.hpp>
-using SokuLib::CTile;
-
-#include <filesystem>
-
+#include "../main.hpp"
 #include "box.hpp"
+#include "panel.hpp"
 
 namespace riv {
+using Mode = SokuLib::BattleMode;
+using SubMode = SokuLib::BattleSubMode;
+using SokuLib::v2::Player;
 
-struct Keys {
-	UINT display_boxes;
-	UINT display_info;
-	UINT display_inputs;
-	UINT decelerate;
-	UINT accelerate;
-	UINT stop;
-	UINT framestep;
-};
+static bool check_key(unsigned int key);
+inline static Player* get_player(const GameDataManager* This, int index);
+inline static Player* get_player(const BattleManager* This, int index);
 
-using SWRVERTEX = SokuLib::DxVertex;
+	void __fastcall SaveTimers(GameDataManager* This);
+	struct HotKeys {
+		UINT display_boxes;
+		UINT display_info;
+		UINT display_inputs;
+		UINT decelerate;
+		UINT accelerate;
+		UINT stop;
+		UINT framestep;
+	};
 
-struct SWRCMDINFO {
-	bool enabled;
-	int prev; // number representing the previously pressed buttons (masks are applied)
-	int now; // number representing the current pressed buttons (masks are applied)
+//using SWRVERTEX = SokuLib::DxVertex;
+	struct RivControlOld {
+		bool enabled = true;
+		int texID = NULL;
+		int forwardCount;
+		int forwardStep;
+		int forwardIndex;
+		pnl::SWRCMDINFO cmdp1;
+		pnl::SWRCMDINFO cmdp2;
+		bool hitboxes = false;
+		bool untech = false;
+		bool show_debug = false;//unused
+		bool paused = false;
+	};
 
-	struct {
-		bool enabled;
-		int id[10];
-		int base; // once len reaches 10 (first cycle), is incremented modulo 10
-		int len; // starts at 0, caps at 10
-	} record;
-};
+	class RivControl : public RivControlOld {
+	public:
+		std::array<pnl::Panel*, PLAYERS_NUMBER> panels = {nullptr};
+		//std::array<SWRCMDINFO, PLAYERS_NUMBER> cmds;
+		RivControl();
+		RivControl(RivControl&& n) noexcept {
+			memmove(this, &n, sizeof(n));
+		}
+		RivControl& operator=(RivControl&& n) {
+			memmove(this, &n, sizeof(n));
+			return *this;
+		}
+		~RivControl() {
+			for (auto ptr : panels)
+				delete ptr;
 
-struct RivControl {
-	bool enabled;
-	int texID;
-	int forwardCount;
-	int forwardStep;
-	int forwardIndex;
-	SWRCMDINFO cmdp1;
-	SWRCMDINFO cmdp2;
-	bool hitboxes;
-	bool untech;
-	bool show_debug;
-	bool paused;
-};
+		}
+		int update(BattleManager* This, int ind);
+	};
 
 }
 
-void __fastcall SaveTimers(GameDataManager* This);
 template<int> BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This);
 template<int> int __fastcall CBattleManager_OnProcess(BattleManager* This);
 template<int> void __fastcall CBattleManager_OnRender(BattleManager* This);
@@ -72,9 +76,6 @@ template<int> BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager*
 #define TP_INSTANTIATE(n) template int __fastcall CBattleManager_OnProcess<(n)>(BattleManager* This)
 #define TR_INSTANTIATE(n) template void __fastcall CBattleManager_OnRender<(n)>(BattleManager* This)
 #define TD_INSTANTIATE(n) template BattleManager* __fastcall CBattleManager_OnDestruct<(n)>(BattleManager* This, int _, char dyn)
-
-extern HMODULE hDllModule;
-extern std::filesystem::path configPath;
 
 #define TARGET_MODES_COUNT (4)
 typedef BattleManager* (__fastcall *ManagerInit)(BattleManager*);

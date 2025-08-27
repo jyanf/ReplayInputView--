@@ -3,24 +3,26 @@
 */
 
 #include <cmath>
-#include <map>
+#include <unordered_map>
 #include "box.hpp"
 #include "DrawCircle.hpp"
 
 namespace riv { 
-static const auto setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
-static const auto renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
+static const auto _setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
+static const auto _renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
 int SetRenderMode(int mode) {
-	DWORD old = SokuLib::renderer.*renderMode;
-	(SokuLib::renderer.*setRenderMode)(mode);
+	DWORD old = SokuLib::renderer.*_renderMode;
+	(SokuLib::renderer.*_setRenderMode)(mode);
 	//SokuLib::pd3dDev->GetRenderState(, &old);
 	//SokuLib::pd3dDev->SetRenderState(, mode);
 	return old;
 }
 	
 namespace box {
-	int Texture_armorBar;
+	//int Texture_armorBar;
+	tex::TileDesc<768, 128, 256, 32> ArmorBar;
 	int Texture_armorLifebar;
+
 
 static const float BOXES_ALPHA = 0.25;
 static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
@@ -29,7 +31,7 @@ void setCamera() {
 	rectangle.setCamera(&SokuLib::camera);
 }
 
-using LagWatcher = std::map<const GameObjectBase*, bool>;
+using LagWatcher = std::unordered_map<const GameObjectBase*, bool>;
 #define CODEC_COL(o) ((o).collisionType + 100 * (o).collisionLimit)
 #define DECODE_COLT(i) ((i)%100)
 #define DECODE_COLL(i) ((i)/100)
@@ -239,6 +241,15 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 	rectangle.setFillColor(fillColor); //if (d) rectangle.fillColors[d - 1] = rectangle.fillColors[d + 1] = Color::Transparent;
 	rectangle.setBorderColor(borderColor); //if (d) rectangle.borderColors[d-1] = rectangle.borderColors[d+1] = Color::Transparent;
 	rectangle.draw();
+
+
+	/*if (d) {
+		int old;
+		old = SetRenderMode(2);
+		rectangle.setFillColor(Color::Transparent);
+		rectangle.draw();
+		SetRenderMode(old);*/
+	}
 }
 
 static void drawPositionBox(const GameObjectBase& object)
@@ -281,9 +292,13 @@ static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool 
 static void drawArmor(const Player& player, bool blockable) {
 	constexpr int threshold = 100;
 	if (!player.boxData.frameData) return;
-	const auto& powerMultiplier = player.unknown538;
-	bool superArmored = powerMultiplier == 0.0f || player.boxData.frameData->frameFlags.superArmor;
-	bool normalArmored = 0.0f < powerMultiplier && powerMultiplier < 1.0f || player.boxData.frameData->frameFlags.extendedArmor;
+	auto powerMultiplier = player.unknown538;
+	if (player.boxData.frameData->frameFlags.superArmor)
+		powerMultiplier *= 0.0f;
+	else if (player.boxData.frameData->frameFlags.extendedArmor)
+		powerMultiplier *= 0.5f;
+	bool superArmored = powerMultiplier == 0.0f;
+	bool normalArmored = 0.0f < powerMultiplier && powerMultiplier < 1.0f;
 	if (!superArmored && !normalArmored) return;
 	const auto& armorTimer = player.unknown4BC;
 	auto pos = SokuLib::Vector2f{
@@ -292,15 +307,15 @@ static void drawArmor(const Player& player, bool blockable) {
 	auto radius = 100 * SokuLib::camera.scale;
 	auto old = SetRenderMode(2);
 	if (superArmored 
-		&& SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON 
+		//&& SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON 
 		//&& !(700 <= player.frameState.actionId && player.frameState.actionId < 800)//in story
 	) {
-		SokuLib::textureMgr.setTexture(Texture_armorBar, 0);
-		float u1 = (player.frameState.currentFrame / 3 % 3) / 3.0, u2 = (player.frameState.currentFrame / 3 % 3 + 1) / 3.0, v1 = (blockable ? 3 : 2) / 4.0, v2 = (blockable ? 4 : 3) / 4.0;
+		/*SokuLib::textureMgr.setTexture(Texture_armorBar, 0);*/
+		ArmorBar.set();
 		//const auto& dmg = player.superArmorDamageTaken;
-		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius + player.frameState.currentFrame % 2 * 2,
-			25.0f, SokuLib::Vector2f{  15.0f , 345.0f } * -player.direction,
-			{ u1,v1,u2,v2 }, 12/11.0f);
+		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius + player.frameState.currentFrame % 2 * 6,
+			25.0f, SokuLib::Vector2f{  20.0f , 340.0f } * -player.direction,
+			ArmorBar.getBorder(player.frameState.currentFrame / 3 % 3 + (blockable ? 9 : 6)), 9 / 8.0f);
 	} else if (normalArmored) {
 		SokuLib::textureMgr.setTexture(Texture_armorLifebar, 0);
 		//float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
@@ -405,10 +420,9 @@ static bool drawBulletBoxes(const GameObject& object)
 	} else if (spec.Gap) {//gap
 		outline = Color::Magenta;
 	} else {
-		outline = Color::Green;
+		outline = Color::Green;//0xFF10cd00; //
 	}
 	fill = hurtbox_active ? outline : Color::Transparent;
-
 	bool drawed = false;
 	if (object.boxData.hurtBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
@@ -531,7 +545,7 @@ void drawFloor() {
 	Color outline = Color_Gray;
 	Color fill = outline;
 	Box bound = {-5, 0, 1280, 0};
-	drawBox(bound, nullptr, outline, Color::Transparent);
+	//drawBox(bound, nullptr, outline, Color::Transparent);
 	
 	constexpr int size = sizeof(groundHeight) / sizeof(*groundHeight);
 	bound.top = -groundHeight[0]; bound.bottom = 200;

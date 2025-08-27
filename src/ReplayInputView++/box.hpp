@@ -1,35 +1,37 @@
+#pragma once
 //#include <SokuLib.hpp>
-#include <Boxes.hpp>
-using Box = SokuLib::Box;
-using RotationBox = SokuLib::RotationBox;
-
 #include <GameObject.hpp>
 #include <Player.hpp>
+#define MAX_UNTECHBAR_SPAN 100
+#include <Boxes.hpp>
+#include <TextureManager.hpp>
+#include <DrawUtils.hpp>
+#include <Renderer.hpp>
+#include <GameData.hpp>
+#include <Design.hpp>
+
+#include "tex.hpp"
+
+namespace riv { 
+using SokuLib::Renderer;
+	int SetRenderMode(int mode);
+
+namespace box {
 using SokuLib::v2::GameObjectBase;
 using SokuLib::v2::GameObject;
 using SokuLib::v2::Player;
 
-#include <TextureManager.hpp>
-#include <DrawUtils.hpp>
+using Box = SokuLib::Box;
+using RotationBox = SokuLib::RotationBox;
 using SokuLib::DrawUtils::RectangleShape;
 using SokuLib::DrawUtils::FloatRect;
 using Color = SokuLib::DrawUtils::DxSokuColor;
-
-#include <Renderer.hpp>
-using SokuLib::Renderer;
-
-#include <GameData.hpp>
 using SokuLib::v2::groundHeight;
-#define MAX_UNTECHBAR_SPAN 100
-
-#include <Design.hpp>
 using SokuLib::CNumber;
 
-namespace riv { 
-int SetRenderMode(int mode);
+	extern int Texture_armorLifebar;
+	extern tex::TileDesc<768, 128, 256, 32> ArmorBar;
 
-namespace box {
-	extern int Texture_armorBar, Texture_armorLifebar;
 	union BulletSpecial {
 		struct {
 			/* 01 */ bool Melee			: 1;

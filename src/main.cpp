@@ -3,12 +3,15 @@
 //
 
 #include <SokuLib.hpp>
-#include <Shlwapi.h>
+//#include <Shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
 
+#include "main.hpp"
 #include "ReplayInputView++/riv.hpp"
 
 static bool init = false;
+HMODULE hDllModule;
+std::filesystem::path configPath;
 
 //credit enebe/shady-loader
 static bool GetModulePath(HMODULE handle, std::filesystem::path& result) {
@@ -59,6 +62,7 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	configPath /= L"ReplayInputView++.ini";
 #endif // INI_FILENAME
 
+	using riv::box::update_collision_shim, riv::box::lag_watcher_updator, riv::SaveTimers;
 
 	DWORD old;
 	/******************************** Hooks ***********************************/
@@ -72,7 +76,6 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	ogUpdateMovement = SokuLib::TamperNearJmp(0x4796c6, SaveTimers);
 	//CBattleManager_UpdateCollision
 		//CMP dword ptr [EAX + 0x174],0x0; 0047d2c4: 83B8 74010000 00 -> JMP shim
-	using riv::box::update_collision_shim, riv::box::lag_watcher_updator;
 	memcpy(update_collision_shim + 9, (void*)0x47d2c4, 7);//more check?
 	memset((void*)0x47d2c4, 0x90, 7);
 	SokuLib::TamperNearJmp(0x47d2c4, update_collision_shim);
