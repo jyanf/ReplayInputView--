@@ -1,4 +1,6 @@
 #include "riv.hpp"
+#include "DrawCircle.hpp"
+#include <functional>
 
 ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT];
 VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT];
@@ -28,9 +30,27 @@ inline static Player* get_player(const GameDataManager* This, int index) {
 }
 inline static Player* get_player(const BattleManager* This, int index) {
 	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
-	auto& players = *reinterpret_cast<std::array<SokuLib::v2::Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
+	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
 	auto manager = GameDataManager::instance;
 	return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
+}
+inline static void traversing_players(const BattleManager* This, 
+	const std::function<void(int, Player*)>& forP,
+	const std::function<void(GameObject*)>& forO
+) {
+	for (int i = 0; i < PLAYERS_NUMBER; ++i) {
+		auto player = get_player(This, i);
+		if (!player) continue;
+		if (forP) forP(i, player);
+		if (player->objectList) {
+			auto& objects = player->objectList->getList();
+			for (auto object : objects) {
+				if (!object) continue;
+				if (forO) forO(object);
+			}
+		}
+	}
+	return;
 }
 
 	RivControl::RivControl() {
@@ -70,16 +90,120 @@ inline static Player* get_player(const BattleManager* This, int index) {
 	int RivControl::update(BattleManager* This, int ind) {
 		int ret = (This->*ogBattleMgrOnProcess[ind])();
 		riv::box::setDirty(true);
-		if (ret > 0 && ret < 4)
+		if (ret > 0 && ret < 4) {
+			//vice.destroyWnd();
+			vice.hideWnd();
+			show_debug = false;//auto on, to do later
 			return ret;
+		}
+		bool focus_valid = !vice.inter.focus;
+		traversing_players(This,
+			[this, &focus_valid](int i, Player* player) {
+				if (panels[i]) {
+					if (globalCounter <= 1)
+						panels[i]->input.reset();
+					panels[i]->update(*player);
 
-		for (int i = 0; i < panels.size(); ++i) {
-			auto player = get_player(This, i);
-			if (!player || !panels[i]) continue;
-			if (*(int*)0x8985d8<=1) panels[i]->input.reset();
-			panels[i]->update(*player);
+				}
+
+				if (vice.inter.focus == player)
+					focus_valid = true;
+			},
+			[this, &focus_valid](GameObject* object) {
+				if (vice.inter.focus == object)
+					focus_valid = true;
+			}
+		);
+		vice.dirty = true;
+		if (!focus_valid) {
+			vice.inter.focus = nullptr;
+			//vice.inter.index = -1;
 		}
 		return ret;
+	}
+
+	void RivControl::render(BattleManager* This) {
+		// fix story blend
+		auto old = SetRenderMode(1);
+		box::setCamera();
+		if (hitboxes) box::drawFloor();
+		
+		if (show_debug) {//insert anchors
+			if (vice.dirty) {//
+				vice.inter.clear();
+
+				traversing_players(This,
+					[this](int i, Player* player) {
+						vice.inter.insert(player);
+					},
+					[this](GameObject* object) {
+						vice.inter.insert(object);
+					}
+				);
+				vice.inter.switchHover(1);
+			}
+			//vice.dirty = vice.inter.checkDMouse() || vice.dirty;
+			if (vice.inter.checkDMouse() || vice.dirty) {
+				vice.updateWnd();
+				vice.dirty = false;
+			}			
+		}
+
+		const auto& pfocus = vice.inter.focus;
+		auto phover = vice.inter.getHover();
+		traversing_players(This,//draw
+			[this, This, pfocus, phover](int i, Player* player) {
+				if (hitboxes && This->matchState > 0) {//boxes
+					box::drawPlayerBoxes(*player,
+						This->matchState <= 1 || This->matchState >= 6
+						|| This->matchState == 2 && This->frameCount == 0,
+						invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2 | unblockable[i] << 3);
+				}
+				if (untech) {
+					box::drawUntechBar(*player);
+				}
+				if (show_debug) {
+					if (player == phover)
+						box::drawPositionBox<7>(*player, box::Color_Gray, box::Color::White);
+					else
+						box::drawPositionBox(*player);
+				}
+				if (panels[i]) panels[i]->render();
+			},
+			[this, pfocus, phover](GameObject* object) {
+				if (show_debug) {
+					if (object == phover)
+						box::drawPositionBox<7>(*object, box::Color_Gray, box::Color::White);
+					else
+						box::drawPositionBox(*object, Color::White * 0.5, box::Color_Gray * 0.5);//default every
+				}
+
+			}
+		);
+		//indicators
+		if (show_debug) {
+			if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
+			if (vice.inter.checkInWnd(vice.inter.cursor)) {
+				SokuLib::textureMgr.setTexture(NULL, 0);
+				Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
+					vice.inter.toler, 2.0f, Vector2f{0, 360});
+				auto index = vice.inter.getIndex();
+				if (index >= 0) {
+					auto count = vice.inter.getCount();
+					float rs = 360.0f / (count ? count : 1);
+					Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
+						vice.inter.toler, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
+						{ 0 }, 1, Color::Black);
+				}
+
+			}
+			
+		}
+
+		box::setDirty(false);
+
+
+		SetRenderMode(old);
 	}
 
 	void __fastcall SaveTimers(GameDataManager* This) {
@@ -218,8 +342,14 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_display_boxes = true;
 		}
 		else if (check_key(toggle_keys.display_info) || (old_display_info = false)) {
-			if (!old_display_info)
-				riv.show_debug = !riv.show_debug;
+			if (!old_display_info) {
+				riv.show_debug = riv.vice.toggleWnd();
+				if (riv.show_debug) {
+					for (auto p : riv.panels)
+						if (p) p->switchState(0);
+				}
+				//riv.show_debug = !riv.show_debug;
+			}
 			old_display_info = true;
 		}
 		else if (check_key(toggle_keys.display_inputs) || (old_display_inputs = false)) {
@@ -312,7 +442,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			riv.forwardIndex = 0;
 		}
-		
+		riv.show_debug = riv.vice.viceDisplay;
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess[ind])();
@@ -330,33 +460,7 @@ void __fastcall CBattleManager_OnRender(BattleManager* This) {
 	(This->*ogBattleMgrOnRender[i])();
 
 	if (riv.enabled) {
-		// fix story blend
-		auto old = riv::SetRenderMode(1);
-		
-
-		riv::box::setCamera();
-		if (riv.hitboxes) drawFloor();
-		for (int i = 0; i<PLAYERS_NUMBER; ++i) {
-			auto player = riv::get_player(This, i);
-			if (!player) continue;
-			if (riv.hitboxes && This->matchState > 0) {
-				drawPlayerBoxes(*player, 
-					This->matchState <= 1 || This->matchState >= 6 
-						|| This->matchState==2 && This->frameCount==0, 
-					riv::invulMelee[i]<<0 | riv::invulBullet[i]<<1 | riv::invulGrab[i]<<2 | riv::unblockable[i]<<3);
-			}
-			if (riv.untech) {
-				drawUntechBar(*player);
-			}
-			if (riv.panels[i]) riv.panels[i]->render();
-		}
-		riv::box::setDirty(false);
-
-		if (riv.show_debug) {
-			//riv::draw_debug_info(This);
-		}
-
-		riv::SetRenderMode(old);
+		riv.render(This);
 	}
 }
 TR_INSTANTIATE(0); TR_INSTANTIATE(1); TR_INSTANTIATE(2);

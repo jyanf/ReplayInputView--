@@ -10,11 +10,12 @@ using GameDataManager = SokuLib::v2::GameDataManager;
 #include "../main.hpp"
 #include "box.hpp"
 #include "panel.hpp"
+#include "info.hpp"
 
 namespace riv {
 using Mode = SokuLib::BattleMode;
 using SubMode = SokuLib::BattleSubMode;
-using SokuLib::v2::Player;
+using SokuLib::v2::Player, SokuLib::v2::GameObjectBase, SokuLib::v2::GameObject;
 
 static bool check_key(unsigned int key);
 inline static Player* get_player(const GameDataManager* This, int index);
@@ -49,12 +50,13 @@ inline static Player* get_player(const BattleManager* This, int index);
 	class RivControl : public RivControlOld {
 	public:
 		std::array<pnl::Panel*, PLAYERS_NUMBER> panels = {nullptr};
+		info::Vice vice;
 		//std::array<SWRCMDINFO, PLAYERS_NUMBER> cmds;
 		RivControl();
 		RivControl(RivControl&& n) noexcept {
 			memmove(this, &n, sizeof(n));
 		}
-		RivControl& operator=(RivControl&& n) {
+		RivControl& operator=(RivControl&& n) noexcept {
 			memmove(this, &n, sizeof(n));
 			return *this;
 		}
@@ -64,6 +66,7 @@ inline static Player* get_player(const BattleManager* This, int index);
 
 		}
 		int update(BattleManager* This, int ind);
+		void render(BattleManager* This);
 	};
 
 }

@@ -12,6 +12,8 @@
 static bool init = false;
 HMODULE hDllModule;
 std::filesystem::path configPath;
+const int& globalCounter = *reinterpret_cast<int*>(0x8985d8);
+
 
 //credit enebe/shady-loader
 static bool GetModulePath(HMODULE handle, std::filesystem::path& result) {

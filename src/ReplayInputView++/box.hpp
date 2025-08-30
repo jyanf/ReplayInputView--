@@ -11,6 +11,7 @@
 #include <Design.hpp>
 
 #include "tex.hpp"
+#include "info.hpp"
 
 namespace riv { 
 using SokuLib::Renderer;
@@ -29,6 +30,7 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 using SokuLib::v2::groundHeight;
 using SokuLib::CNumber;
 
+	extern const Color Color_Orange, Color_Gray , Color_Purple;
 	extern int Texture_armorLifebar;
 	extern tex::TileDesc<768, 128, 256, 32> ArmorBar;
 
@@ -89,11 +91,11 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 template <int d>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor);
 
-static void drawPositionBox(const GameObjectBase& object);
+template <int s = 5> void drawPositionBox(const GameObjectBase& object, Color fill = Color::White, Color border = Color::White + Color::Black);
 
 static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak = false);
 static void drawArmor(const Player& player, bool blockable = true);
-static bool drawHurtBoxes(const GameObjectBase& object, bool meleeInvul, bool projnvul);
+static bool drawHurtBoxes(const Player& object, bool meleeInvul, bool projnvul);
 static bool drawHitBoxes(const GameObjectBase& object);
 
 static bool drawBulletBoxes(const GameObject& object);

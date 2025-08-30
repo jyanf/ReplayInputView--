@@ -25,7 +25,7 @@ namespace box {
 
 
 static const float BOXES_ALPHA = 0.25;
-static const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
+const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static RectangleShape rectangle;
 	void setCamera() {
 		rectangle.setCamera(&SokuLib::camera);
@@ -252,17 +252,21 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 	}*/
 }
 
-static void drawPositionBox(const GameObjectBase& object)
+template <int s>
+void drawPositionBox(const GameObjectBase& object, Color fill, Color border)
 {
-	SokuLib::Vector2u size{ 5, 5 };
+	SokuLib::Vector2u size{ s, s };
 	SokuLib::Vector2i pos{ object.position.x - size.x / 2, -object.position.y - size.y / 2 };
 	rectangle.setPosition(pos);
 	rectangle.setSize(size);
 
-	rectangle.setFillColor(Color::White);
-	rectangle.setBorderColor(Color::White + Color::Black);
+	rectangle.setFillColor(fill);
+	rectangle.setBorderColor(border);
 	rectangle.draw();
 }
+template void drawPositionBox<3>(const GameObjectBase& object, Color fill, Color border);
+template void drawPositionBox(const GameObjectBase& object, Color fill, Color border);
+template void drawPositionBox<7>(const GameObjectBase& object, Color fill, Color border);
 
 static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak)
 {

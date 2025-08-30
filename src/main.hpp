@@ -4,3 +4,5 @@
 
 extern HMODULE hDllModule;
 extern std::filesystem::path configPath;
+extern const int& globalCounter;
+//iniBuffer;

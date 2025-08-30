@@ -44,6 +44,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(GAME_FOLDER_TH123 "th123" CACHE PATH "game folder ig")
 set(CMAKE_INSTALL_PREFIX ${GAME_FOLDER_TH123})
+message(Install prefix: ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 if(SUIT_4_PLAYERS)
