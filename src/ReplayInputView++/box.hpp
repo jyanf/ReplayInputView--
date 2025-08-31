@@ -6,7 +6,6 @@
 #include <Boxes.hpp>
 #include <TextureManager.hpp>
 #include <DrawUtils.hpp>
-#include <Renderer.hpp>
 #include <GameData.hpp>
 #include <Design.hpp>
 
@@ -14,9 +13,6 @@
 #include "info.hpp"
 
 namespace riv { 
-using SokuLib::Renderer;
-	int SetRenderMode(int mode);
-
 namespace box {
 using SokuLib::v2::GameObjectBase;
 using SokuLib::v2::GameObject;
@@ -30,7 +26,7 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 using SokuLib::v2::groundHeight;
 using SokuLib::CNumber;
 
-	extern const Color Color_Orange, Color_Gray , Color_Purple;
+	extern const Color Color_Orange, Color_Gray, Color_Pale , Color_Purple;
 	extern int Texture_armorLifebar;
 	extern tex::TileDesc<768, 128, 256, 32> ArmorBar;
 

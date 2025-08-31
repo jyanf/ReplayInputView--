@@ -110,3 +110,13 @@ HollowLight
 Hitbox.ShadeByHitstop = true
 
 accer method = default
+
+
+
+[blend]
+$$
+源*(,,,) + 目*(1,1,1,1-A_s)//普通\\
+源*(1,1,1,1) + 目*(1,1,1,1)//加性\\
+(C_s*1 - C_d*1)*A_s + C_d*(1-A_s)//\\
+(1-C_d)*A_s + C_d*(1-A)
+$$

@@ -201,46 +201,28 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             CreateD3D(hwnd);
 			return 0;
             // 拦截焦点相关消息
-        case WM_SETFOCUS:
-        case WM_ACTIVATE:
-        case WM_ACTIVATEAPP:
+        case WM_SETFOCUS: case WM_ACTIVATE: case WM_ACTIVATEAPP:
             return 0;
 
-            // 拦截鼠标输入
-        case WM_LBUTTONDOWN:
-        case WM_RBUTTONDOWN:
-        case WM_MBUTTONDOWN:
-        case WM_LBUTTONUP:
-        case WM_RBUTTONUP:
-        case WM_MBUTTONUP:
+        // 拦截输入
+        case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
+        case WM_LBUTTONUP: case WM_RBUTTONUP: case WM_MBUTTONUP:
+        case WM_NCRBUTTONDOWN: case WM_NCRBUTTONUP://case WM_NCLBUTTONDOWN:
+        case WM_NCLBUTTONDBLCLK: case WM_LBUTTONDBLCLK: case WM_NCRBUTTONDBLCLK: case WM_RBUTTONDBLCLK:
         case WM_MOUSEWHEEL:
+        case WM_KEYDOWN: case WM_KEYUP: case WM_CHAR:
             //ProcessClick(lp);
             return 0;
         case WM_MOUSEACTIVATE:
             return MA_NOACTIVATE;
         
-        //case WM_NCLBUTTONDOWN:
-            //if (wp == HTCAPTION) {
-            //    // 发送WM_SYSCOMMAND启动拖拽，避免激活窗口
-            //    SendMessage(hwnd, WM_SYSCOMMAND, SC_MOVE | HTCAPTION, 0);
-            //    return 0; // 不调用默认处理，防止激活
-            //}
-            //break;
-        case WM_NCLBUTTONDBLCLK:
-            return 0;
-        //case WM_NCLBUTTONUP:
         case WM_EXITSIZEMOVE:
-            // 拖拽结束，强制将焦点设置回主窗口
+            // 拖拽结束，焦点设置回主窗口
             if (IsWindow(SokuLib::window)) {
                 SetForegroundWindow(SokuLib::window);
                 // SetFocus(GetDlgItem(hMainWnd, IDC_MAIN_BUTTON));
             }
-            break;   
-            // 拦截键盘输入
-        case WM_KEYDOWN:
-        case WM_KEYUP:
-        case WM_CHAR:
-            return 0;
+            break;
         case WM_VICE_WINDOW_UPDATE:
             InvalidateRect(hwnd, NULL, true);
             break;
@@ -256,10 +238,11 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             wsprintfW(buf, L"Cursor: %d %d", inter.cursor.x, inter.cursor.y);
             DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
             rt.top += 100;
-            wsprintfW(buf, L"Focus: %#8x", (UINT)inter.focus);
+            wsprintfW(buf, L"Focus: 0x%p", inter.focus);
             DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
             rt.top += 100;
-            wsprintfW(buf, L"Hover: %#8x", (UINT)inter.getHover());
+            auto phover = inter.getHover();
+            wsprintfW(buf, L"Hover: 0x%p\n pos: %.2f", phover, phover ? phover->position.x : NAN);
             DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
             rt.top += 100;
 
@@ -292,9 +275,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 switch (pCwp->message) {
                 //case WM_MOVING:
                 //case WM_WINDOWPOSCHANGED:
-                case WM_SIZE:
-				case WM_MOVE:
-                {
+                case WM_SIZE: case WM_MOVE: {
                     WINDOWPOS* pWp = (WINDOWPOS*)pCwp->lParam;
                     RECT mainRect;
                     GetWindowRect(SokuLib::window, &mainRect);
@@ -331,18 +312,14 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                     scaleY = (float)rt.bottom / inter.sokuH;
                     pt.x /= scaleX;
                     pt.y /= scaleY;
-                    if (inter.cursor.x != pt.x || inter.cursor.y != pt.y) {
+                    if (inter.cursor.x != pt.x || inter.cursor.y != pt.y)
                         dirty = true;
-                    }
                     inter.cursor = { pt.x, pt.y };
-					
-                    //inter.updateHover();
-                    //if (inter.switchHover(1) && !inter.focus) dirty = true;
-                    //return 0;
                     break;
                 }
                 case WM_NCMOUSEMOVE: case WM_NCMOUSELEAVE: case WM_MOUSELEAVE: {
                     inter.cursor = { -1, -1 };
+					dirty = true;
                     break;
                 }
                 }

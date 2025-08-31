@@ -8,15 +8,7 @@
 #include "DrawCircle.hpp"
 
 namespace riv { 
-static const auto _setRenderMode = SokuLib::union_cast<void (Renderer::*)(int)>(0x404b80);
-static const auto _renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
-	int SetRenderMode(int mode) {
-		DWORD old = SokuLib::renderer.*_renderMode;
-		(SokuLib::renderer.*_setRenderMode)(mode);
-		//SokuLib::pd3dDev->GetRenderState(, &old);
-		//SokuLib::pd3dDev->SetRenderState(, mode);
-		return old;
-	}
+
 	
 namespace box {
 	//int Texture_armorBar;
@@ -25,7 +17,7 @@ namespace box {
 
 
 static const float BOXES_ALPHA = 0.25;
-const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
+const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFF808080, Color_Pale = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static RectangleShape rectangle;
 	void setCamera() {
 		rectangle.setCamera(&SokuLib::camera);
@@ -331,7 +323,7 @@ static void drawArmor(const Player& player, bool blockable) {
 			SetRenderMode(2);
 			Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius + j*15, 20.0f, 
 				SokuLib::Vector2f{-1, 359}* -player.direction, 
-				{ u1,v1,u2,v2 }, 1, Color_Gray*0.3);
+				{ u1,v1,u2,v2 }, 1, Color_Pale*0.3);
 			SetRenderMode(1);
 			//if (!(50 <= player.frameState.actionId && player.frameState.actionId < 150) && armorTimer < threshold)
 				Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius+j*15, 20.0f, 
@@ -546,7 +538,7 @@ void drawUntechBar(Player& player) {
 	rectangle.draw();
 }
 void drawFloor() {
-	Color outline = Color_Gray;
+	Color outline = Color_Pale;
 	Color fill = outline;
 	Box bound = {-5, 0, 1280, 0};
 	//drawBox(bound, nullptr, outline, Color::Transparent);

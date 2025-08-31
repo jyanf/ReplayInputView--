@@ -124,7 +124,8 @@ inline static void traversing_players(const BattleManager* This,
 
 	void RivControl::render(BattleManager* This) {
 		// fix story blend
-		auto old = SetRenderMode(1);
+		auto guard = tex::RendererGuard();
+		guard.setRenderMode(1);//auto old = SetRenderMode(1);
 		box::setCamera();
 		if (hitboxes) box::drawFloor();
 		
@@ -182,11 +183,28 @@ inline static void traversing_players(const BattleManager* This,
 		);
 		//indicators
 		if (show_debug) {
-			if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
 				SokuLib::textureMgr.setTexture(NULL, 0);
+
+				guard
+					//
+					//.setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVDESTCOLOR)
+					//.setRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE)
+					//.setRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE)
+					//.setRenderState(D3DRS_BLENDOP, D3DBLENDOP_SUBTRACT)
+					//.setRenderState(D3DRS_BLENDOPALPHA, D3DBLENDOP_SUBTRACT)         // Alpha£º¼Ó·¨²Ù×÷
+					.setInvert()
+					.setTexture(NULL);
+				float interp = sinf(globalCounter / 20.0f) + 1.f; interp /= 2.01f;
+				/*Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
+					vice.inter.toler + 20, 20, Vector2f{ 0, 360 },
+					{ 0 }, 1, Color::White);*/
 				Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-					vice.inter.toler, 2.0f, Vector2f{0, 360});
+					vice.inter.toler + 10, 20, Vector2f{0, 360},
+					{ 0 }, 1, Color(int(0xFF * interp) * 0x01010101)* Color::Yellow);
+				
+				guard.restore();
+
 				auto index = vice.inter.getIndex();
 				if (index >= 0) {
 					auto count = vice.inter.getCount();
@@ -195,15 +213,12 @@ inline static void traversing_players(const BattleManager* This,
 						vice.inter.toler, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
 						{ 0 }, 1, Color::Black);
 				}
-
+				if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
 			}
 			
 		}
 
 		box::setDirty(false);
-
-
-		SetRenderMode(old);
 	}
 
 	void __fastcall SaveTimers(GameDataManager* This) {

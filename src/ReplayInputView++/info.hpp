@@ -90,12 +90,6 @@ using SokuLib::v2::Player;
 			}
 			return false;
 		}
-		/*inline void flush() {
-			bufPlayer.swap(poolPlayer);
-			map2D<Player>().swap(bufPlayer);
-			bufObject.swap(poolObject);
-			map2D<GameObject>().swap(bufObject);
-		}*/
 		inline void clear() {
 			hovers.clear();
 			index = -1;
@@ -104,10 +98,7 @@ using SokuLib::v2::Player;
 	};
 	
 	class Vice {
-		//static HANDLE viceThread;
 		static HHOOK mainHook, mouseHook;
-
-		//static bool registered;
 		static HWND viceWND;
 		static LPDIRECT3D9 vicePD3;
 		static LPDIRECT3DDEVICE9 vicePD3D;

@@ -2,11 +2,17 @@
 #include "../main.hpp"
 
 #include <DrawUtils.hpp>
+#include <Renderer.hpp>
 //#include <Design.hpp>
 #include <TextureManager.hpp>
 #include <assert.h>
+#include <unordered_map>
 
-namespace riv { namespace tex {
+namespace riv {
+using SokuLib::Renderer;
+    int SetRenderMode(int mode);
+
+namespace tex {
 //using SokuLib::CTile;
 using SokuLib::Vector2f;
 using SokuLib::DrawUtils::Vertex;
@@ -68,9 +74,78 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 	typedef TileDesc<-1, -1, -1, -1> TileBlank;
 
 
+    class [[nodiscard]] RendererGuard {
+        LPDIRECT3DDEVICE9 mpd = SokuLib::pd3dDev;
+        std::unordered_map<D3DRENDERSTATETYPE, DWORD> orgStates;
+
+		std::unordered_map<DWORD, LPDIRECT3DBASETEXTURE9> orgTextures;
+        int originalMode = -1;
+    public:
+		explicit RendererGuard() = default;
+        explicit RendererGuard(LPDIRECT3DDEVICE9 pDevice) : mpd(pDevice) {
+            if (!pDevice) {
+                throw std::invalid_argument("Device pointer cannot be null");
+            }
+        }
+		RendererGuard(const RendererGuard&) = delete;
+		RendererGuard& operator=(const RendererGuard&) = delete;
+		void* operator new(size_t) = delete;
+		void* operator new(size_t, void*) = delete;
+		void* operator new[](size_t) = delete;
+		void operator delete(void*) = delete;
+		void operator delete[](void*) = delete;
+
+        ~RendererGuard() {
+            restore();
+        }
+		inline bool isSoku() const { return mpd && mpd == SokuLib::pd3dDev; }
+        // 设置渲染状态，自动保存原始值
+		RendererGuard& setRenderState(D3DRENDERSTATETYPE state, DWORD value);
+		inline void resetRenderState() {
+			if (!mpd) return;
+			for (auto& state : orgStates) {
+				mpd->SetRenderState(state.first, state.second);
+			}
+			orgStates.clear();
+		}
+		RendererGuard& setRenderMode(int mode);
+		inline void resetRenderMode() {
+			if (!isSoku() || originalMode<0) return;
+			riv::SetRenderMode(originalMode);
+			originalMode = -1;
+		}
+		RendererGuard& setTexture(LPDIRECT3DBASETEXTURE9 handle, int stage = 0);
+		inline void resetTextures() {
+			if (!isSoku()) return;
+			for (auto& tex : orgTextures) {
+				SokuLib::textureMgr.setTexture((int)tex.second, tex.first);
+			}
+			orgTextures.clear();
+		}
+		inline RendererGuard& setInvert() {
+			return setRenderState(D3DRS_ALPHABLENDENABLE, TRUE)
+				.setRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR)
+				.setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA)
+				.setRenderState(D3DRS_BLENDOP, D3DBLENDOP_ADD)
+				//.setRenderState(D3DRS_SEPARATEALPHABLENDENABLE, TRUE)
+				//.setRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_SRCALPHA)
+				//.setRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA)
+			;
+		}
+		inline RendererGuard& setInvert2() {
+			return setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVDESTCOLOR)
+					//.setRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_ONE)
+				;
+		}
+        // 恢复所有修改过的状态
+        inline void restore() {
+			resetRenderState();
+			resetRenderMode();
+			resetTextures();
+        }
+    };
 
 
-
-
-}}
+}
+}
 
