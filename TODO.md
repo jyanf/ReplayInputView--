@@ -1,3 +1,21 @@
+【！】
+
+无windows resizer情况下：切全屏前后未重置交换链导致崩溃、全屏无法创建swapchain、黑边得到利用？进独占全屏前主动隐藏（或重置交换链？）
+D3DPresent_paramters.Windowed?
+
+hook resetd3d9device
+
+        param_1->mmSavedConfig->fullscreen = param_1->mmSavedConfig->fullscreen == false;
+        hWnd = (HWND)mSokuGame.HWND2;
+        SendMessageA(hWnd,0x104,0xd,0);//a
+        break;
+
+box渲染次序问题：拆解drawPlayerBoxes
+
+
+
+
+
 显示胜方无敌？
 
 颜色微调：墨绿×?
@@ -120,3 +138,16 @@ $$
 (C_s*1 - C_d*1)*A_s + C_d*(1-A_s)//\\
 (1-C_d)*A_s + C_d*(1-A)
 $$
+【AddtionalChain】
+
+hook scene vtable
+
+CBattle
+
+org→enterCritical？→save state→switch→render→（present）→switch→restore→leave？
+
+WM_PAINT→tryloc.
+
+k→`chain->present`
+
+ShowCursor(0) 线程差异		

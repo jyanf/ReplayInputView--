@@ -1,18 +1,19 @@
 //
 // Created by PinkySmile on 31/10/2020
 //
-
-#include <SokuLib.hpp>
-//#include <Shlwapi.h>
-#pragma comment(lib, "Shlwapi.lib")
-
 #include "main.hpp"
+#include <SokuLib.hpp>
+
+#pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "winmm.lib")
 #include "ReplayInputView++/riv.hpp"
 
 static bool init = false;
 HMODULE hDllModule;
-std::filesystem::path configPath;
-const int& globalCounter = *reinterpret_cast<int*>(0x8985d8);
+std::filesystem::path configPath, dataPath;
+const int& battleCounter = *reinterpret_cast<int*>(0x8985d8);
+const int& globalTimer = *reinterpret_cast<int*>(0x89FFC4);
+const int& globalFPS = *reinterpret_cast<int*>(0x89FFD0);
 
 
 //credit enebe/shady-loader
@@ -58,6 +59,13 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	hDllModule = hMyModule;
 
 	GetModulePath(hMyModule, configPath);
+#ifdef DAT_FILENAME
+	dataPath = std::filesystem::relative(configPath / DAT_FILENAME);
+#else
+	dataPath = std::filesystem::relative(configPath / L"ReplayInputView++.dat");
+#endif // DAT_FILENAME
+
+
 #ifdef INI_FILENAME
 	configPath /= INI_FILENAME;
 #else
@@ -72,17 +80,24 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	// combo counter show on hit 1
 	auto& op = *reinterpret_cast<byte(*)[3]>(0x4792FB);
 	if (op[0] == 0x83 && op[1] == 0xf8 && op[2] == 2) op[2] = 1;
+	// fix wrong fullscreen window pos, by setting pos to 0,0
+		//0x415324 03 c3			ADD     EAX, EBX-->  PUSH 0x0
+		//0x415326 6a 00			PUSH    0x0
+		//0x415328 f7 d8			NEG     EAX		-->  PUSH 0x0
+		//0x41532a 50				PUSH    EAX		--> NOP
+		//0x41532b a1 84 0f 8a 00	MOV     EAX, [D3DPresent_paramters.hDeviceWindow]
+		//0x415330 57				PUSH    EDI		--> NOP
+	auto popr = reinterpret_cast<unsigned char*>(0x415324); popr[0] = 0x6A; popr[1] = 0x00;
+	popr = reinterpret_cast<unsigned char*>(0x415328); popr[0] = 0x6A; popr[1] = 0x00;
+	popr = reinterpret_cast<unsigned char*>(0x41532a); popr[0] = 0x90;
+	popr = reinterpret_cast<unsigned char*>(0x415330); popr[0] = 0x90;
 
 	//CBattleManager_UpdateMovement
 		//JMP FUN_0046e010; 004796c6: E9 4549FFFF -> CALL
 	ogUpdateMovement = SokuLib::TamperNearJmp(0x4796c6, SaveTimers);
 	//CBattleManager_UpdateCollision
 		//CMP dword ptr [EAX + 0x174],0x0; 0047d2c4: 83B8 74010000 00 -> JMP shim
-	memcpy(update_collision_shim + 9, (void*)0x47d2c4, 7);//more check?
-	memset((void*)0x47d2c4, 0x90, 7);
-	SokuLib::TamperNearJmp(0x47d2c4, update_collision_shim);
-	SokuLib::TamperNearCall((DWORD)update_collision_shim + 3, lag_watcher_updator);
-	SokuLib::TamperNearJmp((DWORD)update_collision_shim + 16, 0x47d2c4 + 7);
+	update_collision_shim.hook(lag_watcher_updator);
 
 	//Common
 	ogBattleMgrSize[0] = SokuLib::TamperDwordAdd(SokuLib::ADDR_BATTLE_MANAGER_SIZE, sizeof(riv::RivControl));
@@ -96,6 +111,7 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	//Result
 	//ogBattleMgrSize[3] = SokuLib::TamperDwordAdd(0x438803, sizeof(riv::RivControl));
 	ogBattleMgrConstruct[3] = SokuLib::TamperNearCall(0x438823, CBattleManager_OnConstruct<3>);//base init
+	
 	VirtualProtect((PVOID)TEXT_SECTION_OFFSET, TEXT_SECTION_SIZE, old, &old);
 	/******************************** VHooks ***********************************/
 	VirtualProtect((PVOID)RDATA_SECTION_OFFSET, RDATA_SECTION_SIZE, PAGE_WRITECOPY, &old);
@@ -110,7 +126,11 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	ogBattleMgrDestruct[2] = SokuLib::TamperDword((VManagerDestruct*)0x858934, CBattleManager_OnDestruct<2>);
 	ogBattleMgrOnProcess[2] = SokuLib::TamperDword((VManagerOnProcess*)0x858940, CBattleManager_OnProcess<2>);
 	ogBattleMgrOnRender[2] = SokuLib::TamperDword((VManagerOnRender*)0x85896c, CBattleManager_OnRender<2>);
+
+	ogSceneBattleRender = SokuLib::TamperDword(SokuLib::union_cast<VBattleRender*>(&SokuLib::VTable_Battle.onRender), info::Vice::CBattle_Render);
 	VirtualProtect((PVOID)RDATA_SECTION_OFFSET, RDATA_SECTION_SIZE, old, &old);
+
+	reset_swapchian_shim.hook(info::Vice::ResetD3D9Dev);//if no WindowResizer
 
 	FlushInstructionCache(GetCurrentProcess(), NULL, 0);
 	return true;

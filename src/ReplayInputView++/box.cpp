@@ -38,7 +38,7 @@ void setDirty(bool d) {
 		lag_buffer.swap(lag_saver);
 		TRUE_CLEAR(lag_buffer);
 #ifdef _DEBUG
-		printf("lag_saver %d -------------\n", lag_saver.size());
+		//printf("lag_saver %d -------------\n", lag_saver.size());
 #endif // _DEBUG
 
 	}
@@ -47,14 +47,7 @@ void cleanWatcher() {
 	//lag_watcher.clear();
 	TRUE_CLEAR(lag_saver); TRUE_CLEAR(lag_buffer);
 }
-unsigned char update_collision_shim[] = {//credit enebe shady/memory.cpp
-	0x60,		// 0;pushad
-	0x8B, 0xC8,	// 1;mov eax, ecx
-	0xE8, 0x90, 0x90, 0x90, 0x90,   // 3;call updator
-	0x61,       // 8;popad
-	0x90, 0x90, 0x90, 0x90,	0x90, 0x90, 0x90, // 9; org opr
-	0xE9, 0x90, 0x90, 0x90, 0x90,	//16;jmp back
-};
+TrampTamper<7> update_collision_shim(0x47d2c4);
 void __fastcall lag_watcher_updator(const GameObjectBase* object) {
 	if (!object) return;
 	auto spec = determine(*object, BulletSpecial::SHARED_BOX | BulletSpecial::SUBBOX);
@@ -247,7 +240,7 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 template <int s>
 void drawPositionBox(const GameObjectBase& object, Color fill, Color border)
 {
-	SokuLib::Vector2u size{ s, s };
+	SokuLib::Vector2u size{ s, s }; size /= SokuLib::camera.scale;
 	SokuLib::Vector2i pos{ object.position.x - size.x / 2, -object.position.y - size.y / 2 };
 	rectangle.setPosition(pos);
 	rectangle.setSize(size);
@@ -301,30 +294,30 @@ static void drawArmor(const Player& player, bool blockable) {
 				(player.position.x + SokuLib::camera.translate.x) * SokuLib::camera.scale,
 				(-player.position.y - 100 + SokuLib::camera.translate.y) * SokuLib::camera.scale };
 	auto radius = 100 * SokuLib::camera.scale;
-	auto old = SetRenderMode(2);
+	tex::RendererGuard guard; guard.setRenderMode(2);
 	if (superArmored 
 		//&& SokuLib::activeWeather != SokuLib::WEATHER_TYPHOON 
 		//&& !(700 <= player.frameState.actionId && player.frameState.actionId < 800)//in story
 	) {
 		/*SokuLib::textureMgr.setTexture(Texture_armorBar, 0);*/
-		ArmorBar.set();
+		guard.setTexture(ArmorBar);
 		//const auto& dmg = player.superArmorDamageTaken;
 		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius + player.frameState.currentFrame % 2 * 6,
 			25.0f, SokuLib::Vector2f{  20.0f , 340.0f } * -player.direction,
 			ArmorBar.getBorder(player.frameState.currentFrame / 3 % 3 + (blockable ? 9 : 6)), 9 / 8.0f);
 	} else if (normalArmored) {
-		SokuLib::textureMgr.setTexture(Texture_armorLifebar, 0);
+		guard.setTexture(Texture_armorLifebar);
 		//float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
 		float u1 = 0.01, u2 = 1, v1 = 0, v2 = 1;
 		float step = threshold * powerMultiplier;
 
 		for (int i = threshold, j = 0; i > 0; i-= step, ++j)
 		{
-			SetRenderMode(2);
+			guard.setRenderMode(2);
 			Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius + j*15, 20.0f, 
 				SokuLib::Vector2f{-1, 359}* -player.direction, 
 				{ u1,v1,u2,v2 }, 1, Color_Pale*0.3);
-			SetRenderMode(1);
+			guard.setRenderMode(1);
 			//if (!(50 <= player.frameState.actionId && player.frameState.actionId < 150) && armorTimer < threshold)
 				Draw2DCircle<threshold>(SokuLib::pd3dDev, pos, radius+j*15, 20.0f, 
 					SokuLib::Vector2f{ -1, -1+max(min((i-armorTimer)/min(step, i), 1), 0) * 360.0f }*-player.direction,
@@ -333,9 +326,6 @@ static void drawArmor(const Player& player, bool blockable) {
 		}
 
 	}
-	SokuLib::textureMgr.setTexture(NULL, 0);
-	SetRenderMode(old);
-
 }
 
 static bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
@@ -395,7 +385,7 @@ static bool drawHitBoxes(const GameObjectBase& object)
 	return object.boxData.hitBoxCount;
 }
 
-static bool drawBulletBoxes(const GameObject& object)
+static bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
 {
 	using BS = BulletSpecial;
 	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::MELEE);
@@ -420,7 +410,7 @@ static bool drawBulletBoxes(const GameObject& object)
 	}
 	fill = hurtbox_active ? outline : Color::Transparent;
 	bool drawed = false;
-	if (object.boxData.hurtBoxCount <= 5) {
+	if (!hurtbreak && object.boxData.hurtBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
 			if (spec.SharedBox)
 				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA * (hitbox_active ? 0.5 : 1));
@@ -431,7 +421,7 @@ static bool drawBulletBoxes(const GameObject& object)
 	}
 	outline = object.boxData.frameData && object.boxData.frameData->attackFlags.grab ? Color_Orange : Color::Red;
 	fill = hitbox_active ? outline : (object.collisionType && spec.Melee ? outline * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)) : Color::Transparent);
-	if (object.boxData.hitBoxCount <= 5) {
+	if (!hurtbreak && object.boxData.hitBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
 			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
 			drawed = true;
@@ -450,8 +440,8 @@ void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayed
 	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4, hurtbreak);
 	if (!hurtbreak) {
 		drawHurtBoxes(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
+		drawHitBoxes(player);
 	}
-	drawHitBoxes(player);
 	drawPositionBox(player);
 
 	drawArmor(player, !(player.unknown4AA || delayedTimers & 8) && player.boxData.frameData && player.boxData.frameData->frameFlags.guardAvailable);
@@ -469,7 +459,7 @@ void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayed
 
 		//TODO: config
 		if (!obj.lifetime) return;
-		withBox |= drawBulletBoxes(obj);
+		withBox |= drawBulletBoxes(obj, hurtbreak);
 #ifdef _DEBUG
 		if (!withBox) continue;
 		//drawNumber(obj.frameState.actionId, obj.position.x, -obj.position.y - 20, 3); drawNumber(obj.frameState.sequenceId, obj.position.x+20, -obj.position.y - 20, 2);

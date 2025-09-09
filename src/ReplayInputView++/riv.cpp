@@ -2,11 +2,11 @@
 #include "DrawCircle.hpp"
 #include <functional>
 
-ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT];
-VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT];
-VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT];
-VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT];
-int ogBattleMgrSize[TARGET_MODES_COUNT];
+ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT]{};
+VManagerDestruct ogBattleMgrDestruct[TARGET_MODES_COUNT]{};
+VManagerOnProcess ogBattleMgrOnProcess[TARGET_MODES_COUNT]{};
+VManagerOnRender ogBattleMgrOnRender[TARGET_MODES_COUNT]{};
+int ogBattleMgrSize[TARGET_MODES_COUNT]{};
 
 void(__fastcall* ogUpdateMovement)(GameDataManager*);
 
@@ -92,15 +92,15 @@ inline static void traversing_players(const BattleManager* This,
 		riv::box::setDirty(true);
 		if (ret > 0 && ret < 4) {
 			//vice.destroyWnd();
-			vice.hideWnd();
-			show_debug = false;//auto on, to do later
+			vice.hideWnd(); vice.inter.focus = nullptr; 
+			show_debug = false;//auto on? to do later
 			return ret;
 		}
 		bool focus_valid = !vice.inter.focus;
 		traversing_players(This,
 			[this, &focus_valid](int i, Player* player) {
 				if (panels[i]) {
-					if (globalCounter <= 1)
+					if (battleCounter <= 1)
 						panels[i]->input.reset();
 					panels[i]->update(*player);
 
@@ -145,15 +145,16 @@ inline static void traversing_players(const BattleManager* This,
 			}
 			//vice.dirty = vice.inter.checkDMouse() || vice.dirty;
 			if (vice.inter.checkDMouse() || vice.dirty) {
-				vice.updateWnd();
-				vice.dirty = false;
+				//vice.updateWnd();
+				vice.dirty = true;
 			}			
 		}
 
 		const auto& pfocus = vice.inter.focus;
 		auto phover = vice.inter.getHover();
+		float time = timeGetTime() / 1000.f;
 		traversing_players(This,//draw
-			[this, This, pfocus, phover](int i, Player* player) {
+			[this, This, pfocus, phover, time](int i, Player* player) {
 				if (hitboxes && This->matchState > 0) {//boxes
 					box::drawPlayerBoxes(*player,
 						This->matchState <= 1 || This->matchState >= 6
@@ -164,19 +165,26 @@ inline static void traversing_players(const BattleManager* This,
 					box::drawUntechBar(*player);
 				}
 				if (show_debug) {
-					if (player == phover)
+					if (player == phover) {
+						//guard.setInvert2();
+						info::drawObjectHover(player, time);
 						box::drawPositionBox<7>(*player, box::Color_Gray, box::Color::White);
-					else
+					}
+					else {
 						box::drawPositionBox(*player);
+					}
 				}
 				if (panels[i]) panels[i]->render();
 			},
-			[this, pfocus, phover](GameObject* object) {
+			[this, pfocus, phover, time](GameObject* object) {
 				if (show_debug) {
-					if (object == phover)
+					if (object == phover) {
+						info::drawObjectHover(object, time);
 						box::drawPositionBox<7>(*object, box::Color_Gray, box::Color::White);
-					else
+					}
+					else {
 						box::drawPositionBox(*object, Color::White * 0.5, box::Color_Gray * 0.5);//default every
+					}
 				}
 
 			}
@@ -184,8 +192,6 @@ inline static void traversing_players(const BattleManager* This,
 		//indicators
 		if (show_debug) {
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
-				SokuLib::textureMgr.setTexture(NULL, 0);
-
 				guard
 					//
 					//.setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVDESTCOLOR)
@@ -194,8 +200,8 @@ inline static void traversing_players(const BattleManager* This,
 					//.setRenderState(D3DRS_BLENDOP, D3DBLENDOP_SUBTRACT)
 					//.setRenderState(D3DRS_BLENDOPALPHA, D3DBLENDOP_SUBTRACT)         // Alpha£º¼Ó·¨²Ù×÷
 					.setInvert()
-					.setTexture(NULL);
-				float interp = sinf(globalCounter / 20.0f) + 1.f; interp /= 2.01f;
+					.setTexture(0);
+				float interp = sinf(time * 0.6f * 2*3.1416f) + 2.f; interp /= 3.01f;
 				/*Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
 					vice.inter.toler + 20, 20, Vector2f{ 0, 360 },
 					{ 0 }, 1, Color::White);*/
@@ -203,7 +209,7 @@ inline static void traversing_players(const BattleManager* This,
 					vice.inter.toler + 10, 20, Vector2f{0, 360},
 					{ 0 }, 1, Color(int(0xFF * interp) * 0x01010101)* Color::Yellow);
 				
-				guard.restore();
+				guard.resetRenderState();
 
 				auto index = vice.inter.getIndex();
 				if (index >= 0) {
@@ -213,8 +219,8 @@ inline static void traversing_players(const BattleManager* This,
 						vice.inter.toler, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
 						{ 0 }, 1, Color::Black);
 				}
-				if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
 			}
+			if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
 			
 		}
 
@@ -280,11 +286,16 @@ using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 template<int i>
 BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
-
+	if (std::filesystem::is_regular_file(dataPath)) {
+		SokuLib::appendDatFile(dataPath.string().c_str());
+		dataPath.clear();
+	}
 #ifdef SUIT_4_PLAYERS
 	//This->characterManager3 = This->characterManager4 = nullptr; //gamedata manager
 #endif // SUIT_4_PLAYERS
 	
+	info::unfvck(SokuLib::pd3dDev);
+
 	ogBattleMgrConstruct[i](This);
 
 	static char tmp[1024];

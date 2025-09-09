@@ -100,10 +100,20 @@ target_link_libraries(
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION modules/${PROJECT_NAME}/)
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/${I_INI_FILENAME} DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dat DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
 
 #note
 #before "tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0)"
 #after "cmake --install . --config Debug"
+set(SHADY_CLI_PATH "shady-cli.exe" CACHE FILEPATH "")
+file(GLOB SRC_RIV_Pack ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/data/*)
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+	COMMAND "${SHADY_CLI_PATH}" pack -m data
+		-o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dat"
+		"${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}/data"
+	DEPENDS ${SRC_RIV_Pack}
+	VERBATIM
+)
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0))
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND cmake --install . --config $<CONFIG>)
 

@@ -119,7 +119,7 @@ namespace tex{
 		}
 	}
 
-	RendererGuard& RendererGuard::setRenderState(D3DRENDERSTATETYPE state, DWORD value) {
+	RendererGuard& RendererGuard::setRenderState(D3DRENDERSTATETYPE state, DWORD value) & {
 		if (!mpd) return *this;
 		if (orgStates.find(state) == orgStates.end()) {
 			DWORD old;
@@ -135,25 +135,23 @@ namespace tex{
 		}
 		return *this;
 	}
-	RendererGuard& RendererGuard::setRenderMode(int mode) {
-		if (mpd != SokuLib::pd3dDev) return *this;
+	RendererGuard& RendererGuard::setRenderMode(int mode) & {
+		if (!isSoku()) return *this;
 		auto old = riv::SetRenderMode(mode);
 		if (originalMode == -1)
 			originalMode = old;
 		return *this;
 	}
-	RendererGuard& RendererGuard::setTexture(LPDIRECT3DBASETEXTURE9 handle, int stage) {
-		if (mpd != SokuLib::pd3dDev) return *this;
+	RendererGuard& RendererGuard::setTexture(LPDIRECT3DTEXTURE9 handle, int stage) & {
 		if (orgTextures.find(stage) == orgTextures.end()) {
 			LPDIRECT3DBASETEXTURE9 old;
-			if (FAILED(mpd->GetTexture(stage, &old))) {
-				throw std::runtime_error("Failed to get/set texture");
-			}
+            if (FAILED(mpd->GetTexture(stage, &old))) { throw std::runtime_error("Failed to get/set texture"); }
 			if (old == handle) return *this;
 			orgTextures[stage] = old;
 		}
-		SokuLib::textureMgr.setTexture((int)handle, stage);
+        mpd->SetTexture(stage, handle);
 		return *this;
 	}
 
-}}
+
+    }}

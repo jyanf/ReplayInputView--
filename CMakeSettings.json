@@ -33,6 +33,11 @@
           "name": "GAME_FOLDER_TH123",
           "value": "D:/Games/Hisotensoku/th123",
           "type": "PATH"
+        },
+        {
+          "name": "SHADY_CLI_PATH",
+          "value": "C:/Users/Lenovo/Desktop/Codes/Custom_SL/out/build/x86-Debug/src/Cli/shady-cli.exe",
+          "type": "FILEPATH"
         }
       ]
     },

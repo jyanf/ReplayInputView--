@@ -42,10 +42,10 @@ namespace riv::pnl {
 	}
 
 	void Panel::renderInputs() const {
-		auto old = SetRenderMode(1);
+		tex::RendererGuard guard;//auto old = SetRenderMode(1);
+		guard.setRenderMode(1);
 		float x = posI.x, y = posI.y;
-		renderBack(x, y, 24 * 6 + 24, 24 * 3 + 12);
-		//texBtn.set();
+		guard.saveTexture(); renderBack(x, y, 24 * 6 + 24, 24 * 3 + 12);
 		// Directions
 		x += 9; y += 6;
 		texBtn.render(0, { x + 24,	y }, input.cur.up ? 1.0 : 0.18); /* ¡ü */
@@ -65,19 +65,20 @@ namespace riv::pnl {
 		texBtn.render(11, { x + d,		y + 24 }, input.cur.d ? 1.0 : 0.18);
 		texBtn.render(12, { x + d + 27,	y + 24 }, input.cur.ch ? 1.0 : 0.18);
 		texBtn.render(13, { x + d + 54,	y + 24 }, input.cur.s ? 1.0 : 0.18);
-		SetRenderMode(2);
+		//guard.setRenderMode(2);
+		guard.setInvert();
 		for (int i = 8; i < 14; ++i) {
 			if (!input.one[i]) continue;
 			float x2 = x - d + (i - 8) / 3 * 2 * d + (i - 8) % 3 * 27, y2 = y + (i - 8) / 3 * 24;
-			texBtn.render(i, { x2-2.5f, y2-2.5f, x2+3+32, y2+3+32}, Color::White);
+			texBtn.render(14, { x2-2.5f, y2-2.5f, x2+3+32, y2+3+32}, Color::White);
 		}
-		SetRenderMode(old);
 	}
 
 	void Panel::renderRecord() const {
+		tex::RendererGuard guard;
 		float x = posR.x, y = posR.y;
 		float sx = 24 * 10 + 6, sy = 24 + 6;
-		renderBack(x, y, sx, sy);
+		guard.saveTexture(); renderBack(x, y, sx, sy);
 		int dir = direction;//[RecordPanel].Mirror
 		x += sx * (1+dir)/2 + 3 - dir * texBtn.dx/2; y += 3;
 

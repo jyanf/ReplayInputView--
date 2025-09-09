@@ -7,7 +7,6 @@
 #include <TextureManager.hpp>
 #include <DrawUtils.hpp>
 #include <GameData.hpp>
-#include <Design.hpp>
 
 #include "tex.hpp"
 #include "info.hpp"
@@ -67,7 +66,7 @@ using SokuLib::CNumber;
 
 	bool getDirty(); void setDirty(bool d);
 	void cleanWatcher();
-	extern unsigned char update_collision_shim[];
+	extern TrampTamper<7> update_collision_shim;
 	void __fastcall lag_watcher_updator(const GameObjectBase* object);
 
 	void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayTimers);
@@ -94,7 +93,7 @@ static void drawArmor(const Player& player, bool blockable = true);
 static bool drawHurtBoxes(const Player& object, bool meleeInvul, bool projnvul);
 static bool drawHitBoxes(const GameObjectBase& object);
 
-static bool drawBulletBoxes(const GameObject& object);
+static bool drawBulletBoxes(const GameObject& object, bool hurtbreak = false);
 
 
 }

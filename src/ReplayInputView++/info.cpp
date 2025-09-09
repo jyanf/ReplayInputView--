@@ -1,13 +1,26 @@
 #include "info.hpp"
 
-namespace info {
-    const DIMOUSESTATE& sokuDMouse = *(LPDIMOUSESTATE)(0x8a019c + 0x140);
+VBattleRender ogSceneBattleRender{};
 
-    HHOOK Vice::mainHook = NULL, Vice::mouseHook = NULL;
+namespace info {
+    std::array<unsigned char, fvckSize> fvckIchirin{ 0x90 };
+
+    const DIMOUSESTATE& sokuDMouse = *(LPDIMOUSESTATE)(0x8a019c + 0x140);
+    const LPDIRECT3D9& pd3d = *(LPDIRECT3D9*)(0x8A0E2C);
+    CRITICAL_SECTION& d3dMutex = *reinterpret_cast<CRITICAL_SECTION*>(0x8A0E14);
+	const LPDIRECT3DSWAPCHAIN9& pd3dSwapChain = *(LPDIRECT3DSWAPCHAIN9*)(0x8A0E34);
+	const bool& d3dWindowed = *(bool*)(0x8A0F88);
+
+
+	
+    WNDPROC Vice::ogMainWndProc = NULL;
+    HHOOK Vice::mouseHook = NULL;
     //bool Vice::registered = false;
     HWND Vice::viceWND = NULL;
-    LPDIRECT3D9 Vice::vicePD3 = NULL;
-    LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
+    //LPDIRECT3D9 Vice::vicePD3 = NULL;
+    //LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
+	LPDIRECT3DSWAPCHAIN9 Vice::viceSwapChain = NULL;
+	Design Vice::layout;
     std::atomic_bool Vice::viceDisplay = false, Vice::dirty = false;
 
 	Interface Vice::inter(10);//hovers reserve
@@ -16,6 +29,7 @@ struct ViceThreadParams {
     HANDLE hMainThread;
     HWND hParentWnd;
     HINSTANCE hInstance;
+	int width, height;
 };
     bool Vice::createWnd() {
         HANDLE duplicatedHandle = NULL;
@@ -32,10 +46,14 @@ struct ViceThreadParams {
             MessageBoxW(NULL, L"创建副窗口失败！", L"错误", MB_ICONERROR);
             return false;
         }
+        Design::Object* rect = nullptr;
+        layout.getById(&rect, 1);
         auto viceParam = new ViceThreadParams{
 			.hMainThread = duplicatedHandle,
             .hParentWnd = SokuLib::window,
             .hInstance = hDllModule,
+            .width = rect ? int(rect->x2) : WIDTH,
+            .height = rect ? int(rect->y2) : HEIGHT,
         };
         HANDLE hViceThread = CreateThread(
             NULL,               // 默认安全属性
@@ -47,50 +65,75 @@ struct ViceThreadParams {
         );
         if (hViceThread == NULL) {
             CloseHandle(duplicatedHandle);  // 释放复制的句柄
-            MessageBoxW(NULL, L"创建副线程失败！", L"错误", MB_ICONERROR);
+            MessageBoxW(NULL, L"副窗口`CreateThread`失败！", L"错误", MB_ICONERROR);
             return false;
         }
-		CloseHandle(hViceThread);  // 不需要保留线程句柄
+		CloseHandle(hViceThread); // 不需要保留线程句柄
 		return true;
 	}
-    void Vice::updateWnd() {
-        if (!viceWND) return;
-
-        //UpdateWindow(viceWND);
-        PostMessageW(viceWND, WM_VICE_WINDOW_UPDATE, 0, 0);
-    }
-    void Vice::destroyWnd() {
-        if (viceWND) {
-            //DestroyWindow(viceWND);
-            //viceWND = NULL;
-            PostMessageW(viceWND, WM_VICE_WINDOW_DESTROY, 0, 0);
-        }
-    }
-
     bool Vice::CreateD3D(HWND& hwnd) {
-        if (!vicePD3) {
-            vicePD3 = Direct3DCreate9(D3D_SDK_VERSION);
-            if (!vicePD3) return false;
-        }
-        if (!vicePD3D) {
-            D3DPRESENT_PARAMETERS d3dpp = {
-                .SwapEffect = D3DSWAPEFFECT_DISCARD,
-                .hDeviceWindow = viceWND,
-                .Windowed = TRUE,
-            };
-            if (!SUCCEEDED(vicePD3->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
-                D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &vicePD3D)))
-            {
-                //DestroyWindow(hwnd);
-                vicePD3->Release(); vicePD3 = NULL;
+        if (!d3dWindowed) {
+            //MessageBoxW(NULL, L"当前为全屏模式，无法创建Direct3D设备！", L"错误", MB_ICONERROR);
+			//hideWnd(hwnd);
+            return false;
+		}
+        if (hwnd && !viceSwapChain) {
+            D3DPRESENT_PARAMETERS d3dpp{ 0 };
+            d3dpp.Windowed = TRUE;
+            d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+
+            /*D3DDISPLAYMODE mode{0};
+            if (FAILED(pd3d->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &mode))) {
+                MessageBoxW(NULL, L"`GetAdapterDisplayMode`失败！", L"错误", MB_ICONERROR);
+                return false;
+            }*/
+            d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;//mode.Format;
+            d3dpp.hDeviceWindow = hwnd;
+            /*WINDOWINFO wi{ 0 };
+            GetWindowInfo(hwnd, &wi);
+            d3dpp.BackBufferWidth = wi.rcClient.right - wi.rcClient.left;
+            d3dpp.BackBufferHeight = wi.rcClient.bottom - wi.rcClient.top;*/
+            d3dpp.EnableAutoDepthStencil = 1;
+            d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
+            d3dpp.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
+            d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;// no vsync?
+
+            if (FAILED(SokuLib::pd3dDev->CreateAdditionalSwapChain(&d3dpp, &viceSwapChain)) || !viceSwapChain) {
+                MessageBoxW(NULL, L"`CreateAdditionalSwapChain`失败！", L"错误", MB_ICONERROR);
                 return false;
             }
+
+            
+            /*
+            if (!vicePD3) {
+                vicePD3 = Direct3DCreate9(D3D_SDK_VERSION);
+                if (!vicePD3) return false;
+            }
+            if (!vicePD3D) {
+                D3DPRESENT_PARAMETERS d3dpp = {
+                    .SwapEffect = D3DSWAPEFFECT_DISCARD,
+                    .hDeviceWindow = viceWND,
+                    .Windowed = TRUE,
+                };
+                if (!SUCCEEDED(vicePD3->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                    D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &vicePD3D)))
+                {
+                    //DestroyWindow(hwnd);
+                    vicePD3->Release(); vicePD3 = NULL;
+                    return false;
+                }
+            }*/
         }
 		return true;
     }
     bool Vice::DestroyD3D()
     {
         bool t = true;
+        if (viceSwapChain) {
+            viceSwapChain->Release();
+			viceSwapChain = NULL;
+        } else t = false;
+        /*
         if (vicePD3D) {
             vicePD3D->Release();
             vicePD3D = NULL;
@@ -100,6 +143,7 @@ struct ViceThreadParams {
             vicePD3->Release();
             vicePD3 = NULL;
         } else t = false;
+        */
         return t;
     }
 
@@ -127,7 +171,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             .cbSize = sizeof(WNDCLASSEX),
             .lpfnWndProc = WindowProc,
             .hInstance = params.hInstance,
-            .hbrBackground = CreateSolidBrush(RGB(255, 0, 0)),
+            //.hbrBackground = CreateSolidBrush(RGB(255, 0, 0)),
             .lpszClassName = VICE_CLASSNAME,
         };
         //WM_VICE_WINDOW_DESTROY = RegisterWindowMessageW(L"WM_VICE_WINDOW_DESTROY");
@@ -141,7 +185,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             L"Defaulting to Players: ",
             WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX & ~WS_VISIBLE | WS_POPUP,  // 禁止调整大小/最大化
             gameRect.right, gameRect.top,  // 位置跟随游戏窗口右侧
-            WIDTH, HEIGHT,
+            params.width, params.height,
             params.hParentWnd,
             NULL,
             params.hInstance,
@@ -149,7 +193,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         );
         if (!viceWND) goto ExitLoop;
         if (!InstallHooks(params.hInstance, params.hParentWnd)) {
-            UnsintallHooks();
+            UninstallHooks(params.hParentWnd);
             goto ExitLoop;
         }
 
@@ -157,6 +201,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         UpdateWindow(viceWND);
         viceDisplay = true;
 
+        showCursor(true, 1);
 
         while (true) {
             // 等待：要么主线程结束（句柄有信号），要么有窗口消息到来（返回WAIT_OBJECT_0 + 1）
@@ -225,12 +270,21 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             break;
         case WM_VICE_WINDOW_UPDATE:
             InvalidateRect(hwnd, NULL, true);
-            break;
+			UpdateWindow(hwnd);
+            return 0;
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc;
             RECT rt;
             hdc = BeginPaint(hwnd, &ps);
+            /*if (!TryEnterCriticalSection(&d3dMutex)) {
+				EndPaint(hwnd, &ps);
+                return 0;
+            }
+
+			LeaveCriticalSection(&d3dMutex);
+            */
+            /*
             GetClientRect(hwnd, &rt);
             DrawTextW(hdc, L"Test", -1, &rt, DT_LEFT | DT_VCENTER | DT_WORD_ELLIPSIS);
 			rt.top += 100;
@@ -248,8 +302,10 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
 
 
 
+            */
+
             EndPaint(hwnd, &ps);
-            dirty = false;
+            //dirty = false;
             return 0;
         }
         case WM_CLOSE:
@@ -257,7 +313,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             return 0;
         case WM_DESTROY:
             DestroyD3D();
-			UnsintallHooks();
+			UninstallHooks();
 			viceWND = NULL;
             PostQuitMessage(0);
             return 0;
@@ -268,33 +324,34 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         return DefWindowProcW(hwnd, msg, wp, lp);
     }
 
-    LRESULT CALLBACK Vice::MainWindowProcHook(int nCode, WPARAM wParam, LPARAM lParam) {
-        if (nCode >= 0 && SokuLib::window && viceWND) {
-            CWPSTRUCT* pCwp = (CWPSTRUCT*)lParam;
-            if (pCwp->hwnd == SokuLib::window) {
-                switch (pCwp->message) {
-                //case WM_MOVING:
-                //case WM_WINDOWPOSCHANGED:
-                case WM_SIZE: case WM_MOVE: {
-                    WINDOWPOS* pWp = (WINDOWPOS*)pCwp->lParam;
-                    RECT mainRect;
-                    GetWindowRect(SokuLib::window, &mainRect);
-                    // 计算子窗口新位置（主窗口位置 + 偏移）
-                    int childX = mainRect.right;
-                    int childY = mainRect.top;
-                    // 移动子窗口（不激活、不改变大小）
-                    SetWindowPos(viceWND, NULL, childX, childY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-                    break;
-                }
-                case WM_KILLFOCUS:
-                    inter.cursor = { -1, -1 };
-                    break;
+    LRESULT CALLBACK Vice::MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+        switch (msg) {
+        //case WM_MOVING:
+        //case WM_WINDOWPOSCHANGED:
+        case WM_SIZE: case WM_MOVE: {
+            RECT mainRect;
+            GetWindowRect(SokuLib::window, &mainRect);
+            // 计算子窗口新位置（主窗口位置 + 偏移）
+            int childX = mainRect.right;
+            int childY = mainRect.top;
+            // 移动子窗口（不激活、不改变大小）
+            SetWindowPos(viceWND, NULL, childX, childY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 
-                }
-            }
+
+            break;
         }
-        // 传递消息给下一个钩子/窗口
-        return CallNextHookEx(mainHook, nCode, wParam, lParam);
+        case WM_KILLFOCUS:
+            inter.cursor = { -1, -1 };
+            break;
+        case WM_MAIN_TOGGLECURSOR:
+            if (wParam)
+                printf("Show Cursor %d by %d\n", ShowCursor(TRUE), lParam);
+            else
+                printf("Hide Cursor %d by %d\n", ShowCursor(FALSE), lParam);
+            return 0;
+        }
+            
+        CallWindowProcW(ogMainWndProc, hwnd, msg, wParam, lParam);
     }
     LRESULT CALLBACK Vice::MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam) {
         if (nCode >= 0 && SokuLib::window && viceWND) {
@@ -329,27 +386,27 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         return CallNextHookEx(mouseHook, nCode, wParam, lParam);
     }
     bool Vice::InstallHooks(HINSTANCE hInstance, HWND hwnd = SokuLib::window) {
-        if (!hwnd || mainHook) return false;
+        if (!hwnd || ogMainWndProc) return false;
         DWORD mainThreadId = GetWindowThreadProcessId(SokuLib::window, NULL);
-        // 设置WH_CALLWNDPROC钩子，监视主窗口线程的消息
-        mainHook = SetWindowsHookExW(
+        ogMainWndProc = (WNDPROC)SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)MainWindowProc);
+        /*mainHook = SetWindowsHookExW(
             WH_CALLWNDPROC,
             MainWindowProcHook,
             hInstance,
             mainThreadId
-        );
+        );*/
         mouseHook = SetWindowsHookExW(
             WH_MOUSE,
             MainWindowMouseHook,
             hInstance,
             mainThreadId
         );
-        return mainHook != NULL && mouseHook != NULL;
+        return ogMainWndProc != NULL && mouseHook != NULL;
     }
-    void Vice::UnsintallHooks() {
-        if (mainHook) {
-            UnhookWindowsHookEx(mainHook);
-            mainHook = NULL;
+    void Vice::UninstallHooks(HWND hwnd) {
+        if (ogMainWndProc) {
+            SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)ogMainWndProc);
+            ogMainWndProc = NULL;
         }
         if (mouseHook) {
             UnhookWindowsHookEx(mouseHook);
@@ -389,4 +446,139 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     //    inserting.unlock();
     //}
 
+    void drawObjectHover(GameObjectBase* object, float time = timeGetTime()/1000.f) {
+        using riv::tex::RendererGuard, riv::tex::Color;
+        using SokuLib::v2::BlendOptions, SokuLib::v2::FrameData;
+		if (!object || !object->frameData) return;
+        
+        RendererGuard guard;
+        guard.setRenderMode(0);//save mode
+        auto temp = object->renderInfos; auto& color = *reinterpret_cast<Color*>(&object->renderInfos.color);
+        color.a = 0xFF;
+        float interp = tanhf(sinf(time * 2 * 3.1416f)) + 1.f; interp /= 2.f;
+        switch (object->frameData->renderGroup) {
+        case FrameData::SPRITE:
+        case FrameData::TEXTURE:
+        BLEND_NORMAL:
+            object->renderInfos.shaderType = 3;
+            object->renderInfos.shaderColor = 0x00010001 * int(interp * 0xFF);
+            object->render();//sets render mode by group and blendmode
+            break;
+        default:
+        case FrameData::WITHBLEND:
+            auto blend = object->frameData->blendOptionsPtr;
+			if (!blend) return;
+            object->frameData->blendOptionsPtr = new BlendOptions{ *blend };
+
+            switch (object->frameData->blendOptionsPtr->mode) {
+            case BlendOptions::MULTIPLY:
+                object->frameData->blendOptionsPtr->mode = BlendOptions::ADDITIVE;
+                color = color * interp;
+                //object->frameData->blendOptionsPtr->color = 0xFFFF00FF;
+                break;
+            case BlendOptions::NORMAL:
+                //goto BLEND_NORMAL;
+                color += Color::Green;
+            case BlendOptions::ADDITIVE:
+                object->frameData->blendOptionsPtr->mode = BlendOptions::MULTIPLY;
+                color = color * interp;
+                //object->frameData->blendOptionsPtr->color = 0xFF00FF00;
+                break;
+            }
+            object->render();//sets render mode by group and blendmode
+            delete object->frameData->blendOptionsPtr; object->frameData->blendOptionsPtr = blend;
+        }
+        object->renderInfos = temp;
+
+    }
+
+}
+
+bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
+{using riv::tex::RendererGuard, riv::tex::Vertex;
+    auto ret = (This->*ogSceneBattleRender)();
+    bool d = dirty;
+    if(!viceDisplay|| !dirty || !TryEnterCriticalSection(&info::d3dMutex))
+		return ret;
+    if (!viceSwapChain)
+		return LeaveCriticalSection(&info::d3dMutex), ret;
+
+    LPDIRECT3DSURFACE9 pBackBuffer = NULL, pOrgBuffer = NULL;
+    if (FAILED(viceSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer))
+    || FAILED(SokuLib::pd3dDev->GetRenderTarget(0, &pOrgBuffer))
+    ) {
+        return LeaveCriticalSection(&info::d3dMutex), ret;
+	}
+	SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
+    if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
+    //rendering
+        RendererGuard guard; guard.setRenderMode(1);
+        SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 128, 255), 1.0f, 0);
+        auto target = inter.focus ? inter.focus : inter.getHover();
+        Vertex vertices[4] = {
+                {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	0.0f,	0.0f},
+                {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	0.0f,	1.0f},
+                {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	1.0f,	1.0f},
+                {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	1.0f,	0.0f},
+        };
+        if (target && target->frameData) {
+            Design::Object *texpos = nullptr, *texframe = nullptr;
+		    layout.getById(&texpos, 10); layout.getById(&texframe, 11);
+            if (texpos && texframe) {
+                float x1 = texpos->x2, y1 = texpos->y2, x2 = texframe->x2, y2 = texframe->y2;
+                float w = abs(x2 - x1), h = abs(y2 - y1);
+                auto r = target->frameData->texSize;
+                float dscale = target->frameData->renderGroup==0 ? 2.0f : 1.0f;
+                float scale = 1.0f;//scale = r.x/r.y > w/h ? w/r.x : h/r.y;
+                w = r.x*scale; h = r.y*scale;
+                r = (target->frameData->offset / dscale * scale).to<short>();
+                vertices[0].x = vertices[2].x = (x1 + x2) / 2 - r.x;
+                vertices[1].x = vertices[3].x = (x1 + x2) / 2 + w - r.x;
+                vertices[0].y = vertices[1].y = (y1 + y2) / 2 - r.y;
+                vertices[2].y = vertices[3].y = (y1 + y2) / 2 + h - r.y;
+                for (int i = 0; i < 4; ++i) {
+				    vertices[i].u = target->sprite.vertices[i].u;
+                    vertices[i].v = target->sprite.vertices[i].v;
+                }
+                if (target->frameData->renderGroup==2 && target->frameData->blendOptionsPtr)
+                    vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = target->frameData->blendOptionsPtr->color;
+                                                            
+                guard.setTexture(0);
+                SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
+                guard.setTexture(target->sprite.dxHandle);  
+                SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
+            }
+        }
+
+        layout.render4();
+        
+    //SokuLib::renderer.end();
+		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
+    }
+    
+
+
+
+    SokuLib::pd3dDev->SetRenderTarget(0, pOrgBuffer); pOrgBuffer->Release();
+    //if (*(bool*)0x896b76) {//renderer is on, d3d_ok
+    //if (SokuLib::pd3dDev->TestCooperativeLevel() == D3D_OK) {
+        viceSwapChain->Present(NULL, NULL, NULL, NULL,
+            //D3DPRESENT_FORCEIMMEDIATE
+            D3DPRESENT_INTERVAL_IMMEDIATE
+            //D3DPRESENT_DONOTWAIT
+        );
+    //}
+
+	LeaveCriticalSection(&info::d3dMutex);
+    updateWnd();
+    dirty = false;
+	return ret;
+}
+
+TrampTamper<5> reset_swapchian_shim(0x4151dd);
+void info::Vice::ResetD3D9Dev() {
+	//EnterCriticalSection(&d3dMutex);
+    DestroyD3D();
+    CreateD3D(viceWND);
+    //LeaveCriticalSection(&d3dMutex);
 }

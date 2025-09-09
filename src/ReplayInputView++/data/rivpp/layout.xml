@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout version="4">
+	<!--Wnd size controller-->
+	<mutable id="1" xposition="250" yposition="600"/>
+	
+	<!--Background-->
+	<static id="0" xposition="-20" yposition="30" mirror="0">
+		<image name="back.bmp" xposition="0" yposition="0" width="200" height="60"/>
+	</static>
+	<!--sprite pt1-->
+	<mutable id="10" xposition="0" yposition="250"/>
+		<!--sprite pt2-->
+	<mutable id="11" xposition="200" yposition="450"/>
+	
+	<!--
+	<number id="1000" xposition="76" yposition="94" width="36" height="35" fontspacing="10" textspacing="-7" size="0" floatsize="0">
+		<image name="comboFont.bmp" xposition="0" yposition="0" width="445" height="35"/>
+	</number>
+	-->
+</layout>

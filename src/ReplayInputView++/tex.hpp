@@ -11,6 +11,7 @@
 namespace riv {
 using SokuLib::Renderer;
     int SetRenderMode(int mode);
+	
 
 namespace tex {
 //using SokuLib::CTile;
@@ -21,15 +22,29 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 
 	int create_texture_byid(int offset);
 
-	template <int sx, int sy, int gx, int gy, int ox = 0, int oy = 0>
-	struct TileDesc {
-		//int w, h;
+	struct Tex {
 		int ref = 0;
+		int texId = NULL;
+		inline void create(int id) {
+			++ref;
+			if (texId) return;
+			//D3DXGetImageInfoFromResource(SokuLib::pd3dDev, hDllModule, );
+			texId = create_texture_byid(id);
+		};
+		inline void cancel() {
+			if (--ref > 0 || !texId) return;
+			SokuLib::textureMgr.remove(texId);
+			texId = NULL;
+		}
+		inline void set() const { SokuLib::textureMgr.setTexture(texId, 0); }
+	};
+
+	template <int sx, int sy, int gx, int gy, int ox = 0, int oy = 0>
+	struct TileDesc : public Tex {
 		const int w = sx, h = sy;
 		const int dx = gx, dy = gy;
 		const int col = sx / gx, row = sy / gy;
 		static_assert(sx >= gx && sy >= gy && gx > 0 && gy > 0 || sx<0 && sy<0, "asset para error");
-		int texId = NULL;
 		//void create(int rcId);
 		inline void render(int index, FloatRect vert, Color color = Color::White) {
 			/*float u = ox + (index % col) * gx, v = oy + (index / row) * gy;
@@ -48,18 +63,7 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 		inline void render(int index, Vector2f pos, float alpha) {
 			render(index, { pos.x, pos.y, pos.x + gx, pos.y + gy }, Color::White * alpha);
 		}
-		inline void create(int id) {
-			++ref;
-			if (texId) return;
-			//D3DXGetImageInfoFromResource(SokuLib::pd3dDev, hDllModule, );
-			texId = create_texture_byid(id);
-		};
-		inline void cancel() {
-			if (--ref>0 || !texId) return;
-			SokuLib::textureMgr.remove(texId);
-			texId = NULL;
-		}
-		inline void set() { SokuLib::textureMgr.setTexture(texId, 0); }
+		
 		inline FloatRect getBorder(int index) {
 #ifdef _DEBUG
 			assert(0<=index && index<row*col);
@@ -100,29 +104,48 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
         }
 		inline bool isSoku() const { return mpd && mpd == SokuLib::pd3dDev; }
         // 设置渲染状态，自动保存原始值
-		RendererGuard& setRenderState(D3DRENDERSTATETYPE state, DWORD value);
-		inline void resetRenderState() {
+		RendererGuard& setRenderState(D3DRENDERSTATETYPE state, DWORD value) &;
+		inline void resetRenderState() & {
 			if (!mpd) return;
 			for (auto& state : orgStates) {
 				mpd->SetRenderState(state.first, state.second);
 			}
 			orgStates.clear();
 		}
-		RendererGuard& setRenderMode(int mode);
-		inline void resetRenderMode() {
+		inline void resetRenderState(D3DRENDERSTATETYPE state) & {
+			if (!mpd) return;
+			if (orgStates.find(state) == orgStates.end()) return;
+			mpd->SetRenderState(state, orgStates[state]);
+			orgStates.erase(state);
+		}
+		RendererGuard& setRenderMode(int mode) &;
+		inline void resetRenderMode() & {
 			if (!isSoku() || originalMode<0) return;
 			riv::SetRenderMode(originalMode);
 			originalMode = -1;
 		}
-		RendererGuard& setTexture(LPDIRECT3DBASETEXTURE9 handle, int stage = 0);
-		inline void resetTextures() {
+		RendererGuard& setTexture(LPDIRECT3DTEXTURE9 handle, int stage = 0) &;
+		inline RendererGuard& saveTexture() & {
+			return setTexture(NULL, 0);
+		}
+		inline RendererGuard& setTexture(int texId) & {
+			if (!isSoku()) return *this;
+			if (!texId) return setTexture(NULL, 0);
+			auto phandle = SokuLib::textureMgr.Get(texId);
+			return phandle ? setTexture(*phandle, 0) : *this;
+		}
+		inline RendererGuard& setTexture(const Tex& tex) & {
+			return setTexture(tex.texId);
+		}
+		inline void resetTextures() & {
 			if (!isSoku()) return;
 			for (auto& tex : orgTextures) {
-				SokuLib::textureMgr.setTexture((int)tex.second, tex.first);
+				//SokuLib::textureMgr.setTexture((int)tex.second, tex.first);
+				mpd->SetTexture(tex.first, tex.second);
 			}
 			orgTextures.clear();
 		}
-		inline RendererGuard& setInvert() {
+		inline RendererGuard& setInvert() & {
 			return setRenderState(D3DRS_ALPHABLENDENABLE, TRUE)
 				.setRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR)
 				.setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA)
@@ -132,13 +155,13 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 				//.setRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_INVSRCALPHA)
 			;
 		}
-		inline RendererGuard& setInvert2() {
+		inline RendererGuard& setInvert2() & {
 			return setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVDESTCOLOR)
 					//.setRenderState(D3DRS_DESTBLENDALPHA, D3DBLEND_ONE)
 				;
 		}
         // 恢复所有修改过的状态
-        inline void restore() {
+        inline void restore() & {
 			resetRenderState();
 			resetRenderMode();
 			resetTextures();

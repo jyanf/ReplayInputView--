@@ -2,20 +2,46 @@
 #include <DrawUtils.hpp>
 #include <TextureManager.hpp>
 #include <Player.hpp>
+#include <Scenes.hpp>
+#include <Renderer.hpp>
+#include <Design.hpp>
 #include <dinput.h>
 //#include <ShellScalingApi.h>
 #include <windowsx.h>
 #include <map>
+#include <array>
 #include "../main.hpp"
-
+#include "tex.hpp"
 
 namespace info {
 using SokuLib::v2::GameObjectBase;
 using SokuLib::v2::GameObject;
 using SokuLib::v2::Player;
+using Design = SokuLib::CDesign;
 	//void createViceWindow();
 	//void destroyViceWindow();
 	extern const DIMOUSESTATE& sokuDMouse;//mouse data
+	extern const LPDIRECT3D9& pd3d;
+	extern CRITICAL_SECTION& d3dMutex;
+	extern const LPDIRECT3DSWAPCHAIN9& pd3dSwapChain;
+
+	constexpr int fvckSize = 10;
+	extern std::array<unsigned char, fvckSize> fvckIchirin;//why do you hook `EndScene()`?! I spent a whole day to find out and fix your shit
+	inline void unfvck(LPDIRECT3DDEVICE9& dev) {
+		if (!dev || fvckIchirin[0] != 0x90) return;
+		auto orgf = reinterpret_cast<void*>((*(DWORD(**))dev)[42]);
+		fvckIchirin[0] = TRUE;
+		DWORD old; VirtualProtect(orgf, fvckSize, PAGE_EXECUTE_READ, &old);
+		memcpy(&fvckIchirin, orgf, fvckSize);
+		VirtualProtect(orgf, fvckSize, old, &old);
+	}
+	inline void fvck(LPDIRECT3DDEVICE9& dev) {
+		if (!dev || fvckIchirin[0] == 0x90) return;
+		auto& orgf = *reinterpret_cast<std::array<unsigned char, fvckSize>*>((*(DWORD(**))dev)[42]);
+		DWORD old; VirtualProtect(&orgf, fvckSize, PAGE_EXECUTE_READWRITE, &old);
+		orgf.swap(fvckIchirin);
+		VirtualProtect(&orgf, fvckSize, old, &old);
+	}
 	
 	class Interface {
 		using Anchor = SokuLib::Vector2i;//screen coordinate
@@ -98,33 +124,61 @@ using SokuLib::v2::Player;
 	};
 	
 	class Vice {
-		static HHOOK mainHook, mouseHook;
+		static WNDPROC ogMainWndProc;
+		static HHOOK mouseHook;
 		static HWND viceWND;
-		static LPDIRECT3D9 vicePD3;
-		static LPDIRECT3DDEVICE9 vicePD3D;
+		//static LPDIRECT3D9 vicePD3;
+		//static LPDIRECT3DDEVICE9 vicePD3D;
+		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
+		static Design layout;
+		
 		constexpr static UINT WM_VICE_WINDOW_DESTROY = WM_USER + 0x233;
 		constexpr static UINT WM_VICE_WINDOW_UPDATE = WM_USER + 0x234;
+		constexpr static UINT WM_MAIN_TOGGLECURSOR = WM_USER + 0x235;
 
 		constexpr static int WIDTH = 200, HEIGHT = 500;
 	public:
 		static std::atomic_bool viceDisplay, dirty;
 		static Interface inter;
 
-		void updateWnd();
-		static bool createWnd();
-		static void destroyWnd();
 		static bool CreateD3D(HWND&);
 		inline static bool DestroyD3D();
+		static bool createWnd();
+
+		inline static void showCursor(bool show, int id) {
+			if (!SokuLib::window) return;
+			if (show)
+				PostMessageW(SokuLib::window, WM_MAIN_TOGGLECURSOR, 1, id);
+			else
+				PostMessageW(SokuLib::window, WM_MAIN_TOGGLECURSOR, 0, id);
+		}
+		inline static void updateWnd() {
+			if (!viceWND) return;
+			//UpdateWindow(viceWND);
+			PostMessageW(viceWND, WM_VICE_WINDOW_UPDATE, 0, 0);
+		}
+		inline static void destroyWnd() {
+			if (!viceWND) return;
+			//DestroyWindow(viceWND);
+			//viceWND = NULL;
+			PostMessageW(viceWND, WM_VICE_WINDOW_DESTROY, 0, 0);
+			if (viceDisplay) {
+				showCursor(false, 4);
+			}
+		}
 		inline static void showWnd(HWND hwnd = viceWND) {
 			if (!hwnd) return;
 			ShowWindow(hwnd, SW_SHOWNOACTIVATE);
 			//SetWindowPos(viceWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+			dirty = true;
 			viceDisplay = true;
+			showCursor(true, 3);
 		}
 		inline static void hideWnd(HWND hwnd = viceWND) {
 			if (!hwnd) return;
 			ShowWindow(hwnd, SW_HIDE);
 			viceDisplay = false;
+			showCursor(false, 2);
 		}
 		inline static bool toggleWnd() {
 			if (!viceWND) {
@@ -140,22 +194,33 @@ using SokuLib::v2::Player;
 		}
 		static DWORD WINAPI WindowMain(LPVOID params);
 		static LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
-		static LRESULT CALLBACK MainWindowProcHook(int nCode, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK MainWindowProc(HWND, UINT, WPARAM wParam, LPARAM lParam);
 		static LRESULT CALLBACK MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 		static bool InstallHooks(HINSTANCE hInstance, HWND hwnd);
-		static void UnsintallHooks();
+		static void UninstallHooks(HWND hwnd = SokuLib::window);
 		Vice() {
 			//createWnd();
 			/*Sleep(100);*/
 			//hideWnd();
 			inter.cursor = { -1, -1 };
 			inter.focus = nullptr;
+			layout.loadResource("rivpp/layout.dat");
 		}
 		~Vice() {
 			destroyWnd();
+			layout.clear();
+			layout.objectMap.clear();
 		}
+		static bool __fastcall CBattle_Render(SokuLib::Battle* This);
+		static void ResetD3D9Dev();
 	};
 
-
+	void drawObjectHover(GameObjectBase* object, float time);
 
 }
+
+typedef bool (SokuLib::Battle::* VBattleRender)();
+extern VBattleRender ogSceneBattleRender;
+typedef bool (*ResetD3D9Dev)();
+extern TrampTamper<5> reset_swapchian_shim;
+
