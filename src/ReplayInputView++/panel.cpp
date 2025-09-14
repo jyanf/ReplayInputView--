@@ -23,9 +23,10 @@ namespace riv::pnl {
 
 		input.prev = input.cur;
 		input.cur.update(cur);
-		input.one.update<true>(cur);
+		input.one.check_one(player.inputData);
+		input.buf.check_buf(player.inputData);
 
-		input.record.update(input.cur, input.prev);
+		input.record.update(input.cur, input.prev, input.buf | input.one);
 
 
 	}
@@ -67,10 +68,12 @@ namespace riv::pnl {
 		texBtn.render(13, { x + d + 54,	y + 24 }, input.cur.s ? 1.0 : 0.18);
 		//guard.setRenderMode(2);
 		guard.setInvert();
-		for (int i = 8; i < 14; ++i) {
-			if (!input.one[i]) continue;
-			float x2 = x - d + (i - 8) / 3 * 2 * d + (i - 8) % 3 * 27, y2 = y + (i - 8) / 3 * 24;
-			texBtn.render(14, { x2-2.5f, y2-2.5f, x2+3+32, y2+3+32}, Color::White);
+		for (int i = Inputs::Rec::A; i <= Inputs::Rec::S; ++i) {
+			float x2 = x - d + (i - 9) / 3 * 2 * d + (i - 9) % 3 * 27, y2 = y + (i - 9) / 3 * 24;
+			if (input.one[i])
+				texBtn.render(14, { x2-2.5f, y2-2.5f, x2+3+32, y2+3+32}, Color::White);
+			else if (input.buf[i])
+				texBtn.render(15, { x2, y2 }, 1.0f);
 		}
 	}
 
@@ -85,10 +88,13 @@ namespace riv::pnl {
 		for (int i = 0; i < input.record.len; ++i) {
 			int j = (input.record.base + (dir > 0 ? input.record.len - 1 - i : i)) % _countof(input.record.id);
 			int id = input.record.id[j];
-			if(id)
-				texBtn.render(id - 1, { x - i * dir * 24 - texBtn.dx / 2, y }, 
-					dir > 0 ? 1.0 - max(i-6, 0) * 0.25 : 1.0 - max(input.record.len - i - 7, 0) * 0.25
-					);
+			if (id) {
+				float alpha = dir > 0 ? 1.0 - max(i - 6, 0) * 0.25 : 1.0 - max(input.record.len - i - 7, 0) * 0.25;
+				if (id != Inputs::Rec::NONE) {
+					alpha *= input.record.expire[j] ? 1.0f : 0.5f;
+				}
+				texBtn.render(id - 1, Vector2f{ x - i * dir * 24 - texBtn.dx / 2, y }, alpha);
+			}
 		}
 	}
 
@@ -109,18 +115,43 @@ namespace riv::pnl {
 		}
 	}
 
-	template <bool oneshot>
+	void Inputs::Cmd::check_buf(const Player::InputInfo& input) {//check btn active
+		val = 0;
+		const KeyInputLight& keys = input.keyInput;
+		//update<true>(keys);
+		const KeyInputLight& buf = input.bufferedKeyInput;
+		a |= keys.a == 2 || 0 < input.keyUpA && input.keyUpA <= 2 || buf.a;
+		b |= keys.b == 2 || 0 < input.keyUpB && input.keyUpB <= 2 || buf.b;
+		c |= keys.c == 2 || 0 < input.keyUpC && input.keyUpC <= 2 || buf.c;
+		s |= 0 < keys.spellcard && keys.spellcard <= 2 || buf.spellcard;
+
+		d |= keys.d && (keys.horizontalAxis || keys.verticalAxis);
+
+	}
+	void Inputs::Cmd::check_one(const Player::InputInfo& input) {//check btn active
+		val = 0;
+		const KeyInputLight& keys = input.keyInput;
+		//update<true>(keys);
+		const KeyInputLight& buf = input.bufferedKeyInput;
+		
+		a = keys.a == 1;
+		b = keys.b == 1;
+		c = keys.c == 1;
+		d = keys.d == 1;
+		ch = keys.changeCard == 4 && buf.changeCard && input.bufferTimer == 9;//make sure the first frame
+		s = keys.spellcard == 1;
+	}
+
 	void Inputs::Cmd::update(const KeyInputLight& keys) {
 		val = 0;
 		if (keys.verticalAxis < 0)
-			up = oneshot ? abs(keys.verticalAxis) == 1 : true;
+			up = true;
 		else if (keys.verticalAxis > 0)
-			dn = oneshot ? abs(keys.verticalAxis) == 1 : true;
-
+			dn = true;
 		if (keys.horizontalAxis < 0)
-			lf = oneshot ? abs(keys.horizontalAxis) == 1 : true;
+			lf = true;
 		else if (keys.horizontalAxis > 0)
-			rt = oneshot ? abs(keys.horizontalAxis) == 1 : true;
+			rt = true;
 
 		auto dir4 = val & Comb::DIR4;
 		if ((dir4 ^ Comb::LU & Comb::DIR4) == 0) val ^= Comb::LU;
@@ -132,24 +163,36 @@ namespace riv::pnl {
 		assert((dir8 & (dir8 - 1)) == 0);//only one dir or nothing
 #endif // _DEBUG
 
-		if (keys.a > 0) a = oneshot ? keys.a == 1 : true;
-		if (keys.b > 0) b = oneshot ? keys.b == 1 : true;
-		if (keys.c > 0) c = oneshot ? keys.c == 1 : true;
-		if (keys.d > 0) d = oneshot ? keys.d == 1 : true;
-		if (keys.changeCard > 0) ch = oneshot ? keys.changeCard == 1 : true;
-		if (keys.spellcard > 0) s = oneshot ? keys.spellcard == 1 : true;
+		if (keys.a > 0) a = true;
+		if (keys.b > 0) b = true;
+		if (keys.c > 0) c = true;
+		if (keys.d > 0) d = true;
+		if (keys.changeCard > 0) ch = true;
+		if (keys.spellcard > 0) s = true;
 	}
-	void Inputs::Rec::update(Cmd cur, Cmd prev) {
-		for (int i = 0; i < 14; ++i) {
+	void Inputs::Rec::update(Cmd cur, Cmd prev, Cmd act) {
+		for (int i = UP; i <= S; ++i) {
 			if (!cur[i] || prev[i]) continue;
 			int index = (len + base) % _countof(id);
-			id[index] = ID(i + 1);
+			id[index] = ID(i);
+			expire[index] = 14;
 			if (len >= _countof(id)) {
 				base = (base + 1) % _countof(id);
 			}
 			else {
 				++len;
 			}
+		}
+		for (int i = len-1; i >= 0; --i) {
+			int index = (base + i) % _countof(id);
+			if (id[index] == NONE || expire[index]<1) continue;
+			//--expire[i];
+			bool unused = cur[id[index]];
+			expire[index] -= !unused;
+			if (unused) {
+				cur.val ^= 1 << (id[index]-1);
+			}
+			//expire[i] -= !act[id[i]-1];
 		}
 	}
 

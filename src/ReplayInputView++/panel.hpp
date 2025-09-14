@@ -46,9 +46,13 @@ using SokuLib::KeyInputLight;
 				bool s : 1;
 			};
 			unsigned short val = 0;
-			template<bool oneshot = false> void update(const KeyInputLight&);
-			inline bool operator[](int id) const { return val >> id & 1; }
-		} cur, prev, one;
+			void update(const KeyInputLight&);
+			void check_one(const Player::InputInfo&);
+			void check_buf(const Player::InputInfo&);
+			inline bool operator[](int id) const { return val >> (id-1) & 1; }
+			inline Cmd operator |(Cmd other) const { other.val |= val; return other; }
+			inline Cmd operator &(Cmd other) const { other.val &= val; return other; }
+		} cur, prev, one, buf;
 		//keyup, bufTimer
 		struct Rec{
 			enum ID : unsigned char{
@@ -56,10 +60,10 @@ using SokuLib::KeyInputLight;
 				UP, DN, LF, RT, LU, RU, RD, LD,
 				A, B, C, D, CH, S,
 			} id[10] = {NONE};
-			bool expire[10] = { 0 };
+			int expire[10] = { 0 };
 			int base = 0;
 			int len = 0;
-			void update(Cmd, Cmd);
+			void update(Cmd, Cmd, Cmd);
 		} record;
 		inline void reset() {
 			memset(&cur, 0, sizeof(Cmd));

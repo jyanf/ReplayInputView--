@@ -63,6 +63,9 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 		inline void render(int index, Vector2f pos, float alpha) {
 			render(index, { pos.x, pos.y, pos.x + gx, pos.y + gy }, Color::White * alpha);
 		}
+		inline void render(int index, Vector2f pos, Color color) {
+			render(index, { pos.x, pos.y, pos.x + gx, pos.y + gy }, color);
+		}
 		
 		inline FloatRect getBorder(int index) {
 #ifdef _DEBUG

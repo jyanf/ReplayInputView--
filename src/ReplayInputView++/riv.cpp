@@ -391,14 +391,16 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_display_inputs = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
-			&& check_key(toggle_keys.decelerate) || (old_decelerate = false)) {
+			&& !riv.paused
+			&& check_key(toggle_keys.decelerate) || (old_decelerate = false)
+		) {
 			if (old_decelerate) {}
 			else if (slowdown_method) {//
 				if (riv.forwardStep > 1) {
 					riv.forwardCount = 1;
 					riv.forwardStep -= 1;
 				}
-				else {
+				else if (riv.forwardCount > 0) {//fix pause dece div0 crash
 					riv.forwardCount += 1;
 					riv.forwardStep = 1;
 				}
@@ -413,7 +415,9 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_decelerate = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH 
-			&& check_key(toggle_keys.accelerate) || (old_accelerate = false)) {
+			&& !riv.paused
+			&& check_key(toggle_keys.accelerate) || (old_accelerate = false)
+		) {
 			if (old_accelerate) {}
 			else if (slowdown_method) {
 				if (riv.forwardCount > 1) {
@@ -425,6 +429,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 					riv.forwardStep += 1;
 				}
 				riv.forwardIndex = 0;
+				riv.paused = false;
 			}
 			else {
 				//*delay -= 4;

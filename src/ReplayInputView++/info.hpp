@@ -171,14 +171,14 @@ using Design = SokuLib::CDesign;
 			ShowWindow(hwnd, SW_SHOWNOACTIVATE);
 			//SetWindowPos(viceWND, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 			dirty = true;
+			if (!viceDisplay) showCursor(true, 3);
 			viceDisplay = true;
-			showCursor(true, 3);
 		}
 		inline static void hideWnd(HWND hwnd = viceWND) {
 			if (!hwnd) return;
 			ShowWindow(hwnd, SW_HIDE);
+			if (viceDisplay) showCursor(false, 2);
 			viceDisplay = false;
-			showCursor(false, 2);
 		}
 		inline static bool toggleWnd() {
 			if (!viceWND) {
