@@ -3,6 +3,8 @@
 //
 #include "main.hpp"
 #include <SokuLib.hpp>
+#include <iostream>
+using std::cout, std::cerr, std::endl;
 
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "winmm.lib")
@@ -87,10 +89,10 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 		//0x41532a 50				PUSH    EAX		--> NOP
 		//0x41532b a1 84 0f 8a 00	MOV     EAX, [D3DPresent_paramters.hDeviceWindow]
 		//0x415330 57				PUSH    EDI		--> NOP
-	auto popr = reinterpret_cast<unsigned char*>(0x415324); popr[0] = 0x6A; popr[1] = 0x00;
-	popr = reinterpret_cast<unsigned char*>(0x415328); popr[0] = 0x6A; popr[1] = 0x00;
-	popr = reinterpret_cast<unsigned char*>(0x41532a); popr[0] = 0x90;
-	popr = reinterpret_cast<unsigned char*>(0x415330); popr[0] = 0x90;
+	auto popr = reinterpret_cast<byte*>(0x415324); popr[0] = 0x6A; popr[1] = 0x00;
+	popr = reinterpret_cast<byte*>(0x415328); popr[0] = 0x6A; popr[1] = 0x00;
+	popr = reinterpret_cast<byte*>(0x41532a); popr[0] = 0x90;
+	popr = reinterpret_cast<byte*>(0x415330); popr[0] = 0x90;
 
 	//CBattleManager_UpdateMovement
 		//JMP FUN_0046e010; 004796c6: E9 4549FFFF -> CALL

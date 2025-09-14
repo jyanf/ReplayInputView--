@@ -1,5 +1,5 @@
 #pragma once
-#include <SokuLib.hpp>
+#include <Tamper.hpp>
 #include <Shlwapi.h>
 #include <filesystem>
 
@@ -50,4 +50,19 @@ public:
 
 
 
+};
+
+#include "config.hpp"
+//extern Config<bool, int, std::string, SokuLib::Vector2f> iniBuffer;
+using namespace cfg::ex;
+inline auto iniBuffer = cfg::Config{
+	"test.ini",
+	addSection<"Panel">(
+		addInteger<"PosX">(123)
+	),
+	addSection<"Panel2">(
+		addInteger<"PosY">(124),
+		addPoint<"Pos">(),
+		addString<"Name">()
+	),
 };

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout version="4">
 	<!--Wnd size controller-->
-	<mutable id="1" xposition="250" yposition="600"/>
+	<mutable id="1" xposition="240" yposition="600"/>
 	
 	<!--Background-->
 	<static id="0" xposition="-20" yposition="30" mirror="0">
