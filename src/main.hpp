@@ -55,14 +55,16 @@ public:
 #include "config.hpp"
 //extern Config<bool, int, std::string, SokuLib::Vector2f> iniBuffer;
 using namespace cfg::ex;
-inline auto iniBuffer = cfg::Config{
+inline auto iniBuffer = Config{
 	"test.ini",
 	addSection<"Panel">(
 		addInteger<"PosX">(123)
 	),
-	addSection<"Panel2">(
-		addInteger<"PosY">(124),
-		addPoint<"Pos">(),
-		addString<"Name">()
+	addSection<"Panel2">(addBool<"Enabled">(false)
+		,addInteger<"PosY">(124)
+		,addPoint<"Pos">()
+		,addString<"Name">()
+		//addField<"What's", std::string>()
 	),
 };
+//auto& test= iniBuffer.get<"Panel2">()["Pos"_l].value;

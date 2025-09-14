@@ -1,12 +1,12 @@
-//template<typename T, typename... Ts>
-//concept TypesCheck = (std::same_as<T, Ts> || ...);
-
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <filesystem>
+
 #include <Windows.h>
+
 #include <Vector2.hpp>
-#include <string_view>
+
 namespace cfg {
     
     using string = std::string;
@@ -14,11 +14,10 @@ namespace cfg {
     template <size_t N> using cstringarr = const string::value_type[N];
     using string_view = std::basic_string_view<std::string::value_type>;
 
-//--------------------------------
-// 定义字面量
-//--------------------------------
+    //--------------------------------
+    // 定义字面量 literal conversion
+    //--------------------------------
     namespace _string_literal {
-        
         template<size_t N>
         struct _literal_helper {
             string::value_type str[N];
@@ -53,24 +52,56 @@ namespace cfg {
             return std::get<find_index<Key, Fields...>()>(t);
         }
 
-
+    }
+    template<size_t N> using Literal = _string_literal::_literal_helper<N>;
+    namespace _static_checks {
         template<typename... Fields> struct keys_are_unique;
         template<> struct keys_are_unique<> : std::true_type {};
         template<typename F, typename... Rest>
         struct keys_are_unique<F, Rest...>
             : std::bool_constant<((!(F::str_view == Rest::str_view)) && ...) && keys_are_unique<Rest...>::value> {
         };
-
     }
+    //--------------------------------
+    // 定义抽象类 define value base for adapter types
+    //--------------------------------
+    namespace _supported_types {
+        template<typename Var>
+        struct ValueBase {
+            using Base = ValueBase<Var>;
+            using value_type = Var;
 
-    template<size_t N> using Literal = _string_literal::_literal_helper<N>;
+            value_type value;
+            ValueBase(value_type v) : value(std::move(v)) {}
+            operator value_type() const { return value; }
+            virtual void read(const cstring& path, const cstring& section, const cstring& key) = 0;
+            virtual void write(const cstring& path, const cstring& section, const cstring& key) const = 0;
 
-    template<Literal Key, typename Adapter>
-    struct Field {
+            value_type operator=(value_type v) { value = v; }
+        };
+    }
+    namespace _static_checks {
+        template <typename Derived>
+        struct _derives_from_ValueBase {
+        private:
+            static auto test(...) -> std::false_type;
+            template <typename U>
+            static auto test(const _supported_types::ValueBase<U>*) -> std::true_type;
+        public:
+            static constexpr bool value = decltype(test(std::declval<Derived*>()))::value;
+        };
+        template <typename T>
+        concept AdapterType = _derives_from_ValueBase<T>::value;
+    }
+    //--------------------------------
+    // 定义键值对
+    //--------------------------------
+    template<Literal Key, typename Adapter> //requires (_static_checks::AdapterType<Adapter>)
+    struct Field { static_assert(_static_checks::AdapterType<Adapter>, "Template arg must derive from ValueBase<>");
+        using value_type = Adapter::value_type;
         static constexpr auto str = Key;
         static constexpr string_view str_view = Key.str;
         Adapter value;
-        using value_type = Adapter::value_type;
 
         //Field(const Adapter& a) : value(a) {}
         //Field(Adapter&& a = Adapter()) : value(std::move(a)) {}
@@ -97,13 +128,21 @@ namespace cfg {
         }
     };
     //template <Literal Key, typename Adapter> Field(Adapter) -> Field<Key, Adapter>;
-
-    template<Literal Name, typename... Fields>
-    struct Section {
+    namespace _static_checks {
+        template <typename T> struct is_field : std::false_type {};
+        template <Literal Key, typename Adapter> struct is_field<Field<Key, Adapter>> : std::true_type {};
+        template <typename T>
+        concept FieldType = is_field<T>::value;
+    }
+    //--------------------------------
+    // 定义分节类
+    //--------------------------------
+    template<Literal Name, typename... Fields> //requires (_static_checks::FieldType<Fields> && ...) //this works but causes IDE error
+    struct Section { static_assert((_static_checks::FieldType<Fields> && ...), "Template args must be Field<>");
+        static_assert(_static_checks::keys_are_unique<Fields...>::value, "Duplicate Field keys in Section!");
         static constexpr auto str = Name;
         static constexpr string_view str_view = Name.str;
         //static constexpr _string_literal::_literal<Name> literal{};
-        static_assert(_string_literal::keys_are_unique<Fields...>::value, "Duplicate Field keys in Section!");
         std::tuple<Fields...> fields;
         
         Section(Fields... fs) : fields(std::move(fs)...) {}
@@ -117,6 +156,7 @@ namespace cfg {
         auto& get() {
             return _string_literal::get_field<key>(fields);
         }
+
         void read(const cstring& path) {
             std::apply([&](auto&... f) { (f.read(path, str_view.data()), ...); }, fields);
         }
@@ -125,9 +165,18 @@ namespace cfg {
         }
     };
 
-    template<typename... Sections>
-    class Config {
-        static_assert(_string_literal::keys_are_unique<Sections...>::value, "Duplicate Section names in Config!");
+    namespace _static_checks {
+        template <typename T> struct is_section : std::false_type {};
+        template <Literal Name, typename... Fields> struct is_section<Section<Name, Fields...>> : std::true_type {};
+        template <typename T>
+        concept SectionType = is_section<T>::value;
+    }
+    //--------------------------------
+    // 定义接口类
+    //--------------------------------
+    template<typename... Sections> // requires (_static_checks::SectionType<Sections> && ...) //this works but causes IDE error
+    class Config { static_assert((_static_checks::SectionType<Sections> && ...), "Template args must be Section<>");
+        static_assert(_static_checks::keys_are_unique<Sections...>::value, "Duplicate Section names in Config!");
         std::filesystem::path path;
         std::tuple<Sections...> sections;
     public:
@@ -154,25 +203,14 @@ namespace cfg {
         inline auto getPath() const { return path; }
     };
     //template <Literal Name, typename... Fs> Section(Fs...) -> Section<Name, Fs...>;
-    namespace _support_types {
-        template<typename Var>
-        struct ValueBase {
-            using Base = ValueBase<Var>;
-            using value_type = Var;
-
-            value_type value;
-            ValueBase(value_type v) : value(std::move(v)) {}
-            operator value_type() const { return value; }
-            virtual void read(const cstring& path, const cstring& section, const cstring& key) = 0;
-            virtual void write(const cstring& path, const cstring& section, const cstring& key) const = 0;
-
-            value_type operator=(value_type v) { value = v; }
-        };
-        //--------------------------------
-        // 自定义类型适配
-        //--------------------------------
+   
+    //--------------------------------
+    // 自定义类型适配 user defined adapters
+    //--------------------------------
+    namespace _supported_types {
         struct Integer : ValueBase<int> {
             Integer(int v = 0) : Base(v) {}
+            Integer(bool v = 0) : Base(v) {}
 
             void read(const cstring& path, const cstring& section, const cstring& key) override {
                 value = GetPrivateProfileIntA(section, key, value, path);
@@ -211,6 +249,7 @@ namespace cfg {
         };
     }
     namespace ex {
+        template<typename... Sections> using Config = cfg::Config<Sections...>;
         template <Literal Name, typename... Fs>
         auto addSection(Fs&&... fs) {
             return Section<Name, std::decay_t<Fs>...>(std::forward<Fs>(fs)...);
@@ -225,14 +264,15 @@ namespace cfg {
             return Field < Literal{key}, Adapter > (std::forward<U>(v));
         }*/
         template<Literal key, typename Adapter>
-        auto addField(Adapter&& v) {
-            //using Adapter = _support_types::to_adapter<U>::type;
+        auto addField(Adapter&& v = Adapter()) {
+            //using Adapter = _supported_types::to_adapter<U>::type;
             return Field<key, Adapter>(std::forward<Adapter::value_type>(v));
         }
-        template<Literal key> using addInteger = Field<key, _support_types::Integer>;
-        template<Literal key> using addString = Field<key, _support_types::String>;
-        template<Literal key> using addPoint = Field<key, _support_types::Point>;
 
+        template<Literal key> using addInteger = Field<key, _supported_types::Integer>;
+        template<Literal key> using addString = Field<key, _supported_types::String>;
+        template<Literal key> using addPoint = Field<key, _supported_types::Point>;
+        template<Literal key> using addBool = Field<key, _supported_types::Integer>;
         
         template<Literal S>
         constexpr _string_literal::_literal<S> operator""_l() {
@@ -247,7 +287,7 @@ namespace cfg {
 //inline auto tester = cfg::Config{
 //    "ini",
 //    cfg::addSection<"s0">(
-//        //cfg::addField<"nihao2">(123)
+//        //cfg::addField<"nihao2", Integer>(123)
 //        cfg::addField<"f0">(123)
 //    ),
 //};
