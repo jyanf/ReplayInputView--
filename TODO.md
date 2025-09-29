@@ -1,3 +1,9 @@
+随机种子遭到影响，初始化时固定54
+
+SokuLib::appendDatFile固定随机数种子
+
+appendDatFile必须在setup之前做
+
 【！】
 
 无windows resizer情况下：切全屏前后未重置交换链导致崩溃、全屏无法创建swapchain、黑边得到利用？进独占全屏前主动隐藏（或重置交换链？）
@@ -20,7 +26,7 @@ box渲染次序问题：拆解drawPlayerBoxes
 
 颜色微调：墨绿×?
 
-第一帧仍然需要break
+~~第一帧仍然需要break~~
 
 ~~replay倒放情况~~
 

@@ -4,7 +4,7 @@
 #include <filesystem>
 
 extern HMODULE hDllModule;
-extern std::filesystem::path configPath, dataPath;
+extern std::filesystem::path basePath;
 extern const int &battleCounter, &globalTimer, &gameFPS;
 //iniBuffer;
 
@@ -55,16 +55,124 @@ public:
 #include "config.hpp"
 //extern Config<bool, int, std::string, SokuLib::Vector2f> iniBuffer;
 using namespace cfg::ex;
-inline auto iniBuffer = Config{
-	"test.ini",
-	addSection<"Panel">(
-		addInteger<"PosX">(123)
+
+#include <array>
+template<typename Adapter>
+struct MultiField : cfg::_supported_types::ValueBase<bool> {
+	std::array<Adapter, PLAYERS_NUMBER> fields;
+	MultiField(std::initializer_list<typename Adapter::value_type> s) : Base(true) {
+		//assert(s.size() == PLAYERS_NUMBER);
+		std::copy(s.begin(), s.begin()+PLAYERS_NUMBER, fields.begin());
+	}
+	Adapter::value_type& operator[](int i) {
+		return fields[i].value;
+	}
+	void read(const cstring& path, const cstring& section, const cstring& key) override {
+		for (int i = 0; i < fields.size(); ++i) {
+			char buf[24];
+			sprintf(buf, key, i + 1);
+			fields[i].read(path, section, buf);
+		}
+	}
+	void write(const cstring& path, const cstring& section, const cstring& key) const override {
+		for (int i = 0; i < fields.size(); ++i) {
+			char buf[24];
+			sprintf(buf, key, i + 1);
+			fields[i].write(path, section, buf);
+		}
+	}
+};
+
+inline auto iniProxy = Config{
+#ifdef INI_FILENAME
+	INI_FILENAME, 
+#else
+	L"ReplayInputView++.ini",
+#endif // INI_FILENAME
+	addSection<"Assets">(
+		addString<"File">(
+	#ifdef DAT_FILENAME
+		DAT_FILENAME
+	#else
+		"ReplayInputView++.dat"
+	#endif // DAT_FILENAME
+		)
 	),
-	addSection<"Panel2">(addBool<"Enabled">(false)
-		,addInteger<"PosY">(124)
-		,addPoint<"Pos">()
-		,addString<"Name">()
-		//addField<"What's", std::string>()
+	addSection<"Debug">(
+		addBool<"Enabled">(false)
+	),
+	addSection<"InputPanel">(
+		addField<"p%d.Enabled", MultiField<cfg::_supported_types::Integer>>({
+			false, false,
+			false, false
+		}),
+		addField<"p%d.Position", MultiField<cfg::_supported_types::Point>>({
+			{60, 340}, {410, 340},
+			{60, 360}, {410, 360},
+		})
+		//addBool<"p1.Enabled">(false), addBool<"p2.Enabled">(false)
+		//,addPoint<"p1.Position">({60, 340})
+		//,addPoint<"p2.Position">({410, 340})
+#ifdef SUIT_4_PLAYERS
+		//,addBool<"p3.Enabled">(false), addBool<"p4.Enabled">(false)
+		//,addPoint<"p3.Position">({60, 360})
+		//,addPoint<"p4.Position">({410, 360})
+#endif // SUIT_4_PLAYERS
+	),
+	addSection<"InputRecord">(
+		addField<"p%d.Enabled", MultiField<cfg::_supported_types::Integer>>({
+			false, false,
+			false, false
+		})
+		,addField<"p%d.Position", MultiField<cfg::_supported_types::Point>>({
+			{0, 300}, {393, 300},
+			{0, 280}, {393, 280},
+		})
+		//addBool<"p1.Enabled">(false), addBool<"p2.Enabled">(false)
+		//,addPoint<"p1.Position">({0, 300})
+		//,addPoint<"p2.Position">({393, 300})
+#ifdef SUIT_4_PLAYERS
+		//,addBool<"p3.Enabled">(false), addBool<"p4.Enabled">(false)
+		//,addPoint<"p3.Position">({0, 280})
+		//,addPoint<"p4.Position">({393, 280})
+#endif // SUIT_4_PLAYERS
+	),
+	addSection<"BoxDisplay">(addBool<"Enabled">(false)
+		,addBool<"Floor">(true)
+		,addField<"p%d.Character", MultiField<cfg::_supported_types::Integer>>({
+			true, true,
+			true, true
+		})
+		,addField<"p%d.Bullets", MultiField<cfg::_supported_types::Integer>>({
+			true, true,
+			true, true
+		})
+	),
+	addSection<"JuggleMeter">(addBool<"Enabled">(false)),
+
+	addSection<"Keys">(
+		addInteger<"display_boxes">(0x3E),
+		addInteger<"display_info">(0x40),
+		addInteger<"display_inputs">(0x41),
+		addInteger<"decelerate">(0x43),
+		addInteger<"accelerate">(0x44),
+		addInteger<"stop">(0x57),
+		addInteger<"framestep">(0x58)
+	),
+	addSection<"FrameRate">(addInteger<"AdjustmentMethod">(1)),
+	addSection<"ColorProfile">(//Color(ARGB)
+		addInteger<"CollisionBox">()//yellow
+		,addInteger<"Hitbox.Melee">()//red
+			,addInteger<"HitBox.Bullet">()
+			,addInteger<"Hitbox.Grab">()//orange
+		,addInteger<"HurtBox.Character">()//green
+			,addInteger<"HurtBox.Counter">()//cyan
+			,addInteger<"Hurtbox.Guard">()//white
+			,addInteger<"Hurtbox.Parry">()//purple
+		,addInteger<"Hurtbox.Bullet">()//green
+			,addInteger<"HurtBox.Entity">()//cyan
+			,addInteger<"Hurtbox.Reflector">()//blue
+			,addInteger<"Hurtbox.Gap">()//Magenta
+		,addInteger<"FloorBox">()//gray
 	),
 };
-//auto& test= iniBuffer.get<"Panel2">()["Pos"_l].value;

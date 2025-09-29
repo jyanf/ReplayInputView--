@@ -54,33 +54,28 @@ inline static void traversing_players(const BattleManager* This,
 }
 
 	RivControl::RivControl() {
-		auto path = configPath.c_str();
 		for (int i = 0; i < PLAYERS_NUMBER; ++i) {
 			//if (!manager->enabledPlayers[i]) continue;
 			panels[i] = new pnl::Panel(i%2 ? -1 : 1);
-
-			WCHAR buf[24], buf2[32];
-			wsprintfW(buf, L"p%d.Enabled", i + 1);
-			bool eni = GetPrivateProfileIntW(L"InputPanel", buf, 0, path) != 0;
-			bool enr = GetPrivateProfileIntW(L"RecordPanel", buf, 0, path) != 0;
+			bool eni = iniProxy["InputPanel"_l]["p%d.Enabled"_l].value[i] != 0;
+			bool enr = iniProxy["InputRecord"_l]["p%d.Enabled"_l].value[i] != 0;
 			panels[i]->enableState = (eni^enr ? 1 : 0) + enr * 2;//0, 1, 3, 2
 
-			float x, y;
-			wsprintfW(buf, L"p%d.Position", i + 1);
-			GetPrivateProfileStringW(L"InputPanel", buf, L"", buf2, 24, path);//
-			if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
-				panels[i]->setPosI(SokuLib::Vector2f{ x, y });
-			GetPrivateProfileStringW(L"RecordPanel", buf, L"", buf2, 24, path);//
-			if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
-				panels[i]->setPosR(SokuLib::Vector2f{ x, y });
-				
+			//float x, y;
+			//wsprintfW(buf, L"p%d.Position", i + 1);
+			//GetPrivateProfileStringW(L"InputPanel", buf, L"", buf2, 24, path);//
+			//if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
+				panels[i]->setPosI(iniProxy["InputPanel"_l]["p%d.Position"_l].value[i]);
+			//GetPrivateProfileStringW(L"RecordPanel", buf, L"", buf2, 24, path);//
+			//if (swscanf(buf2, L"%f,%f", &x, &y) == 2)
+				panels[i]->setPosR(iniProxy["InputRecord"_l]["p%d.Position"_l].value[i]);
 		}
 		forwardCount = 1;
 		forwardStep = 1;
 		forwardIndex = 0;
 
-		hitboxes = GetPrivateProfileIntW(L"HitboxDisplay", L"Enabled", 0, path) != 0;
-		untech = GetPrivateProfileIntW(L"JuggleMeter", L"Enabled", 0, path) != 0;
+		hitboxes = iniProxy["BoxDisplay"_l]["Enabled"_l] != 0;
+		untech = iniProxy["JuggleMeter"_l]["Enabled"_l] != 0;
 
 		paused = false;
 
@@ -286,10 +281,6 @@ using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
 template<int i>
 BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((char*)This + ogBattleMgrSize[i]);
-	if (std::filesystem::is_regular_file(dataPath)) {
-		SokuLib::appendDatFile(dataPath.string().c_str());
-		dataPath.clear();
-	}
 #ifdef SUIT_4_PLAYERS
 	//This->characterManager3 = This->characterManager4 = nullptr; //gamedata manager
 #endif // SUIT_4_PLAYERS
@@ -311,6 +302,7 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 		riv.enabled = false;
 
 	if (riv.enabled) {
+		iniProxy.load();
 		//riv::box::Texture_armorBar = riv::tex::create_texture_byid(8);
 		riv::box::ArmorBar.create(8);
 		riv::box::Texture_armorLifebar = riv::tex::create_texture_byid(12);
@@ -318,20 +310,18 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 
 		new(&riv)RivControl();//placement new
 
-		//riv.show_debug = GetPrivateProfileIntW(L"Debug", L"Enabled", 0, path) != 0;
-
-		auto path = configPath.c_str();
-		slowdown_method = GetPrivateProfileIntW(L"Framerate", L"AdjustmentMethod", 1, path);
+		riv.show_debug = iniProxy["Debug"_l]["Enabled"_l] != 0;
+		slowdown_method = iniProxy["FrameRate"_l]["AdjustmentMethod"_l];
 		if (slowdown_method != 0 && slowdown_method != 1) {
 			slowdown_method = 1;
 		}
-		toggle_keys.display_boxes = GetPrivateProfileIntW(L"Keys", L"display_boxes", 0, path);
-		toggle_keys.display_info = GetPrivateProfileIntW(L"Keys", L"display_info", 0, path);
-		toggle_keys.display_inputs = GetPrivateProfileIntW(L"Keys", L"display_inputs", 0, path);
-		toggle_keys.decelerate = GetPrivateProfileIntW(L"Keys", L"decelerate", 0, path);
-		toggle_keys.accelerate = GetPrivateProfileIntW(L"Keys", L"accelerate", 0, path);
-		toggle_keys.stop = GetPrivateProfileIntW(L"Keys", L"stop", 0, path);
-		toggle_keys.framestep = GetPrivateProfileIntW(L"Keys", L"framestep", 0, path);
+		toggle_keys.display_boxes	=	iniProxy["Keys"_l]["display_boxes"_l];
+		toggle_keys.display_info	=	iniProxy["Keys"_l]["display_info"_l];
+		toggle_keys.display_inputs	=	iniProxy["Keys"_l]["display_inputs"_l];
+		toggle_keys.decelerate		=	iniProxy["Keys"_l]["decelerate"_l];
+		toggle_keys.accelerate		=	iniProxy["Keys"_l]["accelerate"_l];
+		toggle_keys.stop			=	iniProxy["Keys"_l]["stop"_l];
+		toggle_keys.framestep		=	iniProxy["Keys"_l]["framestep"_l];
 
 		riv::box::setDirty(false);
 	}
