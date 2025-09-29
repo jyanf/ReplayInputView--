@@ -68,17 +68,24 @@ namespace cfg {
     namespace _supported_types {
         template<typename Var>
         struct ValueBase {
+            using cstring = cfg::cstring;
             using Base = ValueBase<Var>;
             using value_type = Var;
 
             value_type value;
             ValueBase(value_type v) : value(std::move(v)) {}
             operator value_type() const { return value; }
+            value_type operator=(const value_type& v) { value = v; }
+
             virtual void read(const cstring& path, const cstring& section, const cstring& key) = 0;
             virtual void write(const cstring& path, const cstring& section, const cstring& key) const = 0;
-
-            value_type operator=(value_type v) { value = v; }
         };
+        template<> struct ValueBase<void> {
+            using cstring = cfg::cstring;
+            virtual void read(const cstring& path, const cstring& section, const cstring& key) = 0;
+            virtual void write(const cstring& path, const cstring& section, const cstring& key) const = 0;
+        };
+        using Void = ValueBase<void>;//as base only
     }
     namespace _static_checks {
         template <typename Derived>
@@ -105,9 +112,12 @@ namespace cfg {
 
         //Field(const Adapter& a) : value(a) {}
         //Field(Adapter&& a = Adapter()) : value(std::move(a)) {}
-        Field() {}
+        Field() = default;
+        Field(const Adapter& v) : value(v) {}
         Field(const value_type& v) : value(v) {}
         Field(value_type&& v) : value(std::move(v)) {}
+        Field(const Field&) = default; Field(Field&&) = default;
+        Field& operator=(const Field&) = default;
 
         operator value_type() const { return value; }
         // ¬„¿‡–Õ∏≥÷µ
@@ -146,6 +156,8 @@ namespace cfg {
         std::tuple<Fields...> fields;
         
         Section(Fields... fs) : fields(std::move(fs)...) {}
+        Section(const Section&) = default; Section(Section&&) = default;
+        Section& operator=(const Section&) = default;
 
         template<typename Key>
         auto& operator[](Key key) {
@@ -181,7 +193,9 @@ namespace cfg {
         std::tuple<Sections...> sections;
     public:
 
-        Config(const std::string& p, Sections... ss) : path(p), sections(std::move(ss)...) {}
+        Config(const std::filesystem::path& p, Sections... ss) : path(p), sections(std::move(ss)...) {}
+        Config(const Config&) = default; Config(Config&&) = default;
+        Config& operator=(const Config&) = default;
 
         template<typename Key>
         auto& operator[](Key name) {
@@ -193,10 +207,10 @@ namespace cfg {
             return _string_literal::get_field<key>(sections);
         }
 
-        void read() {
+        void load() {
             std::apply([&](auto&... s) { (s.read(path.string().c_str()), ...); }, sections);
         }
-        void write() const {
+        void save() const {
             std::apply([&](auto&... s) { (s.write(path.string().c_str()), ...); }, sections);
         }
         inline void setPath(const std::filesystem::path& p) { path = p; }
@@ -210,7 +224,7 @@ namespace cfg {
     namespace _supported_types {
         struct Integer : ValueBase<int> {
             Integer(int v = 0) : Base(v) {}
-            Integer(bool v = 0) : Base(v) {}
+            Integer(bool v) : Integer((int)v) {}
 
             void read(const cstring& path, const cstring& section, const cstring& key) override {
                 value = GetPrivateProfileIntA(section, key, value, path);
@@ -222,10 +236,12 @@ namespace cfg {
 
         struct String : ValueBase<string> {
             String(cstring v = "") : Base(v) {}
+            String(const string& v) : Base(v) {}
 
             void read(const cstring& path, const cstring& section, const cstring& key) override {
                 char buf[1024];
                 GetPrivateProfileStringA(section, key, value.c_str(), buf, sizeof(buf), path);
+                value = string(buf);
             }
             void write(const cstring& path, const cstring& section, const cstring& key) const override {
                 WritePrivateProfileStringA(section, key, value.c_str(), path);
@@ -266,7 +282,7 @@ namespace cfg {
         template<Literal key, typename Adapter>
         auto addField(Adapter&& v = Adapter()) {
             //using Adapter = _supported_types::to_adapter<U>::type;
-            return Field<key, Adapter>(std::forward<Adapter::value_type>(v));
+            return Field<key, Adapter>(std::forward<Adapter>(v));
         }
 
         template<Literal key> using addInteger = Field<key, _supported_types::Integer>;
