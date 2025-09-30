@@ -1,3 +1,5 @@
+timeGetTime精度不足，动画卡顿
+
 随机种子遭到影响，初始化时固定54
 
 SokuLib::appendDatFile固定随机数种子

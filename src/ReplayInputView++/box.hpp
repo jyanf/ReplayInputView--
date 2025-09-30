@@ -1,5 +1,4 @@
 #pragma once
-//#include <SokuLib.hpp>
 #include <GameObject.hpp>
 #include <Player.hpp>
 #define MAX_UNTECHBAR_SPAN 100
@@ -8,6 +7,9 @@
 #include <DrawUtils.hpp>
 #include <GameData.hpp>
 
+#include <map>
+#include <vector>
+#include <functional>
 #include "tex.hpp"
 #include "info.hpp"
 
@@ -69,9 +71,8 @@ using SokuLib::CNumber;
 	extern TrampTamper<7> update_collision_shim;
 	void __fastcall lag_watcher_updator(const GameObjectBase* object);
 
-	void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayTimers);
-	void drawUntechBar(Player& player);
-	void drawFloor();
+	
+
 
 
 inline static void get_collision(const GameObjectBase& object, int& colT, int& colL);
@@ -86,15 +87,166 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 template <int d>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor);
 
-template <int s = 5> void drawPositionBox(const GameObjectBase& object, Color fill = Color::White, Color border = Color::White + Color::Black);
+void drawPositionBox(const GameObjectBase& object, int s=5, Color fill = Color::White, Color border = Color::White + Color::Black);
 
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak = false);
-static void drawArmor(const Player& player, bool blockable = true);
-static bool drawHurtBoxes(const Player& object, bool meleeInvul, bool projnvul);
-static bool drawHitBoxes(const GameObjectBase& object);
+void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak = false);
+bool drawHurtBoxes(const Player& object, bool meleeInvul, bool projnvul);
+bool drawHitBoxes(const GameObjectBase& object);
 
-static bool drawBulletBoxes(const GameObject& object, bool hurtbreak = false);
+bool drawBulletBoxes(const GameObject& object, bool hurtbreak = false);
+//void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayTimers);
+void drawUntechBar(Player& player);
+void drawArmor(const Player& player, bool blockable = true);
+void drawFloor();
 
+extern class LayerManager {
+public:
+	enum Layer : signed char {
+		Back = -1,//TODO: hook before game UI render
+		Sprite = 0,
+		Armor,
+		Collision,
+		Hurtbox,
+		Hitbox,
+		Bullets,
+		Untech,
+		Anchors,
+		Top = 0x7F
+	};
+private:
+	class SimpleCallback {
+		using Data = void*;
+		using Func = void(__fastcall*)(Data);
+		Func func = nullptr;
+		Data data = nullptr;
+	public:
+		SimpleCallback(Func fun, void* d, size_t s) : func(fun) {
+			data = new char[s];
+			memcpy(data, d, s);
+		}
+		template <typename D> SimpleCallback(D d) : SimpleCallback((Func)D::draw, (Data)&d, sizeof(D)) {}
+		~SimpleCallback() {
+			delete[] data;
+		}
+		SimpleCallback(const SimpleCallback&) = delete;
+		SimpleCallback& operator=(const SimpleCallback&) = delete;
+		SimpleCallback(SimpleCallback&& other) noexcept : func(other.func), data(other.data) {
+			other.data = nullptr;
+		}
+		SimpleCallback& operator=(SimpleCallback&& other) noexcept {
+			if (this != &other) {
+				delete[] data;
+				func = other.func;
+				data = other.data;
+				other.data = nullptr;
+			}
+			return *this;
+		}
+		inline void operator()() {
+			return func(data);
+		}
+	};
+	//using Callback = std::function<void()>;
+	using Callback = SimpleCallback;
+	std::map<Layer, std::vector<Callback>> tasks;
+public:
+	LayerManager() {
+		//tasks[Layer(0)].reserve(4);
+	}
+	void renderBack();//neg layers
+	inline void renderFore() {//0+ layers
+		for (auto& [layer, vec] : tasks) {
+			if (layer >= 0) {
+				for (auto& cmds : vec)
+					cmds();
+				//vec.clear();
+			}
+		}
+	}
+	inline void renderAll() {
+		for (auto& [layer, vec] : tasks) {
+			for (auto& cmds : vec)
+				cmds();
+			//vec.clear();
+		}
+	}
+	inline void clear() {
+		for (auto& [layer, vec] : tasks)
+			vec.clear();
+	}
+	template <typename D>
+	inline void push(Layer layer, D d) {
+		tasks[layer].emplace_back(d);
+	}
+	struct CollisionData {
+		const GameObjectBase& object;
+		bool grabInvul, hurtbreak;
+		static void __fastcall draw(CollisionData* This) {
+			drawCollisionBox(This->object, This->grabInvul, This->hurtbreak);
+		}
+	};
+	inline void pushCollision(const GameObjectBase& object, bool grabInvul, bool hurtbreak) {
+		push(Collision, CollisionData{ object, grabInvul, hurtbreak });
+	}
+	struct HurtboxData {
+		const Player& object;
+		bool meleeInvul, projnvul;
+		static void __fastcall draw(HurtboxData* This) {
+			drawHurtBoxes(This->object, This->meleeInvul, This->projnvul);
+		}
+	};
+	inline void pushHurtbox(const Player& object, bool grabInvul, bool hurtbreak) {
+		push(Hurtbox, HurtboxData{ object, grabInvul, hurtbreak });
+	}
+	struct HitboxData {
+		const GameObjectBase& object;
+		static void __fastcall draw(HitboxData* This) {
+			drawHitBoxes(This->object);
+		}
+	};
+	inline void pushHitbox(const GameObjectBase& object) {
+		push(Hitbox, HitboxData{ object });
+	}
+	struct ArmorData {
+		const Player& player;
+		bool blockable;
+		static void __fastcall draw(ArmorData* This) {
+			drawArmor(This->player, This->blockable);
+		}
+	};
+	inline void pushArmor(const Player& player, bool blockable) {
+		push(Armor, ArmorData{ player, blockable });
+	}
+	struct UntechData {
+		Player& player;
+		static void __fastcall draw(UntechData* This) {
+			drawUntechBar(This->player);
+		}
+	};
+	inline void pushUntech(Player& player) {
+		push(Untech, UntechData{ player });
+	}
+	struct BulletData {
+		const GameObject& object;
+		bool hurtbreak;
+		static void __fastcall draw(BulletData* This) {
+			drawBulletBoxes(This->object, This->hurtbreak);
+		}
+	};
+	void pushBullet(const GameObject& object, bool hurtbreak);
+	struct PositionData {
+		const GameObjectBase& object;
+		int size;
+		Color fill, border;
+		static void __fastcall draw(PositionData* This) {
+			drawPositionBox(This->object, This->size, This->fill, This->border);
+		}
+	};
+	inline void pushPosition(const GameObjectBase& object, int s=5, Color fill=Color::White, Color border=Color_Gray) {
+		push(Anchors, PositionData{ object, s, fill, border });
+	}
+	void pushPlayer(const Player& player, bool hurtbreak, unsigned char delayedTimers);
 
-}
-}
+} layers;
+
+}}

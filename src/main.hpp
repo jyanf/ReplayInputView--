@@ -139,6 +139,9 @@ inline auto iniProxy = Config{
 	),
 	addSection<"BoxDisplay">(addBool<"Enabled">(false)
 		,addBool<"Floor">(true)
+		,addBool<"JuggleMeter">(true)
+		,addBool<"ArmorMeter">(true)
+		,addBool<"Hitbox.FadeByHitstop">(true)
 		,addField<"p%d.Character", MultiField<cfg::_supported_types::Integer>>({
 			true, true,
 			true, true
@@ -148,7 +151,6 @@ inline auto iniProxy = Config{
 			true, true
 		})
 	),
-	addSection<"JuggleMeter">(addBool<"Enabled">(false)),
 
 	addSection<"Keys">(
 		addInteger<"display_boxes">(0x3E),
@@ -161,18 +163,22 @@ inline auto iniProxy = Config{
 	),
 	addSection<"FrameRate">(addInteger<"AdjustmentMethod">(1)),
 	addSection<"ColorProfile">(//Color(ARGB)
-		addInteger<"CollisionBox">()//yellow
-		,addInteger<"Hitbox.Melee">()//red
-			,addInteger<"HitBox.Bullet">()
-			,addInteger<"Hitbox.Grab">()//orange
-		,addInteger<"HurtBox.Character">()//green
-			,addInteger<"HurtBox.Counter">()//cyan
-			,addInteger<"Hurtbox.Guard">()//white
-			,addInteger<"Hurtbox.Parry">()//purple
-		,addInteger<"Hurtbox.Bullet">()//green
-			,addInteger<"HurtBox.Entity">()//cyan
-			,addInteger<"Hurtbox.Reflector">()//blue
-			,addInteger<"Hurtbox.Gap">()//Magenta
-		,addInteger<"FloorBox">()//gray
+		addInteger<"CollisionBox">(0xFFffff00)//yellow
+		,addInteger<"Hitbox.Melee">(0xFFff0000)//red
+			,addInteger<"Hitbox.Bullet">(0xFFff0000)
+			,addInteger<"Hitbox.Grab">(0xFFf07000)//orange
+		,addInteger<"Hurtbox.Character">(0xFF00ff00)//green
+			,addInteger<"Hurtbox.Counter">(0xFF00ffff)//cyan
+			,addInteger<"Hurtbox.Guard">(0xFFffffff)//white
+			,addInteger<"Hurtbox.Parry">(0xFFaa00ff)//purple
+				,addInteger<"Hurtbox.Parry.Melee">(0xFFff0000)
+				,addInteger<"Hurtbox.Parry.Bullet">(0xFF0000ff)
+			,addInteger<"Hurtbox.InvulLine.Melee">(0xFFff0000)
+			,addInteger<"Hurtbox.InvulLine.Bullet">(0xFF0000ff)
+		,addInteger<"Hurtbox.Object">(0xFF00ff00)//green
+			,addInteger<"Hurtbox.Entity">(0xFF00ffff)//cyan
+			,addInteger<"Hurtbox.Reflector">(0xFF0000ff)//blue
+			,addInteger<"Hurtbox.Gap">(0xFFffff00)//Magenta
+		,addInteger<"FloorBox">(0xFFcccccc)//pale
 	),
 };

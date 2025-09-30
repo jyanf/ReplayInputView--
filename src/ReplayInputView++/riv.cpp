@@ -36,7 +36,7 @@ inline static Player* get_player(const BattleManager* This, int index) {
 }
 inline static void traversing_players(const BattleManager* This, 
 	const std::function<void(int, Player*)>& forP,
-	const std::function<void(GameObject*)>& forO
+	const std::function<void(int, GameObject*)>& forO
 ) {
 	for (int i = 0; i < PLAYERS_NUMBER; ++i) {
 		auto player = get_player(This, i);
@@ -45,8 +45,8 @@ inline static void traversing_players(const BattleManager* This,
 		if (player->objectList) {
 			auto& objects = player->objectList->getList();
 			for (auto object : objects) {
-				if (!object) continue;
-				if (forO) forO(object);
+				if (!object || object->lifetime<=0) continue;
+				if (forO) forO(i, object);
 			}
 		}
 	}
@@ -75,13 +75,13 @@ inline static void traversing_players(const BattleManager* This,
 		forwardIndex = 0;
 
 		hitboxes = iniProxy["BoxDisplay"_l]["Enabled"_l] != 0;
-		untech = iniProxy["JuggleMeter"_l]["Enabled"_l] != 0;
+		untech = hitboxes;
 
 		paused = false;
 
 		
 	}
-
+	using box::layers;
 	int RivControl::update(BattleManager* This, int ind) {
 		int ret = (This->*ogBattleMgrOnProcess[ind])();
 		riv::box::setDirty(true);
@@ -104,7 +104,7 @@ inline static void traversing_players(const BattleManager* This,
 				if (vice.inter.focus == player)
 					focus_valid = true;
 			},
-			[this, &focus_valid](GameObject* object) {
+			[this, &focus_valid](int i, GameObject* object) {
 				if (vice.inter.focus == object)
 					focus_valid = true;
 			}
@@ -116,15 +116,17 @@ inline static void traversing_players(const BattleManager* This,
 		}
 		return ret;
 	}
-
+	struct PanelData {
+		riv::pnl::Panel* panel;
+		static void __fastcall draw(PanelData* This) {
+			This->panel->render();
+		}
+	};
+	inline void pushPanel(riv::pnl::Panel* panel) {
+		layers.push(riv::box::LayerManager::Top, PanelData{ panel });
+	}
 	void RivControl::render(BattleManager* This) {
-		// fix story blend
-		auto guard = tex::RendererGuard();
-		guard.setRenderMode(1);//auto old = SetRenderMode(1);
-		box::setCamera();
-		if (hitboxes) box::drawFloor();
-		
-		if (show_debug) {//insert anchors
+		if (show_debug) {//insert all anchors
 			if (vice.dirty) {//
 				vice.inter.clear();
 
@@ -132,7 +134,7 @@ inline static void traversing_players(const BattleManager* This,
 					[this](int i, Player* player) {
 						vice.inter.insert(player);
 					},
-					[this](GameObject* object) {
+					[this](int i, GameObject* object) {
 						vice.inter.insert(object);
 					}
 				);
@@ -144,48 +146,68 @@ inline static void traversing_players(const BattleManager* This,
 				vice.dirty = true;
 			}			
 		}
+		// fix story blend
+		auto guard = tex::RendererGuard();
+		guard.setRenderMode(1);//auto old = SetRenderMode(1);
+		box::setCamera();
+		if (hitboxes && iniProxy["BoxDisplay"_l]["Floor"_l]) box::drawFloor();
 
 		const auto& pfocus = vice.inter.focus;
 		auto phover = vice.inter.getHover();
 		float time = timeGetTime() / 1000.f;
 		traversing_players(This,//draw
 			[this, This, pfocus, phover, time](int i, Player* player) {
-				if (hitboxes && This->matchState > 0) {//boxes
-					box::drawPlayerBoxes(*player,
-						This->matchState <= 1 || This->matchState >= 6
-						|| This->matchState == 2 && This->frameCount == 0,
-						invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2 | unblockable[i] << 3);
+				if (hitboxes && iniProxy["BoxDisplay"_l]["ArmorMeter"_l])
+					layers.pushArmor(*player, !(player->unknown4AA || unblockable[i]) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
+				if (untech && iniProxy["BoxDisplay"_l]["JuggleMeter"_l]) {
+					//box::drawUntechBar(*player);
+					layers.pushUntech(*player);
 				}
-				if (untech) {
-					box::drawUntechBar(*player);
+				if (panels[i]) {
+					//panels[i]->render();
+					pushPanel(panels[i]);
 				}
 				if (show_debug) {
 					if (player == phover) {
 						//guard.setInvert2();
-						info::drawObjectHover(player, time);
-						box::drawPositionBox<7>(*player, box::Color_Gray, box::Color::White);
+						//info::drawObjectHover(player, time);
+						return;
 					}
 					else {
-						box::drawPositionBox(*player);
+						//box::drawPositionBox(*player);
+						layers.pushPosition(*player);
 					}
 				}
-				if (panels[i]) panels[i]->render();
+				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Character"_l].value[i]) {//boxes
+					bool hurtbreak = This->matchState <= 1 || This->matchState >= 6 || This->matchState == 2 && This->frameCount == 0;
+					layers.pushPlayer(*player, hurtbreak, invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2);
+				}
 			},
-			[this, pfocus, phover, time](GameObject* object) {
+			[this, This, pfocus, phover, time](int i, GameObject* object) {
 				if (show_debug) {
 					if (object == phover) {
-						info::drawObjectHover(object, time);
-						box::drawPositionBox<7>(*object, box::Color_Gray, box::Color::White);
+						//info::drawObjectHover(object, time);
+						return;
 					}
 					else {
-						box::drawPositionBox(*object, Color::White * 0.5, box::Color_Gray * 0.5);//default every
+						//box::drawPositionBox(*object, 5, Color::White * 0.5, box::Color_Gray * 0.5);//default every
+						layers.pushPosition(*object, 5, Color::White * 0.5, box::Color_Gray * 0.5);
 					}
+				}
+				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Bullets"_l].value[i]) {
+					bool hurtbreak = This->matchState <= 1 || This->matchState >= 6 || This->matchState == 2 && This->frameCount == 0;
+					layers.pushBullet(*object, hurtbreak);
 				}
 
 			}
 		);
+		layers.renderFore();
 		//indicators
 		if (show_debug) {
+			if (phover) {
+				info::drawObjectHover(const_cast<GameObjectBase*>(phover), time);
+				box::drawPositionBox(*phover, 7, box::Color_Gray, box::Color::White);
+			}
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
 				guard
 					//
@@ -215,7 +237,7 @@ inline static void traversing_players(const BattleManager* This,
 						{ 0 }, 1, Color::Black);
 				}
 			}
-			if (pfocus) box::drawPositionBox<7>(*pfocus, box::Color::Black + box::Color::White, box::Color::Black);
+			if (pfocus) box::drawPositionBox(*pfocus, 7, box::Color_Gray, box::Color::Black);
 			
 		}
 
@@ -276,7 +298,7 @@ inline static void traversing_players(const BattleManager* This,
 
 
 using riv::slowdown_method, riv::RivControl, riv::check_key, riv::toggle_keys, riv::Mode, riv::SubMode;
-using riv::box::drawPlayerBoxes, riv::box::drawUntechBar, riv::box::drawFloor;
+using riv::box::layers;
 
 template<int i>
 BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
@@ -352,8 +374,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		static bool old_stop = false;
 		if (check_key(toggle_keys.display_boxes) || (old_display_boxes = false)) {
 			if (!old_display_boxes) {
-				riv.hitboxes = !riv.hitboxes;
-				riv.untech = !riv.untech;
+				riv.untech = riv.hitboxes = !riv.hitboxes;
 			}
 			old_display_boxes = true;
 		}
@@ -477,9 +498,9 @@ TP_INSTANTIATE(0); TP_INSTANTIATE(1); TP_INSTANTIATE(2);
 template<int i>
 void __fastcall CBattleManager_OnRender(BattleManager* This) {
 	RivControl& riv = *(RivControl*)((DWORD)This + ogBattleMgrSize[i]);
-
+	layers.clear();
+	//layers.renderBack();
 	(This->*ogBattleMgrOnRender[i])();
-
 	if (riv.enabled) {
 		riv.render(This);
 	}

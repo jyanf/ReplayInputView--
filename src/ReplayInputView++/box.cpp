@@ -14,10 +14,11 @@ namespace box {
 	//int Texture_armorBar;
 	tex::TileDesc<768, 128, 256, 32> ArmorBar;
 	int Texture_armorLifebar;
-
+	LayerManager layers;
 
 static const float BOXES_ALPHA = 0.25;
 const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFF808080, Color_Pale = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
+static auto& colorProfile = iniProxy["ColorProfile"_l];
 static RectangleShape rectangle;
 	void setCamera() {
 		rectangle.setCamera(&SokuLib::camera);
@@ -237,8 +238,7 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 	}*/
 }
 
-template <int s>
-void drawPositionBox(const GameObjectBase& object, Color fill, Color border)
+void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color border)
 {
 	SokuLib::Vector2u size{ s, s }; size /= SokuLib::camera.scale;
 	SokuLib::Vector2i pos{ object.position.x - size.x / 2, -object.position.y - size.y / 2 };
@@ -249,11 +249,11 @@ void drawPositionBox(const GameObjectBase& object, Color fill, Color border)
 	rectangle.setBorderColor(border);
 	rectangle.draw();
 }
-template void drawPositionBox<3>(const GameObjectBase& object, Color fill, Color border);
-template void drawPositionBox(const GameObjectBase& object, Color fill, Color border);
-template void drawPositionBox<7>(const GameObjectBase& object, Color fill, Color border);
+//template void drawPositionBox<3>(const GameObjectBase& object, Color fill, Color border);
+//template void drawPositionBox(const GameObjectBase& object, Color fill, Color border);
+//template void drawPositionBox<7>(const GameObjectBase& object, Color fill, Color border);
 
-static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak)
+void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbreak)
 {
 	
 	if (!object.gameData.frameData || !object.gameData.frameData->collisionBox) return;
@@ -273,12 +273,252 @@ static void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool 
 		rect = FloatRect( box.left, box.top, box.right, box.bottom );
 	}
 	rectangle.setRect(rect);
-	rectangle.setFillColor(grabInvul ? Color::Transparent : Color::Yellow * BOXES_ALPHA);
-	rectangle.setBorderColor(Color::Yellow);
+	Color color(colorProfile["CollisionBox"_l]);
+	rectangle.setFillColor(grabInvul ? Color::Transparent : color * BOXES_ALPHA);
+	rectangle.setBorderColor(color);
 	rectangle.draw();
 }
 
-static void drawArmor(const Player& player, bool blockable) {
+
+bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
+{
+	if (player.boxData.hurtBoxCount > 5)
+		return false;
+	auto flags = player.gameData.frameData ? &player.gameData.frameData->frameFlags : nullptr;
+	Color outline(colorProfile["Hurtbox.Character"_l]), addline = Color::Transparent;
+	Color fill = outline;
+
+	meleeInvul |= flags && flags->meleeInvincible;
+	projnvul |= flags && flags->projectileInvincible;
+	if (flags) {//invul>atemi>guard>counter
+		bool atemiM = flags->invAirborne || flags->invLowBlow || flags->invMidBlow;
+		bool atemiB = flags->invShoot;
+		if (flags->guardPoint) //guard point
+			fill = outline = colorProfile["Hurtbox.Guard"_l];
+		else if(flags->chOnHit)
+			fill = outline = colorProfile["Hurtbox.Counter"_l];
+		if (atemiM || atemiB) {
+			if (atemiM && atemiB)
+				fill = outline = colorProfile["Hurtbox.Parry"_l];
+			else if (atemiM) {//atemiwaza melee
+				fill = colorProfile["Hurtbox.Parry.Melee"_l]; //addline = Color::Red;
+			} else if (atemiB) {//atemiwaza bullet
+				fill = colorProfile["Hurtbox.Parry.Bullet"_l]; //addline = Color::Blue;
+			}
+		}
+		
+	}
+	if (meleeInvul || projnvul) {
+		fill *= 0.5;
+		if (meleeInvul && projnvul)
+			fill = Color::Transparent;
+		else if (meleeInvul)
+			addline = colorProfile["Hurtbox.InvulLine.Melee"_l];
+		else if (projnvul)
+			addline = colorProfile["Hurtbox.InvulLine.Bullet"_l];
+	}
+	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
+		drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
+		if(addline)
+			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
+	}
+	return player.boxData.hurtBoxCount;
+}
+
+bool drawHitBoxes(const GameObjectBase& object) {
+	if (object.boxData.hitBoxCount > 5)
+		return false;
+	auto spec = determine(object, BulletSpecial::MELEE);
+	Color outline;
+	if (object.boxData.frameData && object.boxData.frameData->attackFlags.grab)
+		outline = colorProfile["Hitbox.Grab"_l];
+	else
+		outline = spec.Melee ? colorProfile["Hitbox.Melee"_l] : colorProfile["Hitbox.Bullet"_l];
+	
+	Color fill = outline;
+	if (!check_hitbox_active(object)) {
+		if (object.collisionType!=0 && iniProxy["BoxDisplay"_l]["Hitbox.FadeByHitstop"_l])
+			fill *= min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0f));
+		else
+			fill = Color::Transparent;
+	}
+	for (int i = 0; i < object.boxData.hitBoxCount; i++)
+		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
+	return object.boxData.hitBoxCount;
+}
+
+bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
+{
+	using BS = BulletSpecial;
+	auto spec = determine(object, BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::MELEE);
+	/*if (spec.Effect) {
+		lag_saver.erase(&object);
+		return false;
+	}*/
+
+	bool hitbox_active = check_bullet_hitbox_active(object, spec);
+	bool hurtbox_active = check_bullet_hurtbox_active(object, spec);
+	
+	Color outline;// = Color::Green;
+	Color fill;// = active ? outline : Color::Transparent;
+	if (spec.Entity) {//entity
+		outline = colorProfile["Hurtbox.Entity"_l];
+	} else if (spec.Reflector) {//reflector
+		outline = colorProfile["Hurtbox.Reflector"_l];
+	} else if (spec.Gap) {//gap
+		outline = colorProfile["Hurtbox.Gap"_l];
+	} else {
+		outline = colorProfile["Hurtbox.Object"_l];//0xFF10cd00; //
+	}
+	fill = hurtbox_active ? outline : Color::Transparent;
+	bool drawed = false;
+	if (!hurtbreak && object.boxData.hurtBoxCount <= 5) {
+		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
+			if (spec.SharedBox)
+				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA * (hitbox_active ? 0.5 : 1));
+			else
+				drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
+			drawed = true;
+		}
+	}
+	if (object.boxData.frameData && object.boxData.frameData->attackFlags.grab)
+		outline = colorProfile["Hitbox.Grab"_l];
+	else 
+		outline = spec.Melee ? colorProfile["Hitbox.Melee"_l] : colorProfile["Hitbox.Bullet"_l];
+	fill = outline;
+	if (!hitbox_active) {
+		if (object.collisionType!=0 && spec.Melee && iniProxy["BoxDisplay"_l]["Hitbox.FadeByHitstop"_l])
+			fill *= min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0f));
+		else
+			fill = Color::Transparent;
+	}
+	if (!hurtbreak && object.boxData.hitBoxCount <= 5) {
+		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
+			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
+			drawed = true;
+		}
+	}
+
+	//drawPositionBox(object);
+
+	return drawed;
+}
+
+
+/*void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayedTimers)
+{
+	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4, hurtbreak);
+	if (!hurtbreak) {
+		drawHurtBoxes(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
+		drawHitBoxes(player);
+	}
+	drawPositionBox(player);
+
+	drawArmor(player, !(player.unknown4AA || delayedTimers & 8) && player.boxData.frameData && player.boxData.frameData->frameFlags.guardAvailable);
+
+	if (!player.objectList) return;
+	const auto& list = player.objectList->getList();//manager.objects.list.vector();
+
+	for (const auto elem : list) {
+		if (!elem) continue;
+		const auto& obj = *elem;
+		auto fdata = obj.gameData.frameData;
+		auto sdata = obj.gameData.sequenceData;
+
+		bool withBox = false;
+
+		//TODO: config
+		if (!obj.lifetime) return;
+		withBox |= drawBulletBoxes(obj, hurtbreak);
+#ifdef _DEBUG
+		if (!withBox) continue;
+		//drawNumber(obj.frameState.actionId, obj.position.x, -obj.position.y - 20, 3); drawNumber(obj.frameState.sequenceId, obj.position.x+20, -obj.position.y - 20, 2);
+		drawNumber(obj.collisionType, obj.position.x, -obj.position.y-10);
+		drawNumber((unsigned)obj.collisionLimit, obj.position.x, -obj.position.y);
+		drawNumber(obj.boxData.prevCollisionType, obj.position.x+10, -obj.position.y-10);
+		drawNumber((unsigned)obj.boxData.prevCollisionLimit, obj.position.x+10, -obj.position.y);
+
+		if (dirty && obj.frameState.actionId >= 800) {
+			printf("OBJ %#8x| act%d | seq%d | frm%d | ---------\n"
+				"\tobj.box.fdata %#8x, obj.fdata %#8x\n"
+				"\tobj.prevType %2d | obj.Type %2d\n"
+				"\tobj.prevLmt  %2u | obj.Lmt  %2u\n\n",
+				&obj, obj.frameState.actionId, obj.frameState.sequenceId, obj.frameState.poseId,
+				obj.boxData.frameData, obj.gameData.frameData,
+				obj.boxData.prevCollisionType, obj.collisionType,
+				obj.boxData.prevCollisionLimit, obj.collisionLimit
+			);
+		}
+#endif // _DEBUG
+		
+	}
+}*/
+
+void drawFloor() {
+	Color outline(colorProfile["FloorBox"_l]);
+	Color fill = outline;
+	Box bound = {-5, 0, 1280, 0};
+	//drawBox(bound, nullptr, outline, Color::Transparent);
+	
+	constexpr int size = sizeof(groundHeight) / sizeof(*groundHeight);
+	bound.top = -groundHeight[0]; bound.bottom = 200;
+	for (int i = 1; i < size; ++i)
+	{
+		if (*(int*)&groundHeight[i - 1] ^ *(int*)&groundHeight[i]) {
+			bound.right = i; fill = outline * min(BOXES_ALPHA, abs(bound.top) / 50);
+			drawBox(bound, nullptr, outline, fill);
+			bound.left = i; bound.top = -groundHeight[i];
+		}
+	}
+	bound.right = size; fill = outline * min(BOXES_ALPHA, abs(bound.top)/ 50);
+	drawBox(bound, nullptr, outline, fill);
+
+	
+}
+void drawUntechBar(Player& player) {
+	int untech = player.untech;
+	if (untech > MAX_UNTECHBAR_SPAN) {
+		untech = MAX_UNTECHBAR_SPAN;
+	}
+
+	float x = player.position.x;
+	float y = player.position.y;
+
+	if (player.isGrounded() && player.speed.y < 0
+	|| !(player.gameData.frameData && player.gameData.frameData->frameFlags.airborne)
+	|| player.damageLimited
+	|| !(50 <= player.frameState.actionId && player.frameState.actionId < 150)
+	) {
+		return;
+	}
+	float w_max = 300.0f;
+	float w = float(untech) / MAX_UNTECHBAR_SPAN * w_max;
+	float h = 5.0f;
+
+	Color color = Color::Yellow;
+
+	if (untech > 50) {
+		color.r = (100 - untech) / 50.0f * 255;
+	}
+	else {
+		unsigned char value = (unsigned char)((untech / 50.0f) * 255.0f);
+		color.g = untech / 50.0f * 255;
+	}
+	FloatRect rect{
+		x - w / 2.0f,
+		-y,
+		0,
+		0
+	}; rect.x2 = rect.x1 + w; rect.y2 = rect.y1 + h;
+
+	rectangle.setBorderColor(Color::Transparent);
+	rectangle.setRect(rect); rectangle.setFillColor(Color::Black);
+	rectangle.draw();
+	rect.y2 -= 1.0f;
+	rectangle.setRect(rect); rectangle.setFillColor(color);
+	rectangle.draw();
+}
+void drawArmor(const Player& player, bool blockable) {
 	constexpr int threshold = 100;
 	if (!player.boxData.frameData) return;
 	auto powerMultiplier = player.unknown538;
@@ -328,225 +568,24 @@ static void drawArmor(const Player& player, bool blockable) {
 	}
 }
 
-static bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
-{
-	if (player.boxData.hurtBoxCount > 5)
-		return false;
-	auto flags = player.gameData.frameData ? &player.gameData.frameData->frameFlags : nullptr;
-	Color outline = Color::Green, addline = Color::Transparent;
-	Color fill = outline;
 
-	meleeInvul |= flags && flags->meleeInvincible;
-	projnvul |= flags && flags->projectileInvincible;
-	if (flags) {//invul>guard>atemi>counter
-		bool atemiM = flags->invAirborne || flags->invLowBlow || flags->invMidBlow;
-		bool atemiB = flags->invShoot;
-		
-		if (atemiM && atemiB)
-			fill = outline = Color_Purple;
-		else if (atemiM) {//atemiwaza melee
-			outline = Color_Purple;
-			fill = Color::Red; //addline = Color::Red;
-		} else if (atemiB) {//atemiwaza bullet
-			outline = Color_Purple;
-			fill = Color::Blue; //addline = Color::Blue;
-		}
-		else if (flags->guardPoint) //guard point
-			fill = outline = Color::White;
-		else if(flags->chOnHit)
-			fill = outline = Color::Cyan;
-	}
-	if (meleeInvul || projnvul) {
-		fill *= 0.5;
-		if (meleeInvul && projnvul)
-			fill = Color::Transparent;
-		else if (meleeInvul)
-			addline = Color::Red;
-		else if (projnvul)
-			addline = Color::Blue;
-	}
-	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
-		drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
-		if(addline)
-			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
-	}
-	return player.boxData.hurtBoxCount;
-}
-
-static bool drawHitBoxes(const GameObjectBase& object)
-{
-	if (object.boxData.hitBoxCount > 5)
-		return false;
-	bool active = check_hitbox_active(object);
-	Color outline = object.boxData.frameData && object.boxData.frameData->attackFlags.grab ? Color_Orange: Color::Red;
-	Color fill = active ? outline : outline * bool(object.collisionType) * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0));
-	for (int i = 0; i < object.boxData.hitBoxCount; i++)
-		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
-	return object.boxData.hitBoxCount;
-}
-
-static bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
-{
-	using BS = BulletSpecial;
-	auto spec = determine(object, BS::EFFECT | BS::ENTITY | BS::REFLECTOR | BS::GAP | BS::SHARED_BOX | BS::SUBBOX | BS::MELEE);
+void LayerManager::pushBullet(const GameObject& object, bool hurtbreak) {
+	auto spec = determine(object, BulletSpecial::EFFECT);
 	if (spec.Effect) {
 		lag_saver.erase(&object);
-		return false;
-	}
-
-	bool hitbox_active = check_bullet_hitbox_active(object, spec);
-	bool hurtbox_active = check_bullet_hurtbox_active(object, spec);
-	
-	Color outline;// = Color::Green;
-	Color fill;// = active ? outline : Color::Transparent;
-	if (spec.Entity) {//entity
-		outline = Color::Cyan;
-	} else if (spec.Reflector) {//reflector
-		outline = Color::Blue;
-	} else if (spec.Gap) {//gap
-		outline = Color::Magenta;
-	} else {
-		outline = Color::Green;//0xFF10cd00; //
-	}
-	fill = hurtbox_active ? outline : Color::Transparent;
-	bool drawed = false;
-	if (!hurtbreak && object.boxData.hurtBoxCount <= 5) {
-		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
-			if (spec.SharedBox)
-				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA * (hitbox_active ? 0.5 : 1));
-			else
-				drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
-			drawed = true;
-		}
-	}
-	outline = object.boxData.frameData && object.boxData.frameData->attackFlags.grab ? Color_Orange : Color::Red;
-	fill = hitbox_active ? outline : (object.collisionType && spec.Melee ? outline * min(1.0, log2f(1 + object.gameData.opponent->hitStop / 10.0)) : Color::Transparent);
-	if (!hurtbreak && object.boxData.hitBoxCount <= 5) {
-		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
-			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
-			drawed = true;
-		}
-	}
-
-	drawPositionBox(object);
-
-	return drawed;
-}
-
-
-
-void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayedTimers)
-{
-	drawCollisionBox(player, player.grabInvulTimer || delayedTimers & 4, hurtbreak);
-	if (!hurtbreak) {
-		drawHurtBoxes(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
-		drawHitBoxes(player);
-	}
-	drawPositionBox(player);
-
-	drawArmor(player, !(player.unknown4AA || delayedTimers & 8) && player.boxData.frameData && player.boxData.frameData->frameFlags.guardAvailable);
-
-	if (!player.objectList) return;
-	const auto& list = player.objectList->getList();//manager.objects.list.vector();
-
-	for (const auto elem : list) {
-		if (!elem) continue;
-		const auto& obj = *elem;
-		auto fdata = obj.gameData.frameData;
-		auto sdata = obj.gameData.sequenceData;
-
-		bool withBox = false;
-
-		//TODO: config
-		if (!obj.lifetime) return;
-		withBox |= drawBulletBoxes(obj, hurtbreak);
-#ifdef _DEBUG
-		if (!withBox) continue;
-		//drawNumber(obj.frameState.actionId, obj.position.x, -obj.position.y - 20, 3); drawNumber(obj.frameState.sequenceId, obj.position.x+20, -obj.position.y - 20, 2);
-		drawNumber(obj.collisionType, obj.position.x, -obj.position.y-10);
-		drawNumber((unsigned)obj.collisionLimit, obj.position.x, -obj.position.y);
-		drawNumber(obj.boxData.prevCollisionType, obj.position.x+10, -obj.position.y-10);
-		drawNumber((unsigned)obj.boxData.prevCollisionLimit, obj.position.x+10, -obj.position.y);
-
-		if (dirty && obj.frameState.actionId >= 800) {
-			printf("OBJ %#8x| act%d | seq%d | frm%d | ---------\n"
-				"\tobj.box.fdata %#8x, obj.fdata %#8x\n"
-				"\tobj.prevType %2d | obj.Type %2d\n"
-				"\tobj.prevLmt  %2u | obj.Lmt  %2u\n\n",
-				&obj, obj.frameState.actionId, obj.frameState.sequenceId, obj.frameState.poseId,
-				obj.boxData.frameData, obj.gameData.frameData,
-				obj.boxData.prevCollisionType, obj.collisionType,
-				obj.boxData.prevCollisionLimit, obj.collisionLimit
-			);
-		}
-#endif // _DEBUG
-		
-	}
-}
-
-void drawUntechBar(Player& player) {
-	int untech = player.untech;
-	if (untech > MAX_UNTECHBAR_SPAN) {
-		untech = MAX_UNTECHBAR_SPAN;
-	}
-
-	float x = player.position.x;
-	float y = player.position.y;
-
-	if (player.isGrounded() && player.speed.y < 0
-	|| !(player.gameData.frameData && player.gameData.frameData->frameFlags.airborne)
-	|| player.damageLimited
-	|| !(50 <= player.frameState.actionId && player.frameState.actionId < 150)
-	) {
 		return;
 	}
-	float w_max = 300.0f;
-	float w = float(untech) / MAX_UNTECHBAR_SPAN * w_max;
-	float h = 5.0f;
-
-	Color color = Color::Yellow;
-
-	if (untech > 50) {
-		color.r = (100 - untech) / 50.0f * 255;
-	}
-	else {
-		unsigned char value = (unsigned char)((untech / 50.0f) * 255.0f);
-		color.g = untech / 50.0f * 255;
-	}
-	FloatRect rect{
-		x - w / 2.0f,
-		-y,
-		0,
-		0
-	}; rect.x2 = rect.x1 + w; rect.y2 = rect.y1 + h;
-
-	rectangle.setBorderColor(Color::Transparent);
-	rectangle.setRect(rect); rectangle.setFillColor(Color::Black);
-	rectangle.draw();
-	rect.y2 -= 1.0f;
-	rectangle.setRect(rect); rectangle.setFillColor(color);
-	rectangle.draw();
+	push(Bullets, BulletData{ object,  hurtbreak });
+	pushPosition(object);
 }
-void drawFloor() {
-	Color outline = Color_Pale;
-	Color fill = outline;
-	Box bound = {-5, 0, 1280, 0};
-	//drawBox(bound, nullptr, outline, Color::Transparent);
-	
-	constexpr int size = sizeof(groundHeight) / sizeof(*groundHeight);
-	bound.top = -groundHeight[0]; bound.bottom = 200;
-	for (int i = 1; i < size; ++i)
-	{
-		if (*(int*)&groundHeight[i - 1] ^ *(int*)&groundHeight[i]) {
-			bound.right = i; fill = outline * min(BOXES_ALPHA, abs(bound.top) / 50);
-			drawBox(bound, nullptr, outline, fill);
-			bound.left = i; bound.top = -groundHeight[i];
-		}
-	}
-	bound.right = size; fill = outline * min(BOXES_ALPHA, abs(bound.top)/ 50);
-	drawBox(bound, nullptr, outline, fill);
 
-	
+void LayerManager::pushPlayer(const Player& player, bool hurtbreak, unsigned char delayedTimers) {
+	pushCollision(player, player.grabInvulTimer || delayedTimers & 4, hurtbreak);
+	if (!hurtbreak) {
+		pushHurtbox(player, player.meleeInvulTimer || delayedTimers & 1, player.projectileInvulTimer || delayedTimers & 2);
+		pushHitbox(player);
+	}
+	pushPosition(player);
 }
 
 

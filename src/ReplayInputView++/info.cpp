@@ -461,7 +461,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         case FrameData::TEXTURE:
         BLEND_NORMAL:
             object->renderInfos.shaderType = 3;
-            object->renderInfos.shaderColor = 0x00010001 * int(interp * 0xFF);
+            object->renderInfos.shaderColor = 0x01010101 * int(interp * 0x7F);
             object->render();//sets render mode by group and blendmode
             break;
         default:
@@ -477,8 +477,11 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 //object->frameData->blendOptionsPtr->color = 0xFFFF00FF;
                 break;
             case BlendOptions::NORMAL:
-                //goto BLEND_NORMAL;
-                color += Color::Green;
+                ////goto BLEND_NORMAL;
+                //color += Color::Green;
+                object->renderInfos.shaderType = 2;
+                object->renderInfos.shaderColor = Color::White * interp;
+                break;
             case BlendOptions::ADDITIVE:
                 object->frameData->blendOptionsPtr->mode = BlendOptions::MULTIPLY;
                 color = color * interp;
@@ -513,7 +516,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
     //rendering
         RendererGuard guard; guard.setRenderMode(1);
-        SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 128, 255), 1.0f, 0);
+        SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(194, 144, 198), 1.0f, 0);
         auto target = inter.focus ? inter.focus : inter.getHover();
         Vertex vertices[4] = {
                 {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	0.0f,	0.0f},
