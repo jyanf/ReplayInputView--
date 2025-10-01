@@ -105,19 +105,23 @@ static const auto _renderMode = SokuLib::union_cast<int Renderer::*>(0xC);
 
 namespace tex{
 
-	int create_texture_byid(int offset) {
+	int create_texture(int offset) {
 		int id;
 		auto pphandle = SokuLib::textureMgr.allocate(&id);
-		if (pphandle)
-			*pphandle = NULL;
-		if (SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(offset), pphandle))) {
+        if (!pphandle)
+            return 0;
+        *pphandle = NULL;
+		if (SUCCEEDED(D3DXCreateTextureFromResource(SokuLib::pd3dDev, hDllModule, MAKEINTRESOURCE(offset), pphandle)))
 			return id;
-		}
-		else {
-			SokuLib::textureMgr.deallocate(id);
-			return 0;
-		}
+		
+		SokuLib::textureMgr.deallocate(id);
+		return 0;
 	}
+    int create_texture(LPCSTR name, int* width, int* height) {
+        int id=0;
+        SokuLib::textureMgr.loadTexture(&id, name, width, height);
+		return id;
+    }
 
 	RendererGuard& RendererGuard::setRenderState(D3DRENDERSTATETYPE state, DWORD value) & {
 		if (!mpd) return *this;

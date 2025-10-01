@@ -20,7 +20,8 @@ using SokuLib::DrawUtils::Vertex;
 using SokuLib::DrawUtils::FloatRect;
 using Color = SokuLib::DrawUtils::DxSokuColor;
 
-	int create_texture_byid(int offset);
+	int create_texture(int offset);
+	int create_texture(LPCSTR name, int* width = nullptr, int* height = nullptr);
 
 	struct Tex {
 		int ref = 0;
@@ -29,8 +30,15 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 			++ref;
 			if (texId) return;
 			//D3DXGetImageInfoFromResource(SokuLib::pd3dDev, hDllModule, );
-			texId = create_texture_byid(id);
+			texId = create_texture(id);
+		}
+		inline void create(LPCSTR name) {
+			++ref;
+			if (texId) return;
+			//D3DXGetImageInfoFromResource(SokuLib::pd3dDev, hDllModule, );
+			texId = create_texture(name);
 		};
+
 		inline void cancel() {
 			if (--ref > 0 || !texId) return;
 			SokuLib::textureMgr.remove(texId);

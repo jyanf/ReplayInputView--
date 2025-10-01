@@ -326,8 +326,8 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	if (riv.enabled) {
 		iniProxy.load();
 		//riv::box::Texture_armorBar = riv::tex::create_texture_byid(8);
-		riv::box::ArmorBar.create(8);
-		riv::box::Texture_armorLifebar = riv::tex::create_texture_byid(12);
+		riv::box::ArmorBar.create("rivpp/ArmorBar.png");
+		riv::box::Texture_armorLifebar = riv::tex::create_texture("rivpp/ArmorLifebar.png");
 		//riv.texID = create_texture(4);
 
 		new(&riv)RivControl();//placement new

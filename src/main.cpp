@@ -1,7 +1,6 @@
 #include "main.hpp"
 #include <SokuLib.hpp>
 #include <iostream>
-using std::cout, std::cerr, std::endl;
 
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "winmm.lib")
@@ -68,6 +67,7 @@ std::filesystem::path basePath;
 // We check if the game version is what we target (in our case, Soku 1.10a).
 extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hParentModule)
 {
+	using std::cout, std::cerr, std::endl;
 #ifdef _DEBUG
 	FILE *_;
 	AllocConsole();
@@ -83,7 +83,7 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	iniProxy.load();//load .ini settings
 
 
-	//cout << "Absolute Ini Path[" << configPath << "]\n";
+	cout << "Absolute Ini Path[" << iniProxy.getPath() << "]\n";
 
 	using riv::box::update_collision_shim, riv::box::lag_watcher_updator, riv::SaveTimers;
 
