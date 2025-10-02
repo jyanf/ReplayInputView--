@@ -130,7 +130,8 @@ using Design = SokuLib::CDesign;
 		//static LPDIRECT3D9 vicePD3;
 		//static LPDIRECT3DDEVICE9 vicePD3D;
 		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
-		static Design layout;
+		static std::optional<Design> layout;
+		//static Design& layout;
 		
 		constexpr static UINT WM_VICE_WINDOW_DESTROY = WM_USER + 0x233;
 		constexpr static UINT WM_VICE_WINDOW_UPDATE = WM_USER + 0x234;
@@ -204,12 +205,14 @@ using Design = SokuLib::CDesign;
 			//hideWnd();
 			inter.cursor = { -1, -1 };
 			inter.focus = nullptr;
-			layout.loadResource("rivpp/layout.dat");
+			if (!layout.has_value())
+				layout.emplace();
+			layout->loadResource("rivpp/layout.dat");
 		}
 		~Vice() {
 			destroyWnd();
-			layout.clear();
-			layout.objectMap.clear();
+			layout->clear();
+			layout->objectMap.clear();
 		}
 		static bool __fastcall CBattle_Render(SokuLib::Battle* This);
 		static void ResetD3D9Dev();

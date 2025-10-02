@@ -29,10 +29,11 @@ inline static Player* get_player(const GameDataManager* This, int index) {
 	return This && This->enabledPlayers[index] ? This->players[index] : nullptr;
 }
 inline static Player* get_player(const BattleManager* This, int index) {
-	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
-	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
-	auto manager = GameDataManager::instance;
-	return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
+	return get_player(GameDataManager::instance, index);
+	//if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
+	//auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
+	//auto manager = GameDataManager::instance;
+	//return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
 }
 inline static void traversing_players(const BattleManager* This, 
 	const std::function<void(int, Player*)>& forP,
@@ -52,7 +53,12 @@ inline static void traversing_players(const BattleManager* This,
 	}
 	return;
 }
-
+inline static bool check_hurtbreak(const BattleManager* This) {
+	return This->matchState <= 1 
+		|| This->matchState >= 6 
+		|| This->matchState == 2 && This->frameCount == 0 
+		|| This->matchState == 4 && SokuLib::mainMode == Mode::BATTLE_MODE_STORY;
+}
 	RivControl::RivControl() {
 		for (int i = 0; i < PLAYERS_NUMBER; ++i) {
 			//if (!manager->enabledPlayers[i]) continue;
@@ -150,7 +156,13 @@ inline static void traversing_players(const BattleManager* This,
 		auto guard = tex::RendererGuard();
 		guard.setRenderMode(1);//auto old = SetRenderMode(1);
 		box::setCamera();
-		if (hitboxes && iniProxy["BoxDisplay"_l]["Floor"_l]) box::drawFloor();
+		if (hitboxes 
+		&& iniProxy["BoxDisplay"_l]["Floor"_l]
+		&& This->matchState < 6
+		&& (SokuLib::mainMode == Mode::BATTLE_MODE_STORY ? This->matchState != 4 && This->matchState != 0 : true)
+		) {
+			box::drawFloor();
+		}
 
 		const auto& pfocus = vice.inter.focus;
 		auto phover = vice.inter.getHover();
@@ -179,8 +191,7 @@ inline static void traversing_players(const BattleManager* This,
 					}
 				}
 				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Character"_l].value[i]) {//boxes
-					bool hurtbreak = This->matchState <= 1 || This->matchState >= 6 || This->matchState == 2 && This->frameCount == 0;
-					layers.pushPlayer(*player, hurtbreak, invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2);
+					layers.pushPlayer(*player, check_hurtbreak(This), invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2);
 				}
 			},
 			[this, This, pfocus, phover, time](int i, GameObject* object) {
@@ -195,8 +206,7 @@ inline static void traversing_players(const BattleManager* This,
 					}
 				}
 				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Bullets"_l].value[i]) {
-					bool hurtbreak = This->matchState <= 1 || This->matchState >= 6 || This->matchState == 2 && This->frameCount == 0;
-					layers.pushBullet(*object, hurtbreak);
+					layers.pushBullet(*object, check_hurtbreak(This));
 				}
 
 			}

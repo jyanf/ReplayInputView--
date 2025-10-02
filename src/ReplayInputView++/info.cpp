@@ -1,5 +1,7 @@
 #include "info.hpp"
 
+#include <optional>
+
 VBattleRender ogSceneBattleRender{};
 
 namespace info {
@@ -20,7 +22,8 @@ namespace info {
     //LPDIRECT3D9 Vice::vicePD3 = NULL;
     //LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
 	LPDIRECT3DSWAPCHAIN9 Vice::viceSwapChain = NULL;
-	Design Vice::layout;
+	std::optional<Design> Vice::layout;//delay Design construct to avoid soku runtime dependency, which is not considered by archaic swrstoys loader
+    //Design& Vice::layout = *_layout;
     std::atomic_bool Vice::viceDisplay = false, Vice::dirty = false;
 
 	Interface Vice::inter(10);//hovers reserve
@@ -47,7 +50,7 @@ struct ViceThreadParams {
             return false;
         }
         Design::Object* rect = nullptr;
-        layout.getById(&rect, 1);
+        layout->getById(&rect, 1);
         auto viceParam = new ViceThreadParams{
 			.hMainThread = duplicatedHandle,
             .hParentWnd = SokuLib::window,
@@ -501,11 +504,10 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 {using riv::tex::RendererGuard, riv::tex::Vertex;
     auto ret = (This->*ogSceneBattleRender)();
     bool d = dirty;
-    if(!viceDisplay|| !dirty || !TryEnterCriticalSection(&info::d3dMutex))
+    if(!viceDisplay|| !dirty || !layout.has_value() || !TryEnterCriticalSection(&info::d3dMutex))
 		return ret;
     if (!viceSwapChain)
 		return LeaveCriticalSection(&info::d3dMutex), ret;
-
     LPDIRECT3DSURFACE9 pBackBuffer = NULL, pOrgBuffer = NULL;
     if (FAILED(viceSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer))
     || FAILED(SokuLib::pd3dDev->GetRenderTarget(0, &pOrgBuffer))
@@ -526,7 +528,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
         };
         if (target && target->frameData) {
             Design::Object *texpos = nullptr, *texframe = nullptr;
-		    layout.getById(&texpos, 10); layout.getById(&texframe, 11);
+		    layout->getById(&texpos, 10); layout->getById(&texframe, 11);
             if (texpos && texframe) {
                 float x1 = texpos->x2, y1 = texpos->y2, x2 = texframe->x2, y2 = texframe->y2;
                 float w = abs(x2 - x1), h = abs(y2 - y1);
@@ -553,7 +555,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
             }
         }
 
-        layout.render4();
+        layout->render4();
         
     //SokuLib::renderer.end();
 		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
