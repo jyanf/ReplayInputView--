@@ -537,8 +537,8 @@ BattleManager* __fastcall CBattleManager_OnDestruct(BattleManager* This, int _, 
 			WritePrivateProfileStringW(L"InputPanel", buf, 1<=state && state<=2  ? L"1" : L"0", path);
 			WritePrivateProfileStringW(L"RecordPanel", buf, 2<=state && state<=3 ? L"1" : L"0", path);
 		}*/
+		riv.~RivControl();//i put destructor out of enabled check, my bad
 	}
-	riv.~RivControl();
 	riv::box::cleanWatcher();
 	return (This->*ogBattleMgrDestruct[i])(dyn);
 }

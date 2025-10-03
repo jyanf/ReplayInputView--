@@ -211,8 +211,11 @@ using Design = SokuLib::CDesign;
 		}
 		~Vice() {
 			destroyWnd();
-			layout->clear();
-			layout->objectMap.clear();
+			if (layout.has_value())
+			{
+				layout->clear();
+				layout->objectMap.clear();
+			}
 		}
 		static bool __fastcall CBattle_Render(SokuLib::Battle* This);
 		static void ResetD3D9Dev();

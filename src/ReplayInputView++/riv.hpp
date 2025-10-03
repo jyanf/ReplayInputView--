@@ -63,7 +63,6 @@ inline static Player* get_player(const BattleManager* This, int index);
 		~RivControl() {
 			for (auto ptr : panels)
 				delete ptr;
-
 		}
 		int update(BattleManager* This, int ind);
 		void render(BattleManager* This);
