@@ -178,7 +178,7 @@ inline auto iniProxy = Config{
 		,addInteger<"Hurtbox.Object">(0xFF00ff00)//green
 			,addInteger<"Hurtbox.Entity">(0xFF00ffff)//cyan
 			,addInteger<"Hurtbox.Reflector">(0xFF0000ff)//blue
-			,addInteger<"Hurtbox.Gap">(0xFFffff00)//Magenta
+			,addInteger<"Hurtbox.Gap">(0xFFff00ff)//Magenta
 		,addInteger<"FloorBox">(0xFFcccccc)//pale
 	),
 };
