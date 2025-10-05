@@ -19,7 +19,7 @@ class TrampTamper {//credit enebe shady/memory.cpp
 	TrampTamper(const TrampTamper&) = delete;
 	TrampTamper& operator=(const TrampTamper&) = delete;
 public:
-	void hook(void* target){
+	inline void hook(void* target){
 		if (!addr) return;
 		
 		DWORD old;
@@ -32,6 +32,13 @@ public:
 		SokuLib::TamperNearCall((DWORD)&calla, target);
 		SokuLib::TamperNearJmp((DWORD)&jmpa, addr + oprSize);
 	}
+	inline void restore() {
+		if (!addr) return;
+		DWORD old;
+		VirtualProtect((PVOID)addr, oprSize, PAGE_EXECUTE_READWRITE, &old);
+		memcpy((void*)addr, &opra, oprSize);
+		VirtualProtect((PVOID)addr, oprSize, old, &old);
+	}
 	TrampTamper(DWORD source) : addr(source) {
 		shim.fill(0x90);
 		shim[0] = 0x60;// 0;pushad
@@ -41,11 +48,7 @@ public:
 		jmpa = 0xE9;//size-5;jmp org
 	}
 	~TrampTamper() {
-		if (!addr) return;
-		DWORD old;
-		VirtualProtect((PVOID)addr, oprSize, PAGE_EXECUTE_READWRITE, &old);
-		memcpy((void*)addr, &opra, oprSize);
-		VirtualProtect((PVOID)addr, oprSize, old, &old);
+		restore();
 	}
 
 

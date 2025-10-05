@@ -90,7 +90,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 	using box::layers;
 	int RivControl::update(BattleManager* This, int ind) {
 		int ret = (This->*ogBattleMgrOnProcess[ind])();
-		riv::box::setDirty(true);
+		riv::box::flushWatcher();
 		if (ret > 0 && ret < 4) {
 			//vice.destroyWnd();
 			vice.hideWnd(); vice.inter.focus = nullptr; 
@@ -250,8 +250,6 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 			if (pfocus) box::drawPositionBox(*pfocus, 7, box::Color_Gray, box::Color::Black);
 			
 		}
-
-		box::setDirty(false);
 	}
 
 	void __fastcall SaveTimers(GameDataManager* This) {
@@ -355,7 +353,10 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 		toggle_keys.stop			=	iniProxy["Keys"_l]["stop"_l];
 		toggle_keys.framestep		=	iniProxy["Keys"_l]["framestep"_l];
 
-		riv::box::setDirty(false);
+		riv::box::startWatcher();
+	}
+	else {
+		riv::box::closeWatcher();
 	}
 	return This;
 }
@@ -388,7 +389,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_display_boxes = true;
 		}
-		else if (check_key(toggle_keys.display_info) || (old_display_info = false)) {
+		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH
+			&& check_key(toggle_keys.display_info) || (old_display_info = false)) {
 			if (!old_display_info) {
 				riv.show_debug = riv.vice.toggleWnd();
 				if (riv.show_debug) {
@@ -498,7 +500,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess[ind])();
-		//riv::box::setDirty(true);
+		//riv::box::flushWatcher();
+
 	}
 
 	return ret;

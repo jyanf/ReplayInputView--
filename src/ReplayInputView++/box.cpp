@@ -8,7 +8,6 @@
 #include "DrawCircle.hpp"
 
 namespace riv { 
-
 	
 namespace box {
 	//int Texture_armorBar;
@@ -20,7 +19,7 @@ static const float BOXES_ALPHA = 0.25;
 const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFF808080, Color_Pale = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static auto& colorProfile = iniProxy["ColorProfile"_l];
 static RectangleShape rectangle;
-	void setCamera() {
+	inline void setCamera() {
 		rectangle.setCamera(&SokuLib::camera);
 	}
 
@@ -29,29 +28,28 @@ using LagWatcher = std::unordered_map<const GameObjectBase*, bool>;
 #define DECODE_COLT(i) ((i)%100)
 #define DECODE_COLL(i) ((i)/100)
 #define TRUE_CLEAR(m) (LagWatcher().swap(m))
-//static LagWatcher lag_watcher, lag_buffer;
 static LagWatcher lag_saver, lag_buffer;
-static bool dirty = false;
-bool getDirty() { return dirty; }
-void setDirty(bool d) {
-	dirty = d;
-	if (dirty) {
-		lag_buffer.swap(lag_saver);
-		TRUE_CLEAR(lag_buffer);
+static bool enabled = false, unflushed = false;
+void flushWatcher() {
 #ifdef _DEBUG
-		//printf("lag_saver %d -------------\n", lag_saver.size());
+	printf("lag_saver %d buffer %d\n", lag_saver.size(), lag_buffer.size());
 #endif // _DEBUG
-
-	}
+	if (!unflushed) return;
+	lag_buffer.swap(lag_saver);
+	TRUE_CLEAR(lag_buffer);
+	unflushed = false;
 }
 void cleanWatcher() {
 	//lag_watcher.clear();
 	TRUE_CLEAR(lag_saver); TRUE_CLEAR(lag_buffer);
+	enabled = unflushed = false;
 }
+void closeWatcher() { enabled = false; }
+void startWatcher() { cleanWatcher(); enabled = true; }
 TrampTamper<7> update_collision_shim(0x47d2c4);
 void __fastcall lag_watcher_updator(const GameObjectBase* object) {
-	if (!object) return;
-	auto spec = determine(*object, BulletSpecial::SHARED_BOX | BulletSpecial::SUBBOX);
+	if (!enabled || !object) return;
+	auto spec = determine(*object, BulletSpecial::SHARED_BOX | BulletSpecial::SUBBOX | BulletSpecial::EFFECT);
 	if (spec.SubBox) {
 		object = object->parentA;
 		spec = determine(*object, BulletSpecial::SHARED_BOX);
@@ -60,6 +58,7 @@ void __fastcall lag_watcher_updator(const GameObjectBase* object) {
 		&& check_lag<false>(*object, spec) && object->collisionLimit && !object->collisionType)
 		//lag_buffer.erase(object);
 		lag_buffer[object] = true;
+	unflushed = true;
 }
 
 
@@ -240,10 +239,22 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 
 void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color border)
 {
-	SokuLib::Vector2u size{ s, s }; size /= SokuLib::camera.scale;
-	SokuLib::Vector2i pos{ object.position.x - size.x / 2, -object.position.y - size.y / 2 };
-	rectangle.setPosition(pos);
-	rectangle.setSize(size);
+	SokuLib::Vector2u size{ s, s };
+	SokuLib::Vector2i pos;
+	if (object.isGui) {
+		pos = object.position.to<int>() - size / 2;
+		rectangle.setCamera(nullptr);
+		rectangle.setPosition(pos);
+		rectangle.setSize(size);
+		setCamera();
+	}
+	else {
+		size /= SokuLib::camera.scale;
+		pos.x = object.position.x - size.x / 2;
+		pos.y =-object.position.y - size.y / 2;
+		rectangle.setPosition(pos);
+		rectangle.setSize(size);
+	}
 
 	rectangle.setFillColor(fill);
 	rectangle.setBorderColor(border);

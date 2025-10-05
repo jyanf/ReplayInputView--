@@ -575,6 +575,16 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     //}
 
 	LeaveCriticalSection(&info::d3dMutex);
+
+    auto target = inter.focus ? inter.focus : inter.getHover();
+    if (target) {
+        auto formatted = std::format("{}:{:#08x} | act{:03} | seq{:03}", "Object", (DWORD)target, target->frameState.actionId, target->frameState.sequenceId);
+        //format = ;//tuple<> pfocus
+        auto buf = std::wstring(MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), nullptr, 0), 0);
+        MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), buf.data(), buf.size());
+        wndTitle(buf);
+    }
+
     updateWnd();
     dirty = false;
 	return ret;

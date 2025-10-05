@@ -10,6 +10,7 @@
 #include <windowsx.h>
 #include <map>
 #include <array>
+#include <string>
 #include "../main.hpp"
 #include "tex.hpp"
 
@@ -67,9 +68,9 @@ using Design = SokuLib::CDesign;
 		}
 		
 		inline bool insert(const GameObjectBase* o) {
-			Anchor pos = {
-				SokuLib::camera.scale * (SokuLib::camera.translate.x + o->position.x),
-				SokuLib::camera.scale * (SokuLib::camera.translate.y - o->position.y)
+			Anchor pos = o->isGui ? o->position.to<int>() : Anchor {
+				.x = int(SokuLib::camera.scale * (SokuLib::camera.translate.x + o->position.x)),
+				.y = int(SokuLib::camera.scale * (SokuLib::camera.translate.y - o->position.y))
 			};
 			if (!checkInWnd(pos) || !checkHover(pos, cursor))
 				return false;
@@ -197,6 +198,10 @@ using Design = SokuLib::CDesign;
 		static LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 		static LRESULT CALLBACK MainWindowProc(HWND, UINT, WPARAM wParam, LPARAM lParam);
 		static LRESULT CALLBACK MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+		inline static void wndTitle(const std::wstring& title) {
+			if (viceWND)
+				SetWindowTextW(viceWND, title.c_str());
+		}
 		static bool InstallHooks(HINSTANCE hInstance, HWND hwnd);
 		static void UninstallHooks(HWND hwnd = SokuLib::window);
 		Vice() {
