@@ -19,7 +19,7 @@ static const float BOXES_ALPHA = 0.25;
 const Color Color_Orange = 0xFFf07000, Color_Gray = 0xFF808080, Color_Pale = 0xFFcccccc, Color_Purple = 0xFFaa00ff;
 static auto& colorProfile = iniProxy["ColorProfile"_l];
 static RectangleShape rectangle;
-	inline void setCamera() {
+	void setCamera() {
 		rectangle.setCamera(&SokuLib::camera);
 	}
 
