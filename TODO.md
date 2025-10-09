@@ -18,7 +18,7 @@ hook resetd3d9device
         SendMessageA(hWnd,0x104,0xd,0);//a
         break;
 
-box渲染次序问题：拆解drawPlayerBoxes
+~~box渲染次序问题：拆解drawPlayerBoxes~~
 
 是否处于蓄力状态（压键）
 

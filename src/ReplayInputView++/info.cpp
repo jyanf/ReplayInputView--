@@ -584,6 +584,9 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
         MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), buf.data(), buf.size());
         wndTitle(buf);
     }
+    else {
+		wndTitle(L"Defaulting to Players: ");
+    }
 
     updateWnd();
     dirty = false;

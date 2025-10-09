@@ -10,7 +10,7 @@
 #include <windowsx.h>
 #include <map>
 #include <array>
-#include <string>
+#include <variant>
 #include "../main.hpp"
 #include "tex.hpp"
 
@@ -50,12 +50,46 @@ using Design = SokuLib::CDesign;
 		//map2D<Player> bufPlayer, poolPlayer;
 		//map2D<GameObject> bufObject, poolObject;
 		int index = -1;
-		std::vector<const GameObjectBase*> hovers;
+		//using Phover = const GameObjectBase*;
+		using PhoverBase = std::variant<std::nullptr_t, const GameObject*, const Player*, const GameObjectBase*>;
+		struct Phover : public PhoverBase {
+			using PhoverBase::PhoverBase;
+			using PhoverBase::operator=;
+			inline bool has_value() const { return !std::holds_alternative<std::nullptr_t>(*this); }
+			
+			inline const GameObjectBase* get_base() const {
+				if (std::holds_alternative<const GameObjectBase*>(*this))
+					return std::get<const GameObjectBase*>(*this);
+				else if (std::holds_alternative<const GameObject*>(*this))
+					return std::get<const GameObject*>(*this);
+				else if (std::holds_alternative<const Player*>(*this))
+					return std::get<const Player*>(*this);
+				return nullptr;
+			}
+			inline const Player* get_player() const {
+				if (std::holds_alternative<const Player*>(*this))
+					return std::get<const Player*>(*this);
+				return nullptr;
+			}
+			inline const GameObject* get_object() const {
+				if (std::holds_alternative<const GameObject*>(*this))
+					return std::get<const GameObject*>(*this);
+				return nullptr;
+			}
+			//inline operator bool() const { return has_value(); }
+			inline operator const GameObjectBase* () const { return get_base(); }
+			inline operator GameObjectBase* () const { return const_cast<GameObjectBase*>(get_base()); }
+			inline const GameObjectBase* operator->() const noexcept { return get_base(); }
+			inline const GameObjectBase& operator*() const noexcept { return *get_base(); }
+			inline operator DWORD () const noexcept { return DWORD(get_base()); }
+		};
+		std::vector<Phover> hovers;
 		std::mutex inserting;
 	public:
 		constexpr static int toler = 5;
 		Anchor cursor = { -1, -1 };
-		const GameObjectBase* focus = nullptr;
+		Phover focus = nullptr;
+		//std::variant<const GameObjectBase*, const GameObject*, const Player*> focus;
 		Interface(int reserve) {
 			hovers.reserve(reserve);
 		}
@@ -95,7 +129,7 @@ using Design = SokuLib::CDesign;
 			return hovers.size();
 		}
 		inline int getIndex() { return index; }
-		inline const GameObjectBase* getHover() {
+		inline Phover getHover() {
 			if (index >= 0) {
 				std::lock_guard lock(inserting);
 				return hovers[index];

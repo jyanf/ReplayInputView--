@@ -215,7 +215,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		//indicators
 		if (show_debug) {
 			if (phover) {
-				info::drawObjectHover(const_cast<GameObjectBase*>(phover), time);
+				info::drawObjectHover(phover, time);
 				box::drawPositionBox(*phover, 7, box::Color_Gray, box::Color::White);
 			}
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
