@@ -48,6 +48,7 @@ inline static Player* get_player(const BattleManager* This, int index);
 	};
 
 	class RivControl : public RivControlOld {
+		int counter = 0;//as timer
 	public:
 		std::array<pnl::Panel*, PLAYERS_NUMBER> panels = {nullptr};
 		info::Vice vice;

@@ -582,8 +582,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     }
     else if (target.is_player()) {
         auto player = target.get_player(); if (player) {
-        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() ? name : "Unknown";
-        std::transform(name.begin(), name.begin()+1, name.begin(), [](char c) { return std::toupper(c); });
+        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name.data()[0] = std::toupper(name.data()[0]), name) : "Unknown";
         auto formatted = std::format("{:8s}(P{:1d}): {:#08x}", 
             name,
             player->teamId+1, 

@@ -3,7 +3,7 @@
 #include <iostream>
 
 #pragma comment(lib, "Shlwapi.lib")
-#pragma comment(lib, "winmm.lib")
+//#pragma comment(lib, "winmm.lib")
 #include "ReplayInputView++/riv.hpp"
 
 const int& battleCounter = *reinterpret_cast<int*>(0x8985d8);

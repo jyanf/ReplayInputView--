@@ -166,7 +166,8 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 
 		const auto& pfocus = vice.inter.focus;
 		auto phover = vice.inter.getHover();
-		float time = timeGetTime() / 1000.f;
+		//float time = timeGetTime() / 1000.f;
+		float time = ++counter / 60.f;
 		traversing_players(This,//draw
 			[this, This, pfocus, phover, time](int i, Player* player) {
 				if (hitboxes && iniProxy["BoxDisplay"_l]["ArmorMeter"_l])
