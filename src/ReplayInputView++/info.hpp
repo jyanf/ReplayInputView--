@@ -56,9 +56,13 @@ using Design = SokuLib::CDesign;
 			using PhoverBase::PhoverBase;
 			using PhoverBase::operator=;
 			inline bool has_value() const { return !std::holds_alternative<std::nullptr_t>(*this); }
+			inline bool is_player() const { return std::holds_alternative<const Player*>(*this); }
+			inline bool is_object() const { return std::holds_alternative<const GameObject*>(*this); }
 			
 			inline const GameObjectBase* get_base() const {
-				if (std::holds_alternative<const GameObjectBase*>(*this))
+				if (std::holds_alternative<std::nullptr_t>(*this))
+					return nullptr;
+				else if (std::holds_alternative<const GameObjectBase*>(*this))
 					return std::get<const GameObjectBase*>(*this);
 				else if (std::holds_alternative<const GameObject*>(*this))
 					return std::get<const GameObject*>(*this);
@@ -101,7 +105,7 @@ using Design = SokuLib::CDesign;
 			return abs(c.x - p.x) <= toler && abs(c.y - p.y) <= toler;
 		}
 		
-		inline bool insert(const GameObjectBase* o) {
+		inline bool insert(const Phover& o) {
 			Anchor pos = o->isGui ? o->position.to<int>() : Anchor {
 				.x = int(SokuLib::camera.scale * (SokuLib::camera.translate.x + o->position.x)),
 				.y = int(SokuLib::camera.scale * (SokuLib::camera.translate.y - o->position.y))

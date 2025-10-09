@@ -577,15 +577,37 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 	LeaveCriticalSection(&info::d3dMutex);
 
     auto target = inter.focus ? inter.focus : inter.getHover();
-    if (target) {
-        auto formatted = std::format("{}:{:#08x} | act{:03} | seq{:03}", "Object", (DWORD)target, target->frameState.actionId, target->frameState.sequenceId);
+    if (!target.has_value()) {
+		wndTitle(L"Defaulting to Players: ");
+    }
+    else if (target.is_player()) {
+        auto player = target.get_player(); if (player) {
+        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() ? name : "Unknown";
+        std::transform(name.begin(), name.begin()+1, name.begin(), [](char c) { return std::toupper(c); });
+        auto formatted = std::format("{:8s}(P{:1d}): {:#08x}", 
+            name,
+            player->teamId+1, 
+            (DWORD)player
+        );
+        auto buf = std::wstring(MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), nullptr, 0), 0);
+        MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), buf.data(), buf.size());
+        wndTitle(buf);
+    }}
+    else if (target.is_object()) {
+		auto object = target.get_object(); if (object) {
+        auto player = object->gameData.owner;
+		int teamid = player ? player->teamId+1 : 0;
+        auto formatted = std::format("Object{}: {:#08x}", 
+                teamid > 0 ? std::format("(P{:1d})", teamid) : std::string(""), 
+                (DWORD)object
+        );
         //format = ;//tuple<> pfocus
         auto buf = std::wstring(MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), nullptr, 0), 0);
         MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), buf.data(), buf.size());
         wndTitle(buf);
-    }
+    }}
     else {
-		wndTitle(L"Defaulting to Players: ");
+
     }
 
     updateWnd();
