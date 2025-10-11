@@ -77,7 +77,7 @@ inline static void drawNumber(int number, float x, float y, int length = 1) {
 inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char interest)
 {
 	auto fdata = obj.boxData.frameData;
-	//auto fdata = obj.gameData.frameData;
+	//auto fdata2 = obj.gameData.frameData;
 	//auto sdata = obj.boxData.sequenceData;
 	auto sdata = obj.gameData.sequenceData;
 
@@ -92,15 +92,20 @@ inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char i
 		special.Gap = false;
 	}
 	if (fdata) {
-		special.Melee &= !fdata->attackFlags.grazable;//wrong flag name but nah
 		special.SharedBox &= fdata->frameFlags.atkAsHit;
+		special.Melee &= !fdata->attackFlags.grazable;//wrong flag name but nah
 		special.Reflector &= fdata->frameFlags.reflectionProjectile;
 		special.Entity &= fdata->frameFlags.chOnHit;
 		//special.Effect &= !fdata->attackFlags.value && !(special.Reflector || special.Entity);
 	} else {
 		//special.value &= 0b11111111u;
-		special.Melee = special.SharedBox = special.Reflector = special.Entity = false;
+		special.SharedBox = special.Melee = special.Reflector = special.Entity = false;
 	}
+	/*if (fdata2) {
+		special.SharedBox &= fdata2->frameFlags.atkAsHit;
+	} else {
+		special.SharedBox = false;
+	}*/
 	special.SubBox &= obj.parentA != nullptr;
 
 	fdata = obj.gameData.frameData;
@@ -127,8 +132,11 @@ inline static bool check_hitbox_active(const GameObjectBase& object) {
 	return colL && !colT;
 }
 inline static bool check_bullet_hurtbox_active(const GameObjectBase& object, BulletSpecial spec) {
-	if (spec.Reflector || spec.Entity) {
-		return object.boxData.frameData == object.gameData.frameData;
+	if (object.boxData.frameData != object.gameData.frameData) return false;//only meaningful when object lag with hurtbox disappeared
+	if (spec.Reflector) {
+		return true;
+	} else if (spec.Entity) {
+		return (bool)object.unknown1AC;
 	}
 	int colL = 0, colT = 0;
 	get_collision(object, colT, colL);
@@ -142,7 +150,7 @@ inline static bool check_lag(const GameObjectBase& object, BulletSpecial spec) {
 		return false;
 	bool hitbox = object.gameData.frameData && object.gameData.frameData->attackBoxes.size() || object.customHitBox != nullptr;
 	bool hurtbox =object.gameData.frameData && object.gameData.frameData->hurtBoxes.size();
-	if (spec.SharedBox)
+	if (/*spec.SharedBox*/ object.gameData.frameData && object.gameData.frameData->frameFlags.atkAsHit)
 		hurtbox |= hitbox;
 
 	if (checkHitBox
@@ -297,7 +305,7 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
 		return false;
 	auto flags = player.gameData.frameData ? &player.gameData.frameData->frameFlags : nullptr;
 	Color outline(colorProfile["Hurtbox.Character"_l]), addline = Color::Transparent;
-	Color fill = outline;
+	Color fill = outline, fill2 = Color::Transparent;
 
 	meleeInvul |= flags && flags->meleeInvincible;
 	projnvul |= flags && flags->projectileInvincible;
@@ -320,18 +328,19 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
 		
 	}
 	if (meleeInvul || projnvul) {
-		fill *= 0.5;
-		if (meleeInvul && projnvul)
-			fill = Color::Transparent;
-		else if (meleeInvul)
+		std::swap(fill, fill2);
+		if (meleeInvul && projnvul) {
+			
+		} else if (meleeInvul) {
 			addline = colorProfile["Hurtbox.InvulLine.Melee"_l];
-		else if (projnvul)
+		} else if (projnvul) {
 			addline = colorProfile["Hurtbox.InvulLine.Bullet"_l];
+		}
 	}
 	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
 		drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
 		if(addline)
-			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, Color::Transparent);
+			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2 * BOXES_ALPHA);
 	}
 	return player.boxData.hurtBoxCount;
 }
@@ -555,7 +564,7 @@ void drawArmor(const Player& player, bool blockable) {
 		//const auto& dmg = player.superArmorDamageTaken;
 		Draw2DCircle<threshold, 4>(SokuLib::pd3dDev, pos, radius + player.frameState.currentFrame % 2 * 6,
 			25.0f, SokuLib::Vector2f{  20.0f , 340.0f } * -player.direction,
-			ArmorBar.getBorder(player.frameState.currentFrame / 3 % 3 + (blockable ? 9 : 6)), 9 / 8.0f);
+			ArmorBar.getBorder(player.frameState.currentFrame / 3 % 3 + (blockable ? 9 : 6)), 9 / 8.0f, 0xC0FFFFFF);
 	} else if (normalArmored) {
 		guard.setTexture(Texture_armorLifebar);
 		//float u1 = (player.frameState.currentFrame/3 % 3) / 3.0, u2 = (player.frameState.currentFrame/3 % 3 + 1) / 3.0, v1 = 0 / 4.0, v2 = 1 / 4.0;
