@@ -1,5 +1,6 @@
 #include "riv.hpp"
 #include "DrawCircle.hpp"
+#include "InfoManager.hpp"
 #include <functional>
 
 ManagerInit ogBattleMgrConstruct[TARGET_MODES_COUNT]{};
@@ -491,11 +492,41 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 		}
 
 		riv.forwardIndex += riv.forwardStep;
-		if (riv.forwardIndex >= riv.forwardCount) {
+		if (riv.forwardCount>=0 && riv.forwardIndex >= riv.forwardCount) {
 			for (int i = riv.forwardIndex / riv.forwardCount; i > 0; --i) {
 				ret = riv.update(This, ind);
 			}
 			riv.forwardIndex = 0;
+		}
+		else {
+			auto info = SokuLib::v2::InfoManager::instance;
+			if (info) {
+				static const auto calcf = reinterpret_cast<float(__cdecl*)(int)>(0x4096d0);
+				auto counterOfs = reinterpret_cast<int*>(DWORD(&info->state1[0]) + 0x14);
+				auto offset = reinterpret_cast<float*>(DWORD(&info->state1[0]) + 0x8);
+				*offset = 0.f;
+				if (*counterOfs > 0) {
+					*offset = (1 - calcf((*counterOfs)-- * 9)) * 300;
+				}
+				counterOfs = reinterpret_cast<int*>(DWORD(&info->state1[1]) + 0x14);
+				offset = reinterpret_cast<float*>(DWORD(&info->state1[1]) + 0x8);
+				*offset = 0.f;
+				if (*counterOfs > 0) {
+					*offset = (1 - calcf((*counterOfs)-- * 9)) * 300;
+				}
+				struct OfsAndCounter {
+					float offset;  int counter; char unknown008[0x48];
+					inline void calc(int dir = 1) {
+						if (counter > 0) {
+							offset = (1 - calcf(--counter * 9)) * 300 * dir;
+						}
+					}
+				};
+				auto& mods1 = *reinterpret_cast<SokuLib::Deque<OfsAndCounter>*>(&info->state1[0].unknown20);
+				for (OfsAndCounter& o : mods1) { o.calc(info->state1[0].player && info->state1[0].player->teamId == 1 ? 1 : -1); }
+				auto& mods2 = *reinterpret_cast<SokuLib::Deque<OfsAndCounter>*>(&info->state1[1].unknown20);
+				for (OfsAndCounter& o : mods2) { o.calc(info->state1[1].player && info->state1[1].player->teamId == 1 ? 1 : -1); }
+			}
 		}
 		riv.show_debug = riv.vice.viceDisplay;
 	}
