@@ -3,7 +3,7 @@
 
 #include <DrawUtils.hpp>
 #include <Renderer.hpp>
-//#include <Design.hpp>
+#include <Sprite.hpp>
 #include <TextureManager.hpp>
 #include <assert.h>
 #include <unordered_map>
@@ -45,6 +45,30 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 			texId = NULL;
 		}
 		inline void set() const { SokuLib::textureMgr.setTexture(texId, 0); }
+		static inline FloatRect getBorder(int index, int sx, int sy, int gx, int gy, int ox = 0, int oy = 0) {
+			int col = sx / gx, row = sy / gy;
+			index %= col * row;
+			float u = ox + (index % col) * gx, v = oy + (index / col) * gy;
+			float du = gx, dv = gy;
+			u /= sx; v /= sy; du /= sx; dv /= sy;
+			return { u, v, u + du, v + dv };
+		}
+
+		static inline FloatRect getBorder(int index, int col, int row, const SokuLib::SpriteBase& ref) {
+			index %= col * row;
+			const auto& vert1 = ref.vertices[0];
+			const auto& vert2 = ref.vertices[3];
+			FloatRect uv {
+				vert1.u, vert1.v,
+				vert2.u, vert2.v,
+			};
+			// º∆À„ UV ≥ﬂ∂»
+			float du = (uv.x2 - uv.x1) / float(col);
+			float dv = (uv.y2 - uv.y1) / float(row);
+			uv.x1 += du * (index % col); uv.x2 = uv.x1 + du;
+			uv.y1 += dv * (index / col); uv.y2 = uv.y1 + dv;
+			return uv;
+		}
 	};
 
 	template <int sx, int sy, int gx, int gy, int ox = 0, int oy = 0>
@@ -79,11 +103,7 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 #ifdef _DEBUG
 			assert(0<=index && index<row*col);
 #endif
-			float u = ox + (index % col) * gx, v = oy + (index / col) * gy;
-			u /= sx; v /= sy;
-			float du = gx, dv = gy;
-			du /= sx; dv /= sy;
-			return { u, v, u + du, v + dv };
+			return Tex::getBorder(index, sx, sy, gx, gy, ox, oy);
 		}
 	};
 	typedef TileDesc<-1, -1, -1, -1> TileBlank;

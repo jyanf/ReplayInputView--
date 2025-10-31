@@ -75,7 +75,7 @@ using SokuLib::CNumber;
 
 
 
-inline static void get_collision(const GameObjectBase& object, int& colT, int& colL);
+template<bool check_sub = true> inline static void get_collision(const GameObjectBase& object, int& colT, int& colL);
 inline static bool check_hitbox_active(const GameObjectBase& object);
 
 inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char interest = BulletSpecial::ALL);
@@ -242,7 +242,7 @@ public:
 			drawPositionBox(This->object, This->size, This->fill, This->border);
 		}
 	};
-	inline void pushPosition(const GameObjectBase& object, int s=5, Color fill=Color::White, Color border=Color_Gray) {
+	inline void pushPosition(const GameObjectBase& object, Color fill=Color::White, Color border=Color_Gray, int s = 6) {
 		push(Anchors, PositionData{ object, s, fill, border });
 	}
 	void pushPlayer(const Player& player, bool hurtbreak, unsigned char delayedTimers);

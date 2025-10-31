@@ -1,5 +1,63 @@
 # Task
 
+- [ ] 4 p None
+
+- [ ] 副窗口交互
+
+  - [ ] tooltip窗口显示说明文字
+  - [ ] 可点击跳转的pa\pb
+  - [ ] 样式切换！
+
+- [ ] 重置光标选择器样式，包含滚轮进程accu/thre
+
+- [ ] 首次F6，默认给出指导图片
+
+- [ ] _stacker可以抽象到更上层，默认不启用
+
+  - [x] 或者用xmlattr控制
+
+- [ ] 代码规则宏化
+
+- [x] 右击标题栏复制
+
+  - [x] 及指引
+  - [ ] 窗口跟随优化（不出屏），记录手动拖放的位置；但全屏时还是在侧（注意点选失焦）
+
+- [ ] 图标渲染不完美
+
+  - [ ] 对素材差1 pixel?
+
+- [ ] 虚标题重载？layout继承时自身标题放在最上方以覆盖
+
+- [ ] 可视优化？：
+  窗口滚轮缩放+记忆大小/允许等比例拖动缩放+（双击标题栏）重置?
+  /窗口滚轮滚动
+  /多窗口
+  /自由布局（layout同样stacker？）
+  /甚至鼠标拖动交互；超·GUI……
+
+- [ ] 休眠重进的DPI被改
+
+  - [ ] 考虑跨屏扩展，移动窗口情况
+
+
+  > ```c++
+  > CreateD3D
+  > //GetWindowInfo(hwnd, &wi);
+  > //d3dpp.BackBufferWidth = wi.rcClient.right - wi.rcClient.left;
+  > //d3dpp.BackBufferHeight = wi.rcClient.bottom - wi.rcClient.top;
+  > ```
+
+- [x] hitstop等countdown lag?
+
+- [ ] playerid
+
+- [x] 无敌、untech条再细化
+
+  - [ ] 空中演出可受身？
+
+  - [ ] 受身无敌？
+
 - [x] 铃仙214幻视涟漪滞留弹lag有误
   817|seq 03
 
@@ -10,14 +68,172 @@
 
   > unknown1ac ==0 时身代无敌
 
-- [ ] 暂停时，窗口最小化再恢复后，不dirty导致白屏
-  切换窗口莫名丢失focus
+- [x] 暂停时，窗口最小化再恢复后，不dirty导致白屏
 
-- [ ] 暂停时立即显示combo info，跳过动画
+  - [x] 切换窗口莫名丢失focus
+
+- [x] 暂停时立即显示combo info，跳过动画
 
 - [x] 降低无限霸体圈透明度
 
 ---
+
+## F6-Tags
+
+- [ ] AlwaysShown框，另开窗口？
+- [ ] 根据hover在固定位置显示说明
+- [x] ref引用原版对象，image导入，相对切片等
+- [ ] Layout继承Design
+- [ ] 布局继承merge
+- [x] container统一动态大小，用pad/pin（图钉）实现固定大小
+
+
+> - [ ] Basic
+>
+>   > - [x] 位置
+>   >   - [ ] center
+>   >   - [ ] dir图标
+>   > - [x] 速度，g
+>   >   - [ ] addi
+>   > - [x] actionid, seq, ps, frm
+>   >   - [ ] 循环seq
+>   > - [x] Ct、Cl
+>   > - [x] hitstop（更新在前x）
+>   > - [ ] 强制打康(蓝CH)0x1a2
+>   > - [x] skillindex
+>   > - [x] renderInfos(Tex)
+>
+> - [ ] Obj
+>
+>   > - [ ] isbullet
+>   >   - [x] 弹幕等级/隙间等级
+>   >   - [x] 相杀计数（额外）
+>   >   - [x] 耐擦计数
+>   > - [ ] hp(仅身代)
+>   > - [ ] parentA/B: 仅icon，靠console显示指针
+>   > - [ ] gpshort6, gpfloat3/custom data (3)
+>   > - [ ] 不被暂停360
+>   > - [ ] layer?
+>
+> - [ ] Player
+>
+>   > - [x] teamId→P3P4??
+>   > - [ ] 川雾速度？？
+>   > - [x] gpshort/float 6
+>   >
+>   > ---
+>   >
+>   > - [ ] untech
+>   >   - [ ] stun防御硬直/受击硬直?
+>   > - [ ] hp/redhp delta/maxhp
+>   > - [ ] spirit & delay
+>   > - [ ] 取消等级(依旧icon，N0, Al10, Ah20, B30, C40, Sk50, Sc(60+)100
+>   >   - [x] 移动取消锁（上升且<=100.0）
+>   >   
+>   >   - [ ] 挥空取消锁（动作>=300且result为0）
+>   >   
+>   >     > bool resultCancellable = this->actionId < 300 || this->collisionType != 0 && this->collisionType != 3
+>   > - [x] 一些天气标志；开关们
+>   >   - [ ] canGrazeMelee
+>   >   - [ ] 黄砂
+>   >   - [ ] crush on WB
+>   >   - [ ] charged atk
+>   > - [ ] 乘子们
+>   >   - [ ] 攻、防←棒子和人偶.2f
+>   >   - [ ] speedXY; speedPower?
+>   >   - [ ] power
+>   >   - [ ] limit？
+>   >   - [ ] 反甲
+>   >   - [x] 连段伤害
+>   >   - [ ] sc、skill、吸血、碎卡
+>   > - [ ] 倒计时（更新在前）
+>   >   - [x] 擦弹
+>   >   - [x] 三无敌
+>   >   - [x] SOR（封）
+>   >   - [x] confusion（红眼）
+>   >   - [ ] 回血符（星）
+>   >   - [ ] 蓝药
+>   >   - [ ] 龙星、天滴
+>   > - [ ] DD锁
+>   > - [ ] 
+>
+> - [x] 标签：
+>
+>   - [x] 站/蹲
+>
+>   - [x] 打站蹲
+>
+>   - [x] 空中
+>
+>   - [x] 体术/弹幕；
+>
+>   - [x] 友伤
+>
+>   - [x] AUB，UB
+>
+>   - [x] 投技
+>
+>   - [x] 擦弹
+>
+>   - [x] 无敌
+>
+>   - [x] 不可反射
+>   - [x] Parry单独一栏（紫色上下行）f&a=|p
+>   - [x] Armor与ignore Armor
+>
+> 
+>
+> - [x] 嵌套窗口系统??
+>   标题→小框→子内容
+>   Base→
+>   Player→
+> - [ ] 点击跳转（地址 type→按钮）
+> - [ ] 展开收起功能>
+>   滚动条
+> - [ ] 系统卡等级？？卡组？
+
+```json
+{
+    "GameObjectBase": {
+		"base": null,
+    },
+    "Player": {
+        "base":"GameObjectBase",
+        "Frames":{
+            ""
+        },
+        "Fields": {
+            "0": null,//
+            "10": null,//
+            "11": null,//
+            //reserved id below
+            "123": {//adjust pos in layout
+                "Name_Icon":12,//str, or index of png chunks 
+                "Description": "text to be shown",
+                "Value": {
+                    "offset":"0x1",
+                    "size": 4,
+                    "pointer": null,
+                    "type": "dec",//hex, color, str, float
+                    "hide_if": 0
+                }
+            },
+            "100": {
+                
+            }
+        }
+
+    },
+    "GameObject": {
+        "base": "GameObjectBase",
+        "":null
+    },
+    "Suwako": {
+        base: "Player",
+        
+    }
+}
+```
 
 - [x] timeGetTime精度不足，动画卡顿
 
@@ -26,6 +242,10 @@
   随机种子遭到影响，初始化时固定54
 
   SokuLib::appendDatFile固定随机数种子
+
+---
+
+
 
 【！】
 
@@ -120,97 +340,6 @@ $$
 ~~镜像从左到右~~
 
 ## CommandFade
-
-
-
-## F6-Tags
-
-- [ ] AlwaysShown框，另开窗口？
-- [ ] 根据hover在固定位置显示说明
-
-
-> - [ ] 弹幕等级
->
-> - [ ] 擦弹状态和
->   无敌倒计时们
->
-> - [ ] CtCl
->
->
-> 不可防（空防不可）；不可擦
->
-> 数值：身代HP、damage、lv、ProjCollideCounter、GrazeTimer
->
-> - [ ] 标签：
->
->   - [x] 体术/弹幕；
->
->   - [ ] 友伤
->
->   - [x] AUB，UB
->
->   - [x] 投技
->
->   - [ ] 擦弹
->
->   - [ ] 无敌
->
->   - [ ] 不可反射
->
->   - [ ] 
->
->     
->
-> - [ ] 嵌套窗口系统??
->   标题→小框→子内容
->   Base→
->   Player→
-> - [ ] 点击跳转（地址 type→按钮）
-> - [ ] 展开收起功能>
->   滚动条
-> - [ ] 系统卡等级？？卡组？
-
-```json
-{
-    "GameObjectBase": {
-		"base": null,
-    },
-    "Player": {
-        "base":"GameObjectBase",
-        "Frames":{
-            ""
-        },
-        "Fields": {
-            "0": null,//
-            "10": null,//
-            "11": null,//
-            //reserved id below
-            "123": {//adjust pos in layout
-                "Name_Icon":12,//str, or index of png chunks 
-                "Description": "text to be shown",
-                "Value": {
-                    "offset":"0x1",
-                    "size": 4,
-                    "pointer": null,
-                    "type": "dec"//hex, str, float
-                }
-            },
-            "100": {
-                
-            }
-        }
-
-    },
-    "GameObject": {
-        "base": "GameObjectBase",
-        "":null
-    },
-    "Suwako": {
-        base: "Player",
-        
-    }
-}
-```
 
 
 

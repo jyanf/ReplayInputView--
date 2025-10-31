@@ -1,20 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout version="4">
-	<!--Wnd size controller-->
-	<mutable id="1" xposition="240" yposition="600"/>
-	
 	<!--Background-->
-	<static id="0" xposition="-20" yposition="30" mirror="0">
-		<image name="back.bmp" xposition="0" yposition="0" width="200" height="60"/>
+	<static id="0" xposition="0" yposition="0" mirror="0">
+		<image name="back.png" xposition="0" yposition="0" width="240" height="1080"/>
 	</static>
-	<!--sprite pt1-->
-	<mutable id="10" xposition="0" yposition="250"/>
-		<!--sprite pt2-->
-	<mutable id="11" xposition="200" yposition="450"/>
+
+<!--ref supports-->
+	<!--icons-->
+	<static class="frame-flags-icon" id="100" xposition="0" yposition="100" mirror="0">
+		<image name="frame-flag-icons.png" xposition="0" yposition="0" width="312" height="48"/>
+	</static>
+	<static class="attack-flags-icon" id="101" xposition="0" yposition="200" mirror="0">
+		<image name="attack-flag-icons.png" xposition="0" yposition="0" width="312" height="48"/>
+	</static>
+	<!--static class="extra-icon" id="102" xposition="0" yposition="48" mirror="0">
+		<image name="extra-icons.png" xposition="0" yposition="0" width="72" height="24"/>
+	</static>
 	
-	<!--
-	<number id="1000" xposition="76" yposition="94" width="36" height="35" fontspacing="10" textspacing="-7" size="0" floatsize="0">
-		<image name="comboFont.bmp" xposition="0" yposition="0" width="445" height="35"/>
+
+	<!--backs-->
+	<static class="debug-box" id="200" xposition="0" yposition="0" mirror="0">
+		<image name="debug-box.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="transparent-back" id="201" xposition="72" yposition="0" mirror="0">
+		<image name="transparent.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="half-gray" id="202" xposition="72" yposition="0" mirror="0">
+		<image name="half-gray.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	
+	<static class="titlebox-gray" id="210" xposition="0" yposition="72" mirror="0">
+		<image name="titlebox-gray.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="titlebox-pale" id="211" xposition="72" yposition="72" mirror="0">
+		<image name="titlebox-pale.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="titlebox-green" id="212" xposition="216" yposition="72" mirror="1">
+		<image name="titlebox-green.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="titlebox-red" id="213" xposition="72" yposition="144" mirror="1">
+		<image name="titlebox-red.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="titlebox-white" id="214" xposition="144" yposition="144" mirror="1">
+		<image name="titlebox-white.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="titlebox-blue" id="215" xposition="144" yposition="144" mirror="0">
+		<image name="titlebox-blue.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	
+	<static class="frame-gray" id="220" xposition="0" yposition="216" mirror="0">
+		<image name="frame-gray.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-pale" id="221" xposition="72" yposition="216" mirror="0">
+		<image name="frame-pale.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-green" id="222" xposition="144" yposition="216" mirror="0">
+		<image name="frame-green.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-red" id="223" xposition="0" yposition="288" mirror="0">
+		<image name="frame-red.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-white" id="224" xposition="72" yposition="288" mirror="0">
+		<image name="frame-white.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-blue" id="225" xposition="144" yposition="288" mirror="0">
+		<image name="frame-blue.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+	<static class="frame-black" id="226" xposition="0" yposition="360" mirror="0">
+		<image name="frame-black.png" xposition="0" yposition="0" width="72" height="72"/>
+	</static>
+
+	<!--numbers-->
+	<number id="300" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="2">
+		<image name="font-plain.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
-	-->
+	<number id="301" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="0">
+		<image name="font-plain.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="310" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="0">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="312" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="2" floatsize="0">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="313" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="3" floatsize="0">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="314" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="4" floatsize="0">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="320" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="0" floatsize="2">
+		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="321" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="0" floatsize="0">
+		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="323" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="3" floatsize="0">
+		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="323" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="3" floatsize="2">
+		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	
+	
+	
+	<!--Cursor hint-->
+	<static id="1" xposition="0" yposition="100" mirror="0">
+		<image name="hint.png" xposition="20" yposition="0" width="240" height="680"/>
+	</static>
 </layout>

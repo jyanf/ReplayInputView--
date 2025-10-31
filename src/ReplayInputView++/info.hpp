@@ -8,17 +8,20 @@
 #include <dinput.h>
 //#include <ShellScalingApi.h>
 #include <windowsx.h>
+#include <WinUser.h>
 #include <map>
 #include <array>
 #include <variant>
 #include "../main.hpp"
 #include "tex.hpp"
+#include "gui.hpp"
 
 namespace info {
 using SokuLib::v2::GameObjectBase;
 using SokuLib::v2::GameObject;
 using SokuLib::v2::Player;
-using Design = SokuLib::CDesign;
+//using Design = SokuLib::CDesign;
+using Design = gui::RivDesign;
 	//void createViceWindow();
 	//void destroyViceWindow();
 	extern const DIMOUSESTATE& sokuDMouse;//mouse data
@@ -86,12 +89,17 @@ using Design = SokuLib::CDesign;
 			inline const GameObjectBase* operator->() const noexcept { return get_base(); }
 			inline const GameObjectBase& operator*() const noexcept { return *get_base(); }
 			inline operator DWORD () const noexcept { return DWORD(get_base()); }
+			inline std::string tostring() const {
+				return std::format("{:#08x}", DWORD(*this));
+			}
 		};
 		std::vector<Phover> hovers;
+		int zaccu = 0; const int thre = WHEEL_DELTA;
+		DWORD oldi = 0;
 		std::mutex inserting;
 	public:
 		constexpr static int toler = 5;
-		Anchor cursor = { -1, -1 };
+		Anchor cursor = { -1, -1 }, cursor2 = { -1, -1 };
 		Phover focus = nullptr;
 		//std::variant<const GameObjectBase*, const GameObject*, const Player*> focus;
 		Interface(int reserve) {
@@ -140,21 +148,20 @@ using Design = SokuLib::CDesign;
 			}
 			return nullptr;
 		}
-		inline bool checkDMouse() {
-			auto old = focus;
-			if (sokuDMouse.rgbButtons[0]) {
-				focus = getHover();
-				return old != focus;
-			}
-			if (sokuDMouse.rgbButtons[1] && focus) {
-				focus = nullptr;
-				return old != focus;
-			}
-			if (abs(sokuDMouse.lZ) >= WHEEL_DELTA) {
-				return switchHover(sokuDMouse.lZ > 0 ? 1 : -1);
-			}
-			return false;
+		inline static bool cursor_refresh(Anchor& cur, POINT raw, HWND hwnd = SokuLib::window, int ww = sokuW, int wh = sokuH) {
+			if (!hwnd || !wh || !ww) return false;
+			float scaleX, scaleY;
+			RECT rt;
+			GetClientRect(hwnd, &rt);
+			scaleX = (float)rt.right / ww;
+			scaleY = (float)rt.bottom / wh;
+			raw.x /= scaleX;
+			raw.y /= scaleY;
+			bool moved = cur.x != raw.x || cur.y != raw.y;
+			cur.x = raw.x; cur.y = raw.y;
+			return moved;
 		}
+		bool checkDMouse();
 		inline void clear() {
 			hovers.clear();
 			index = -1;
@@ -164,8 +171,8 @@ using Design = SokuLib::CDesign;
 	
 	class Vice {
 		static WNDPROC ogMainWndProc;
-		static HHOOK mouseHook;
-		static HWND viceWND;
+		//static HHOOK mainMouseHook, mouseHook;
+		static HWND viceWND, tipWND;
 		//static LPDIRECT3D9 vicePD3;
 		//static LPDIRECT3DDEVICE9 vicePD3D;
 		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
@@ -176,14 +183,20 @@ using Design = SokuLib::CDesign;
 		constexpr static UINT WM_VICE_WINDOW_UPDATE = WM_USER + 0x234;
 		constexpr static UINT WM_MAIN_TOGGLECURSOR = WM_USER + 0x235;
 
-		constexpr static int WIDTH = 200, HEIGHT = 500;
+		constexpr static int WIDTH = 240, HEIGHT = 1080;
 	public:
 		static std::atomic_bool viceDisplay, dirty;
-		static Interface inter;
+		static Interface inter; friend class Interface;
 
 		static bool CreateD3D(HWND&);
 		inline static bool DestroyD3D();
 		static bool createWnd();
+		inline static void delayedInit() {
+			//static bool inited = false;
+			if (!layout) {
+				layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.cv0");
+			}
+		}
 
 		inline static void showCursor(bool show, int id) {
 			if (!SokuLib::window) return;
@@ -235,29 +248,31 @@ using Design = SokuLib::CDesign;
 		static DWORD WINAPI WindowMain(LPVOID params);
 		static LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 		static LRESULT CALLBACK MainWindowProc(HWND, UINT, WPARAM wParam, LPARAM lParam);
-		static LRESULT CALLBACK MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+		//static LRESULT CALLBACK WindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+		//static LRESULT CALLBACK MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
+
 		inline static void wndTitle(const std::wstring& title) {
 			if (viceWND)
 				SetWindowTextW(viceWND, title.c_str());
 		}
-		static bool InstallHooks(HINSTANCE hInstance, HWND hwnd);
-		static void UninstallHooks(HWND hwnd = SokuLib::window);
+		static bool InstallHooks(HINSTANCE, HWND);
+		static void UninstallHooks(HWND);
 		Vice() {
 			//createWnd();
 			/*Sleep(100);*/
 			//hideWnd();
-			inter.cursor = { -1, -1 };
+			inter.cursor = { -1, -1 }; inter.cursor2 = { -1, -1 };
 			inter.focus = nullptr;
-			if (!layout.has_value())
-				layout.emplace();
-			layout->loadResource("rivpp/layout.dat");
+			delayedInit();
+			//if (!layout.has_value())
+				//layout.emplace("rivpp/layout.xml");
+			//layout->loadResource();
 		}
 		~Vice() {
 			destroyWnd();
-			if (layout.has_value())
-			{
+			if (layout.has_value()) {
 				layout->clear();
-				layout->objectMap.clear();
+				layout.reset();
 			}
 		}
 		static bool __fastcall CBattle_Render(SokuLib::Battle* This);

@@ -63,12 +63,10 @@ void __fastcall lag_watcher_updator(const GameObjectBase* object) {
 
 
 static CNumber& num = *reinterpret_cast<CNumber*>(0x00882940);
-const auto& CDrawNumber = SokuLib::union_cast<void(__thiscall CNumber::*)(int, float, float, int, bool)>(0x00414940);
 inline static void drawNumber(int number, float x, float y, int length = 1) {
 	x = (SokuLib::camera.translate.x + x) * SokuLib::camera.scale;
 	y = (SokuLib::camera.translate.y + y) * SokuLib::camera.scale;
-
-	(num.*CDrawNumber)(
+	num.render(
 		number, x, y, length,
 		false//is take neg sign
 	);
@@ -114,8 +112,8 @@ inline static BulletSpecial determine(const GameObjectBase& obj, unsigned char i
 	return special;
 }
 
-inline static void get_collision(const GameObjectBase& object, int& colT, int& colL) {
-	bool is_sub = determine(object, BulletSpecial::SUBBOX).SubBox;
+template<bool check_sub> inline static void get_collision(const GameObjectBase& object, int& colT, int& colL) {
+	bool is_sub = check_sub && determine(object, BulletSpecial::SUBBOX).SubBox;
 	colT = is_sub ? object.parentA->collisionType : object.collisionType;
 	colL = is_sub ? object.parentA->collisionLimit : object.collisionLimit;
 	if (colT) {
@@ -139,8 +137,8 @@ inline static bool check_bullet_hurtbox_active(const GameObjectBase& object, Bul
 		return (bool)object.unknown1AC;
 	}
 	int colL = 0, colT = 0;
-	get_collision(object, colT, colL);
-	return colL;
+	get_collision<false>(object, colT, colL);
+	return colL > 0;
 }
 template<bool checkHitBox = true>
 inline static bool check_lag(const GameObjectBase& object, BulletSpecial spec) {//lag: bullet boxInfo not updated
@@ -190,19 +188,22 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 	//return check_hitbox_active(object);
 	
 }
-
+static SokuLib::DrawUtils::Rect<SokuLib::Vector2f> precised_vertex(const FloatRect& b, const SokuLib::Vector2f& d) {
+	float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
+	float	left=	(b.x1 + tx) * scale - d.x,
+			top=	(b.y1 + ty) * scale - d.y,
+			right=	(b.x2 + tx) * scale + d.x,
+			bottom=	(b.y2 + ty) * scale + d.y;
+	SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect{
+		{left, top},		{right, top},
+		{right, bottom},	{left, bottom},
+	};
+	return rect;
+}
 template <int d = 0>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor)
 {
-	if (!rotation) {
-		float d0 = d / SokuLib::camera.scale;
-		FloatRect rect{
-			box.left-d0 + 0.5, box.top-d0,
-			box.right+d0 + 0.5, box.bottom + d0
-		};//0.5 align
-		rectangle.setRect(rect);
-	}
-	else {
+	if (rotation) {
 		SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect;
 		SokuLib::Vector2f da = rotation->pt1.to<float>(), db = rotation->pt2.to<float>();
 		float length = sqrtf(da.x * da.x + da.y * da.y);
@@ -211,24 +212,46 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 		db *= d/length;
 		da += db; db -= da - db;//da = d1+d2; db=-d1+d2
 
+		float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
+		Vector2f base{ tx + box.left, ty + box.top };
 
-		rect.x1.x = SokuLib::camera.scale * (SokuLib::camera.translate.x + box.left);
-		rect.x1.y = SokuLib::camera.scale * (SokuLib::camera.translate.y + box.top);
-		rect.x1.x += -da.x; rect.x1.y += -da.y;
-
-		rect.y1.x = SokuLib::camera.scale * (SokuLib::camera.translate.x + box.left + rotation->pt1.x);
-		rect.y1.y = SokuLib::camera.scale * (SokuLib::camera.translate.y + box.top + rotation->pt1.y);
-		rect.y1.x += -db.x; rect.y1.y += -db.y;
-
-		rect.x2.x = SokuLib::camera.scale * (SokuLib::camera.translate.x + box.left + rotation->pt1.x + rotation->pt2.x);
-		rect.x2.y = SokuLib::camera.scale * (SokuLib::camera.translate.y + box.top + rotation->pt1.y + rotation->pt2.y);
-		rect.x2.x += da.x; rect.x2.y += da.y;
-
-		rect.y2.x = SokuLib::camera.scale * (SokuLib::camera.translate.x + box.left + rotation->pt2.x);
-		rect.y2.y = SokuLib::camera.scale * (SokuLib::camera.translate.y + box.top + rotation->pt2.y);
-		rect.y2.x += db.x; rect.y2.y += db.y;
+		rect.x1 = base * scale; rect.x1 -= da;
+		//rect.x1.x = scale * (tx + box.left);
+		//rect.x1.y = scale * (ty + box.top);
+		//rect.x1.x += -da.x; rect.x1.y += -da.y;
+		rect.y1 = (base + rotation->pt1) * scale; rect.y1 -= db;
+		//rect.y1.x = scale * (tx + box.left + rotation->pt1.x);
+		//rect.y1.y = scale * (ty + box.top + rotation->pt1.y);
+		//rect.y1.x += -db.x; rect.y1.y += -db.y;
+		rect.x2 = (base + rotation->pt1 + rotation->pt2) * scale; rect.x2 += da;
+		//rect.x2.x = scale * (tx + box.left + rotation->pt1.x + rotation->pt2.x);
+		//rect.x2.y = scale * (ty + box.top + rotation->pt1.y + rotation->pt2.y);
+		//rect.x2.x += da.x; rect.x2.y += da.y;
+		rect.y2 = (base + rotation->pt2) * scale; rect.y2 += db;
+		//rect.y2.x = scale * (tx + box.left + rotation->pt2.x);
+		//rect.y2.y = scale * (ty + box.top + rotation->pt2.y);
+		//rect.y2.x += db.x; rect.y2.y += db.y;
 
 		rectangle.rawSetRect(rect);
+	} else if constexpr (d) {
+		/*float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
+		float	left=	(box.left	+ tx) * scale - d,
+				top=	(box.top	+ ty) * scale - d,
+				right=	(box.right	+ tx) * scale + d,
+				bottom=	(box.bottom	+ ty) * scale + d;
+		SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect{
+			{left, top},		{right, top},
+			{right, bottom},	{left, bottom},
+		};*/
+		rectangle.rawSetRect(
+			precised_vertex( FloatRect(box.left , box.top, box.right, box.bottom), { d,d })
+		);
+	} else {
+		FloatRect rect{
+			box.left,		box.top,
+			box.right,		box.bottom,
+		};//0.5 align?
+		rectangle.setRect(rect);//精度尼玛掉完了
 	}
 
 	rectangle.setFillColor(fillColor); //if (d) rectangle.fillColors[d - 1] = rectangle.fillColors[d + 1] = Color::Transparent;
@@ -247,26 +270,37 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 
 void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color border)
 {
-	SokuLib::Vector2u size{ s, s };
-	SokuLib::Vector2i pos;
-	if (object.isGui) {
-		pos = object.position.to<int>() - size / 2;
-		rectangle.setCamera(nullptr);
-		rectangle.setPosition(pos);
-		rectangle.setSize(size);
-		setCamera();
-	}
-	else {
-		size /= SokuLib::camera.scale;
-		pos.x = object.position.x - size.x / 2;
-		pos.y =-object.position.y - size.y / 2;
-		rectangle.setPosition(pos);
-		rectangle.setSize(size);
-	}
-
 	rectangle.setFillColor(fill);
 	rectangle.setBorderColor(border);
-	rectangle.draw();
+	SokuLib::Vector2f size{ s, s };
+	SokuLib::Vector2f pos = object.position;
+	//float scale = object.isGui ? 1.f : SokuLib::camera.scale;
+	
+	if (object.isGui) {
+		pos -= size / 2.f;
+		rectangle.setCamera(nullptr);
+		rectangle.setPosition(pos.to<int>());
+		rectangle.setSize(size.to<unsigned>());
+		constexpr float rot = 45.0 / 180 * 3.14159;
+		rectangle.setRotation(rot);
+		rectangle.draw();
+		setCamera();
+		rectangle.setRotation(0);
+	}
+	else {
+		//size /= scale;
+		//pos -= size / 2.f;
+		//pos.x = roundf(pos.x); //pos.y = roundf(pos.y);
+		pos.x = ceilf(pos.x); pos.y = ceilf(pos.y);
+		pos.y *= -1;
+		//rectangle.setPosition(pos.to<int>());
+		//rectangle.setSize(size.to<unsigned>());
+		rectangle.rawSetRect(
+			precised_vertex( { pos.x, pos.y, pos.x, pos.y }, size/2 )
+		);
+		rectangle.draw();
+	}
+	
 }
 //template void drawPositionBox<3>(const GameObjectBase& object, Color fill, Color border);
 //template void drawPositionBox(const GameObjectBase& object, Color fill, Color border);
@@ -395,7 +429,10 @@ bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
 	if (!hurtbreak && object.boxData.hurtBoxCount <= 5) {
 		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
 			if (spec.SharedBox)
-				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA * (hitbox_active ? 0.5 : 1));
+				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], 
+					(!hurtbox_active && hitbox_active ? (outline.r *= 0.9, outline.g *= 0.9, outline.b *= 0.9, outline) : outline ), 
+					fill * BOXES_ALPHA * (hitbox_active ? 0.6 : 1)
+				);
 			else
 				drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
 			drawed = true;

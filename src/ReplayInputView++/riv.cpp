@@ -204,7 +204,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 					}
 					else {
 						//box::drawPositionBox(*object, 5, Color::White * 0.5, box::Color_Gray * 0.5);//default every
-						layers.pushPosition(*object, 5, Color::White * 0.5, box::Color_Gray * 0.5);
+						layers.pushPosition(*object, Color::White * 0.5, box::Color_Gray * 0.5);
 					}
 				}
 				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Bullets"_l].value[i]) {
@@ -218,7 +218,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		if (show_debug) {
 			if (phover) {
 				info::drawObjectHover(phover, time);
-				box::drawPositionBox(*phover, 7, box::Color_Gray, box::Color::White);
+				box::drawPositionBox(*phover, 8, box::Color_Gray, box::Color::White);
 			}
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
 				guard
@@ -249,7 +249,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 						{ 0 }, 1, Color::Black);
 				}
 			}
-			if (pfocus) box::drawPositionBox(*pfocus, 7, box::Color_Gray, box::Color::Black);
+			if (pfocus) box::drawPositionBox(*pfocus, 8, box::Color_Gray, box::Color::Black);
 			
 		}
 	}
@@ -499,6 +499,8 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			riv.forwardIndex = 0;
 		}
 		else {
+			//0x478ED2 add 10f countdown
+			//0x479398 update offset
 			auto info = SokuLib::v2::InfoManager::instance;
 			if (info) {
 				static const auto calcf = reinterpret_cast<float(__cdecl*)(int)>(0x4096d0);

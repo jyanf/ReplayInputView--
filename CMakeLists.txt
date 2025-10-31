@@ -71,7 +71,14 @@ add_subdirectory(
     ${SOKULIB_PATH}
     src/${PROJECT_NAME}
 )
-
+set(BOOST_ROOT "S:/boost_1_89_0" CACHE PATH "")
+set(Boost_NO_SYSTEM_PATHS ON)
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+    message(STATUS "Boost include dir: ${Boost_INCLUDE_DIRS}")
+else()
+    message(FATAL_ERROR "Boost not found!")
+endif()
 
 # Module
 add_library("${PROJECT_NAME}"
@@ -83,10 +90,11 @@ add_library("${PROJECT_NAME}"
         src/${PROJECT_NAME}/panel.cpp
         src/${PROJECT_NAME}/tex.cpp
         src/${PROJECT_NAME}/info.cpp
+        src/${PROJECT_NAME}/gui.cpp
 )
 target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
-target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}")
+target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}" ${Boost_INCLUDE_DIRS})
 target_link_directories("${PROJECT_NAME}" PRIVATE ${SOKULIB_PATH}/lib)
 target_link_options(${PROJECT_NAME} PRIVATE "/SUBSYSTEM:WINDOWS")
 target_link_libraries(

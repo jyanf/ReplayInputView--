@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="GBK"?>
+<!--
+This xml has expanded features out of original soku layout system, implemented by ReplayInputView++
+本布局文件含有非想天则原有布局系统之外的扩展特性（由RIV++负责实现）
+## Introductions: 
+介绍如下：
+  - <window width="240" height="600"/>
+	Class window: controls the size of debug window by w/h properties
+	窗口标签：宽高属性控制窗口大小
+	出于调试考虑添加了版本字符串属性。
+
+  - 
+  
+以下为自定义部分：
+
+  -	<suwako inherit="player"><suwako/>
+
+补充：
+	**保留id范围(0~100)及用途**: 
+	1. `0`: 原版的默认显示id，不可索引；
+	2. `1`: 鼠标点选的提示图片；
+	3. `2~10`: .
+  
+-->
+<layout version="4">
+	<window width="240" height="1040" xbase="15" ybase="78">
+		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v0.0.1</title>
+	</window>
+	<fonts>
+		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
+		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1"/>
+		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xFFffffff" color_bottom="0xFF7070a0"/>
+		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xFFffffff" color_bottom="0xFFcccccc"/>
+		<font id="6"	class="field-names-blue"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xFFffffff" color_bottom="0xFF7070a0"/>
+		<font id="10"	class="field-string-plain"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="16" spacing="1"/>
+		<font id="11"	class="field-string-small"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="12"/>
+		<font id="12"	class="field-string-monos"	name="Cascadia Code"			stroke="true"	bold="true"		wrap="true" height="16" xspacing="0" yspacing="-3"/>
+		<font id="15"	class="console-string"		name="SimSun"					stroke="false"	bold="false"	wrap="true" height="14"/>
+		<font id="20"	class="big-hint-string"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="true" height="30"/>
+	</fonts>
+	<sublayout class="None">
+		<pad width="205" height="500"/>
+		<field class="hint">
+			<icon ref_id="1" tile="2,4,0" description="" xoffset="0" yoffset="0" width="" height=""/>
+			<textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox>
+		</field>
+	</sublayout>
+	<sublayout class="Mini" >
+		<pad width="207" height="169"/>
+		<back ref_id="200"/>
+		<title font_id="2" xoffset="3" yoffset="-29">Basic
+			<pad width="80" height="24" xoffset="-2" yoffset="-1"/>
+			<back ref_id="210"/>
+		</title>
+		<values>
+			<value class="position-x" id="1" type="float">
+				<offset hex="0xEC"/>
+			</value>
+			<value class="position-y" id="2" type="float">
+				<offset hex="0xF0"/>
+			</value>
+			<value class="speed-x" id="3" type="float">
+				<offset hex="0xF4"/>
+			</value>
+			<value class="speed-y" id="4" type="float">
+				<offset hex="0xF8"/>
+			</value>
+			<value class="gravity-y" id="5" type="float">
+				<offset hex="0x100"/>
+			</value>
+			<value class="direction" id="6" type="char">
+				<offset hex="0x104"/>
+			</value>
+			<value class="center-x" id="7" type="float">
+				<offset hex="0x108"/>
+			</value>
+			<value class="center-y" id="8" type="float">
+				<offset hex="0x10C"/>
+			</value>
+			<value class="action" id="10" type="ushort">
+				<offset hex="0x13C"/>
+			</value>
+			<value class="sequence" id="11" type="ushort">
+				<offset hex="0x13E"/>
+			</value>
+			<value class="pose" id="12" type="ushort">
+				<offset hex="0x140"/>
+			</value>
+			<value class="pose-frame" id="13" type="ushort">
+				<offset hex="0x142"/>
+			</value>
+			<value class="current-frame" id="14" type="int">
+				<offset hex="0x144"/>
+			</value>
+			<value class="sequence-size" id="15" type="ushort">
+				<offset hex="0x148"/>
+			</value>
+			<value class="pose-duration" id="16" type="ushort">
+				<offset hex="0x14C"/>
+			</value>
+			<value class="collision-type" id="20" type="int">
+				<offset hex="0x190"/>
+			</value>
+			<value class="collision-limit" id="21" type="char">
+				<offset hex="0x194"/>
+			</value>
+			<value class="skill-index" id="25" type="char">
+				<offset hex="0x18C"/>
+			</value>
+			<value class="skill-level" id="26" type="char"/>
+			<value class="hitstop" id="30" type="short">
+				<offset hex="0x196"/>
+			</value>
+			
+		</values>
+		<field class="position">
+			<pad width="207" height="20"/>
+			<back ref_id="200"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="" >Position</textbox>
+			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
+				(&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;,&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;)
+			</textbox>
+			<number value_id="1" number_id="300" xoffset="128" yoffset="-2"><back ref_id="200"/></number>
+			<number value_id="2" number_id="300" xoffset="204" yoffset="-2"><back ref_id="200"/></number>
+		</field>
+		<field class="speed">
+			<pad width="207" height="20"/>
+			<back ref_id="200"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Speed</textbox>
+			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
+				(&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;,&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;)
+			</textbox>
+			<textbox font_id="10" width="" height="" xoffset="156" yoffset="1">g=</textbox>
+			<number value_id="3" number_id="300" xoffset="106" yoffset="-2"><back ref_id="200"/></number>
+			<number value_id="4" number_id="300" xoffset="157" yoffset="-2"><back ref_id="200"/></number>
+			<number value_id="5" number_id="300" xoffset="213" yoffset="-2"><back ref_id="200"/></number>
+		</field>
+		<field class="frame-state">
+			<pad width="207" height="70"/>
+			<textbox font_id="5" xoffset="3" yoffset="25" width="" height="">Pattern</textbox>
+			<textbox font_id="12" width="170" height="" xoffset="46" yoffset="0">
+				| ACT | SEQ | curF |&lt;br&gt;|&#32;&#32;&#32;&#32;&#32;|&#32;&#32;&#32;&#32;&#32;|&#32;&#32;&#32;&#32;&#32;&#32;|&lt;br&gt;====================&lt;br&gt;| POSEs |&#32;&#32;FRAMEs&#32;&#32;|&lt;br&gt;|&#32;&#32;&#32;/&#32;&#32;&#32;|&#32;&#32;&#32;&#32;/&#32;&#32;&#32;&#32;&#32;|
+			</textbox>
+			<number value_id="10" number_id="313" xoffset="95" yoffset="9"/>
+			<number value_id="11" number_id="313" xoffset="143" yoffset="9"/>
+			<number value_id="14" number_id="314" xoffset="199" yoffset="9"/>
+			<number value_id="12" number_id="312" xoffset="87" yoffset="49"/>
+			<number value_id="15" number_id="312" xoffset="111" yoffset="49"/>
+			<number value_id="13" number_id="310" xoffset="159" yoffset="49"/>
+			<number value_id="16" number_id="314" xoffset="199" yoffset="49"/>
+			<icon ref_id="102" tile="1,1,0" class="is-loop-seq" xoffset="10" yoffset="30"/>
+		</field>
+		<field class="collision">
+			<pad width="207" height="20"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Collision</textbox>
+			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
+				{ type:&#32;&#32;&#32;; count: &#32;&#32;&#32;&#32;&#32;&#32;&#32;}
+			</textbox>
+			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
+			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
+		</field>
+		<field class="skill-tag">
+			<pad width="207" height="20"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Skill tag</textbox>
+			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
+				{ index:&#32;&#32;&#32;&#32;; level: &#32;&#32;&#32;&#32;&#32;&#32;}
+			</textbox>
+			<number value_id="25" number_id="301" xoffset="128" yoffset="-3"/>
+			<number value_id="26" number_id="301" xoffset="199" yoffset="-3"/>
+		</field>
+		<field class="hitstop">
+			<pad width="207" height="20"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Hitstop</textbox>
+			<number value_id="30" number_id="301" xoffset="88" yoffset="-1"/>
+		</field>
+		<field><pad height="10"/></field>
+	</sublayout>
+	<sublayout class="Frame-flags">
+		<pad width="200" height="55"/>
+		<back ref_id="221"/>
+		<title font_id="2" xoffset="110" yoffset="-29" width="" height="20">FrameFlags
+			<pad width="90" height="24"/>
+			<back ref_id="211"/>
+		</title>
+		<field class="column-test">
+			<field class="column1" stack="false" xoffset="4" yoffset="5">
+				<pad width="96" height="48"/>
+				<grid class="grid-attack-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
+					<!--always invisible so Pad is not counted-->
+					<icon class="attack-melee" ref_id="101" tile="13,2,0" description="Attack: melee."/>
+					<icon class="attack-bullet" ref_id="101" tile="13,2,1" description="Attack: bullet."/>
+					<icon class="attack-grab" ref_id="101" tile="13,2,2" description="Attack: grab."/>
+					
+					<icon class="attack-counter-hit" ref_id="101" tile="13,2,15" description="Can induce counter hit."/>
+					
+					<icon class="attack-highRB" ref_id="101" tile="13,2,3" description="High rightblock."/>
+					<icon class="attack-lowRB" ref_id="101" tile="13,2,4" description="Low rightblock."/>
+					<icon class="attack-bothRB" ref_id="101" tile="13,2,5" description="Always rightblock."/>
+					<icon class="attack-noRB" ref_id="101" tile="13,2,18" description="No rightblock."/>
+					
+					<icon class="attack-knockback" ref_id="101" tile="13,2,20" description="Hit knockback(high)."/>
+					<icon class="attack-stagger" ref_id="101" tile="13,2,21" description="Hit stagger(low)."/>
+					
+					<icon class="attack-ungrazable" ref_id="101" tile="13,2,13" description="Ungrazable."/>
+					<icon class="attack-drain" ref_id="101" tile="13,2,14" description="Drain on graze."/>
+					
+					<icon class="attack-self???" ref_id="101" tile="13,2,6" description="Self-hurt attack."/>
+					
+					<icon class="attack-unreflectable" ref_id="101" tile="13,2,6" description="unreflectable"/>
+					
+					<icon class="attack-unblockable" ref_id="101" tile="13,2,7" description="Unblockable."/>
+					<icon class="attack-air-unblockable" ref_id="101" tile="13,2,8" description="Air unblockable."/>
+					<icon class="attack-hitWB" ref_id="101" tile="13,2,9" description="Hit on wrongblock."/>
+					
+					
+					<icon class="attack-ignore-armor" ref_id="101" tile="13,2,22" description="Ignore armor."/>
+				</grid>
+				<grid class="grid-attack-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
+					
+				</grid>
+			</field>
+			<field class="column2" stack="false" xoffset="110" yoffset="5">
+				<pad width="96" height="48"/>
+				<grid class="grid-frame-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
+					<icon class="flag-stance-none" ref_id="100" tile="13,2,3" description="Stance: none."/>
+					<icon class="flag-stance-standing" ref_id="100" tile="13,2,4" description="Stance: standing."/>
+					<icon class="flag-stance-crouching" ref_id="100" tile="13,2,5" description="Stance: crouching."/>
+					<icon class="flag-stance-both" ref_id="100" tile="13,2,16" description="Stance: both?"/>
+					
+					<icon class="flag-stance-down" ref_id="100" tile="13,2,17" description="Stance: down."/>
+					<icon class="flag-stance-airborne" ref_id="100" tile="13,2,6" description="Stance: airborne."/>
+					
+					<icon class="flag-stance-guarding" ref_id="100" tile="13,2,18" description="Stance: guarding."/>
+					<icon class="flag-guard-available" ref_id="100" tile="13,2,20" description="Guard available."/>
+					<icon class="flag-guardpoint" ref_id="100" tile="13,2,21" description="GuardPoint Skill."/>
+					
+					<icon class="flag-uncancelable" ref_id="100" tile="13,2,22" description="Not cancelable."/>
+					
+					<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" description="Movement cancelable."/>
+					
+					<icon class="flag-counter-hit" ref_id="100" tile="13,2,15" description="Can be countered."/>
+					<icon class="flag-entity" ref_id="100" tile="13,2,15" description="Entity bullet."/>
+					
+					<icon class="flag-invul-melee" ref_id="100" tile="13,2,0" description="Melee invulnerable."/>
+					
+					<icon class="flag-invul-bullet" ref_id="100" tile="13,2,1" description="Bullet invulnerable."/>
+					
+					<icon class="flag-invul-grab" ref_id="100" tile="13,2,2" description="Grab invulnerable."/>
+					
+					<icon class="flag-grazing" ref_id="100" tile="13,2,13" description="Grazing."/>
+					
+					<icon class="flag-armor-normal" ref_id="100" tile="13,2,7" description="Normal armor."/>
+					<icon class="flag-armor-super" ref_id="100" tile="13,2,8" description="Super armor."/>
+					
+					<icon class="flag-reflector" ref_id="100" tile="13,2,19" description="Reflect sheild."/>
+					
+					<icon class="flag-parry-high" ref_id="100" tile="13,2,11" description="Parry: high flag."/>
+					<icon class="flag-parry-low" ref_id="100" tile="13,2,12" description="Parry: low flag."/>
+					<icon class="flag-parry-air" ref_id="100" tile="13,2,24" description="Parry: air flag."/>
+					<icon class="flag-parry-obj" ref_id="100" tile="13,2,25" description="Parry: obj flag."/>
+				</grid>
+			</field>
+		</field>
+	</sublayout>
+	<sublayout class="Tex">
+		<values>
+			<value class="color" id="1" type="uint">
+				<offset hex="0x110"/>
+			</value>
+			<value class="shader-color" id="2" type="uint"/>
+			<value class="shader-type" id="3" type="int">
+				<offset hex="0x114"/>
+			</value>
+			<value class="fixed-blend-mode" id="4" type="uint">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x0"/>
+			</value>
+			<value class="fixed-color" id="5" type="uint">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x4"/>
+			</value>
+			<value class="fixed-scalex" id="6" type="float">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x8"/>
+			</value>
+			<value class="fixed-scaley" id="7" type="float">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0xC"/>
+			</value>
+			<value class="fixed-rotx" id="8" type="float">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x10"/>
+			</value>
+			<value class="fixed-roty" id="9" type="float">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x14"/>
+			</value>
+			<value class="fixed-rotz" id="10" type="float">
+				<offset hex="0x150"/><offset hex="0x18"/><offset hex="0x18"/>
+			</value>
+			<value class="tex-offsetx" id="11" type="short">
+				<offset hex="0x150"/><offset hex="0xC"/>
+			</value>
+			<value class="tex-offsety" id="12" type="short">
+				<offset hex="0x150"/><offset hex="0xE"/>
+			</value>
+			<value class="tex-sizex" id="13" type="short">
+				<offset hex="0x150"/><offset hex="0x10"/>
+			</value>
+			<value class="tex-sizey" id="14" type="short">
+				<offset hex="0x150"/><offset hex="0x12"/>
+			</value>
+			<value class="scalex" id="15" type="float">
+				<offset hex="0x11C"/>
+			</value>
+			<value class="scaley" id="16" type="float">
+				<offset hex="0x120"/>
+			</value>
+			<value class="rotx" id="17" type="float">
+				<offset hex="0x124"/>
+			</value>
+			<value class="roty" id="18" type="float">
+				<offset hex="0x128"/>
+			</value>
+			<value class="rotz" id="19" type="float">
+				<offset hex="0x12C"/>
+			</value>
+			
+		</values>
+		<field class="sprite">
+			<sprite crop="false" xoffset="0" yoffset="0" width="128" height="128"/>
+			
+			<textbox font_id="5" xoffset="138" yoffset="6">Color</textbox>
+			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18"/>
+			
+			<textbox font_id="5" xoffset="138" yoffset="26">Shader</textbox>
+			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18"/>
+			<number value_id="3" number_id="310" xoffset="211" yoffset="21"/>
+			
+			<textbox font_id="5" xoffset="138" yoffset="46">Scale X-Y</textbox>
+			<number value_id="15" number_id="320" xoffset="176" yoffset="55"/>
+			<number value_id="16" number_id="320" xoffset="215" yoffset="55"/>
+			
+			<textbox font_id="5" xoffset="138" yoffset="77">Rot.X-Y-Z</textbox>
+			<number value_id="17" number_id="320" xoffset="187" yoffset="87"/>
+			<number value_id="18" number_id="320" xoffset="187" yoffset="101"/>
+			<number value_id="19" number_id="320" xoffset="187" yoffset="115"/>
+			
+			
+			<textbox font_id="11" xoffset="0" yoffset="122">
+				[&#32;&#32;&#32;&#32;&#32;&#32;&#32;,&#32;&#32;&#32;&#32;&#32;&#32;&#32;,&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;x&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;]
+			</textbox>
+			<number value_id="11" number_id="321" xoffset="31" yoffset="116"/>
+			<number value_id="12" number_id="321" xoffset="55" yoffset="116"/>
+			<number value_id="13" number_id="321" xoffset="85" yoffset="116"/>
+			<number value_id="14" number_id="321" xoffset="117" yoffset="116"/>
+			
+			<field class="blend-options"><!--hide if not renderGroup2-->
+				<textbox font_id="11" xoffset="0" yoffset="0">*&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;;</textbox>
+				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18"/>
+				<number value_id="4" number_id="310" xoffset="133" yoffset="-4"/>
+				<number value_id="6" number_id="320" xoffset="43" yoffset="-7"/>
+				<number value_id="7" number_id="320" xoffset="76" yoffset="-7"/>
+				
+				<textbox font_id="11" xoffset="179" yoffset="93">+</textbox>
+				<number value_id="8" number_id="323" xoffset="215" yoffset="87"/>
+				<textbox font_id="11" xoffset="179" yoffset="107">+</textbox>
+				<number value_id="9" number_id="323" xoffset="215" yoffset="101"/>
+				<textbox font_id="11" xoffset="179" yoffset="121">+</textbox>
+				<number value_id="10" number_id="323" xoffset="215" yoffset="115"/>
+			</field>
+		</field>
+	</sublayout>
+	<sublayout class="Basic" inherit="Mini,Frame-flags,Attack-flags,Tex">
+		
+	</sublayout>
+	<sublayout class="Object" inherit="Basic">
+		<title xoffset="0" yoffset="-25">Object
+			<back ref_id="214"/>
+		</title>
+	</sublayout>
+	<sublayout class="Player" inherit="Basic">
+		<title xoffset="0" yoffset="-25">Player
+			<back ref_id="214"/>
+		</title>
+	</sublayout>
+	<sublayout class="Suwako" inherit="Player">
+		
+	</sublayout>
+	<sublayout class="Console" align="bottom">
+		<title xoffset="" yoffset="">Console</title>
+		<textbox width="" height="">Hello World!</textbox>
+	</sublayout>
+	<console font_id="">
+		<title>Console</title>
+		<pad width="" height=""/>
+	</console>
+</layout>

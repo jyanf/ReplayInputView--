@@ -55,8 +55,9 @@ static bool __fastcall onSokuSetup(void* self, int unused, void* data) {
 		MessageBoxA(nullptr, msg, "RIV Error", MB_ICONERROR | MB_OK);
 		throw std::runtime_error(msg);
 	}
-
-	return orgSokuSetup(self, unused, data);
+	bool ret = orgSokuSetup(self, unused, data);
+	info::Vice::delayedInit();//reader not ready?
+	return ret; 
 }
 
 static bool init = false;
@@ -82,6 +83,7 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 
 	iniProxy.load();//load .ini settings
 
+	gui::Font::LoadAllFontsInFolder(basePath / L"fonts", true);
 
 	cout << "Absolute Ini Path[" << iniProxy.getPath() << "]\n";
 

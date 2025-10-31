@@ -1,6 +1,7 @@
 #include "info.hpp"
 
 #include <optional>
+#include <string>
 
 VBattleRender ogSceneBattleRender{};
 
@@ -16,9 +17,9 @@ namespace info {
 
 	
     WNDPROC Vice::ogMainWndProc = NULL;
-    HHOOK Vice::mouseHook = NULL;
+    //HHOOK Vice::mainMouseHook = NULL, Vice::mouseHook = NULL;
     //bool Vice::registered = false;
-    HWND Vice::viceWND = NULL;
+    HWND Vice::viceWND = NULL, Vice::tipWND = NULL;
     //LPDIRECT3D9 Vice::vicePD3 = NULL;
     //LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
 	LPDIRECT3DSWAPCHAIN9 Vice::viceSwapChain = NULL;
@@ -49,14 +50,14 @@ struct ViceThreadParams {
             MessageBoxW(NULL, L"创建副窗口失败！", L"错误", MB_ICONERROR);
             return false;
         }
-        Design::Object* rect = nullptr;
-        layout->getById(&rect, 1);
+        //Design::Object* rect = nullptr;
+        //layout->getById(&rect, 1);
         auto viceParam = new ViceThreadParams{
 			.hMainThread = duplicatedHandle,
             .hParentWnd = SokuLib::window,
             .hInstance = hDllModule,
-            .width = rect ? int(rect->x2) : WIDTH,
-            .height = rect ? int(rect->y2) : HEIGHT,
+            .width = layout ? layout->windowSize.x : WIDTH,//rect ? int(rect->x2) : WIDTH,
+            .height = layout ? layout->windowSize.y : HEIGHT,//rect ? int(rect->y2) : HEIGHT,
         };
         HANDLE hViceThread = CreateThread(
             NULL,               // 默认安全属性
@@ -92,10 +93,15 @@ struct ViceThreadParams {
             }*/
             d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;//mode.Format;
             d3dpp.hDeviceWindow = hwnd;
-            /*WINDOWINFO wi{ 0 };
-            GetWindowInfo(hwnd, &wi);
+            static HWND chached = NULL;
+            static WINDOWINFO wi{ 0 };
+            if (chached != hwnd) {
+                GetWindowInfo(hwnd, &wi);
+                chached = hwnd;
+            }
+
             d3dpp.BackBufferWidth = wi.rcClient.right - wi.rcClient.left;
-            d3dpp.BackBufferHeight = wi.rcClient.bottom - wi.rcClient.top;*/
+            d3dpp.BackBufferHeight = wi.rcClient.bottom - wi.rcClient.top;
             d3dpp.EnableAutoDepthStencil = 1;
             d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
             d3dpp.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
@@ -154,7 +160,7 @@ struct ViceThreadParams {
 
 constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     DWORD WINAPI Vice::WindowMain(LPVOID pParams) {
-        //SetThreadDpiAwarenessContex(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+        //SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         using DpiFunc = HRESULT(WINAPI* )(HANDLE);
         HMODULE hUser32 = LoadLibraryW(L"user32.dll");
         if (hUser32) {
@@ -243,19 +249,191 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         CloseHandle(params.hMainThread);                        // 释放主线程句柄
         return 0;
     }
+#ifndef WM_DPICHANGED
+#define WM_DPICHANGED 0x02E0
+#endif
+    namespace {
+        template<typename Ch>
+        struct _char_traits { static constexpr UINT val = 0; };
+        template<> struct _char_traits<char> { static constexpr UINT val = CF_TEXT; };
+        template<> struct _char_traits<char16_t> { static constexpr UINT val = CF_UNICODETEXT; };
+
+        template<typename In> struct _enum_format { static constexpr UINT val = _char_traits<void>::val; };
+        template<typename Ch> struct _enum_format<std::basic_string<Ch>> {
+            //using T = std::basic_string<Ch>;
+            static constexpr UINT val = _char_traits<Ch>::val;
+            template<typename T> static auto get_size(const T& t) noexcept { return (t.length() + 1) * sizeof(Ch); }
+            template<typename T> static const void* get_data(const T& t) noexcept { return t.data(); }
+        };
+        template<typename Ch> struct _enum_format<std::basic_string_view<Ch>> : _enum_format<std::basic_string<Ch>> {
+            /*using T = std::basic_string_view<Ch>;
+            static constexpr UINT val = _char_traits<Ch>::val;
+            template<typename T> static auto get_size(const T& t) noexcept { return (t.length() + 1) * sizeof(Ch); }
+            template<typename T> static const void* get_data(const T& t) noexcept { return t.c_str(); }*/
+        };
+        template<typename Ch> struct _enum_format<Ch*> {
+            static constexpr UINT val = _char_traits<Ch>::val;
+            static auto get_size(const Ch* t) { return (std::char_traits<Ch>::length(t) + 1) * sizeof(Ch); }
+            static const void* get_data(const Ch* t) { return t; }
+        };
+        template<typename Ch, size_t N> struct _enum_format<Ch[N]> {
+            static constexpr UINT val = _char_traits<Ch>::val;
+            static constexpr auto get_size(const Ch(&)[N]) { return N * sizeof(Ch); }
+            static const void* get_data(const Ch(&t)[N]) { return t; }
+        };
+
+#if WCHAR_MAX == 0xFFFF
+        template<> struct _char_traits<wchar_t> { static constexpr UINT val = CF_UNICODETEXT; };
+        //template<> struct _char_traits<char8_t> { static constexpr UINT val = CF_UNICODETEXT; };
+        template<> struct _enum_format<char8_t*> {
+            using T = const char8_t*;
+            static constexpr UINT val = CF_UNICODETEXT;
+            std::wstring buf;
+            /*_enum_format(const std::u8string& t) {
+                buf.resize(t.length());
+                std::mbstowcs(buf.data(), reinterpret_cast<const char*>(t.c_str()), t.length());*/
+            inline void convert(T s) {
+                if (!buf.empty()) return;
+                int len = MultiByteToWideChar(CP_UTF8, 0, (LPCCH)s, -1, nullptr, 0);
+                buf.resize(len, L'\0');
+                MultiByteToWideChar(CP_UTF8, 0, (LPCCH)s, -1, buf.data(), len);
+            }
+            auto get_size(T t) {
+                convert(t);
+                return (buf.length() + 1) * sizeof(wchar_t);
+            }
+            const void* get_data(T t) {
+                convert(t);
+                return buf.c_str();
+            }
+        };
+        template<size_t N> struct _enum_format<char8_t[N]> : _enum_format<char8_t*> {};
+        template<> struct _enum_format<std::u8string> : _enum_format<char8_t*> {
+			//using T = std::u8string;
+            template<typename T> auto get_size(const T& t) {
+				convert(t.data());
+                return (buf.length() + 1) * sizeof(wchar_t);
+            }
+            template<typename T> const void* get_data(const T& t) {
+                convert(t.data());
+				return buf.c_str();
+            }
+        };
+        template<> struct _enum_format<std::u8string_view> : _enum_format<std::u8string> {};
+
+        template<> struct _enum_format<char32_t*> {
+            using T = const char32_t*;
+            static constexpr UINT val = CF_UNICODETEXT;
+            std::wstring buf;
+            inline void convert(T s) {
+                if (!buf.empty()) return;
+                auto sv = std::u32string_view(s);
+                for (char32_t c : sv) {
+                    if (c <= 0xFFFF) {
+                        buf.push_back(static_cast<wchar_t>(c));
+                    }
+                    else {
+                        // surrogate pair
+                        c -= 0x10000;
+                        wchar_t high = static_cast<wchar_t>(0xD800 + ((c >> 10) & 0x3FF));
+                        wchar_t low = static_cast<wchar_t>(0xDC00 + (c & 0x3FF));
+                        buf.push_back(high);
+                        buf.push_back(low);
+                    }
+                }
+                buf.push_back(L'\0');
+            }
+            auto get_size(T t) {
+                convert(t);
+                return (buf.length() + 1) * sizeof(wchar_t);
+            }
+            const void* get_data(T t) {
+                convert(t);
+                return buf.c_str();
+            }
+        };
+        template<size_t N> struct _enum_format<char32_t[N]> : _enum_format<char32_t*> {};
+        template<> struct _enum_format<std::u32string> : _enum_format<char32_t*> {
+            template<typename T> auto get_size(const T& t) {
+                convert(t.data());
+                return (buf.length() + 1) * sizeof(wchar_t);
+            }
+            template<typename T> const void* get_data(const T& t) {
+                convert(t.data());
+                return buf.c_str();
+            }
+        };
+        template<> struct _enum_format<std::u32string_view> : _enum_format<std::u32string> {};
+        
+
+
+#elif (WCHAR_MAX == 0x7FFFFFFF || WCHAR_MAX == 0xFFFFFFFF)
+        
+#endif
+        template<typename T>
+		struct remove_cvcref {
+            using type = std::remove_cvref_t<T>;
+        };
+		template<typename T>
+        struct  remove_cvcref<const T*> {
+            using type = remove_cvcref<T*>::type;
+        };
+        template<typename T> using remove_cvcref_t = typename remove_cvcref<T>::type;
+        template<typename In> static void WriteToClipboard(HWND hWnd, const In& text) {
+            //using T = std::remove_cvref_t<In>;
+			using T = remove_cvcref_t<In>;
+            //using C = _enum_format<T>;
+			auto c = _enum_format<T>{};
+            constexpr auto fmt = c.val;//C::val;
+            static_assert(fmt, "Unsupported text type for clipboard");
+            printf("Copied to clipboard! ACP: %u\n", GetACP());
+            if (!OpenClipboard(hWnd)) return;
+            
+            EmptyClipboard();
+            size_t size = c.get_size(text);//C::get_size(text);
+            HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, size);
+            if (hMem)
+            {
+                void* dst = GlobalLock(hMem);
+                if (dst)
+                {
+                    memcpy(dst, c.get_data(text), size);
+                    GlobalUnlock(hMem);
+                    SetClipboardData(fmt, hMem);
+                }
+                else
+                {
+                    GlobalFree(hMem);
+                }
+            }
+            CloseClipboard();
+        }
+    }
+    
+    inline static bool BeginMouseLeaveTracking(HWND hwnd) {
+        TRACKMOUSEEVENT tme = { sizeof(tme) };
+        tme.dwFlags = TME_LEAVE;
+        tme.hwndTrack = hwnd;
+        return TrackMouseEvent(&tme);
+    }
     LRESULT CALLBACK Vice::WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+        static bool tracked = false;
         switch (msg) {
         case WM_CREATE:
             CreateD3D(hwnd);
 			return 0;
-            // 拦截焦点相关消息
+        //case WM_DPICHANGED:
+            //ResetD3D9Dev();
+            //return 0;
+        // 拦截焦点相关消息
         case WM_SETFOCUS: case WM_ACTIVATE: case WM_ACTIVATEAPP:
             return 0;
-
         // 拦截输入
         case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
         case WM_LBUTTONUP: case WM_RBUTTONUP: case WM_MBUTTONUP:
-        case WM_NCRBUTTONDOWN: case WM_NCRBUTTONUP://case WM_NCLBUTTONDOWN:
+        //case WM_NCRBUTTONUP:
+        case WM_NCRBUTTONDOWN: 
+        //case WM_NCLBUTTONDOWN:
         case WM_NCLBUTTONDBLCLK: case WM_LBUTTONDBLCLK: case WM_NCRBUTTONDBLCLK: case WM_RBUTTONDBLCLK:
         case WM_MOUSEWHEEL:
         case WM_KEYDOWN: case WM_KEYUP: case WM_CHAR:
@@ -264,6 +442,24 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         case WM_MOUSEACTIVATE:
             return MA_NOACTIVATE;
         
+        case WM_SIZE:
+            dirty = true;
+            return 0;
+
+        case WM_MOUSEMOVE:
+            if (!tracked) {
+                tracked = BeginMouseLeaveTracking(hwnd);
+            }
+            auto pt2 = POINT{ MAKEPOINTS(lp).x, MAKEPOINTS(lp).y };
+            printf("MOUSEMOVE from viceWindow; <%3d, %3d>\n", pt2.x, pt2.y);
+            layout&& Interface::cursor_refresh(inter.cursor2, pt2, hwnd, layout->windowSize.x, layout->windowSize.y);
+            break;
+        case WM_MOUSELEAVE:
+            printf("MOUSELEAVE from viceWindow.\n");
+            tracked = false;
+        case WM_KILLFOCUS:
+            inter.cursor2 = { -1, -1 };
+            break;
         case WM_EXITSIZEMOVE:
             // 拖拽结束，焦点设置回主窗口
             if (IsWindow(SokuLib::window)) {
@@ -271,6 +467,16 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 // SetFocus(GetDlgItem(hMainWnd, IDC_MAIN_BUTTON));
             }
             break;
+        case WM_NCRBUTTONUP:
+            //WriteToClipboard(hwnd, "s:只因你太美");//多字节，但是剪贴板的解释在GBK和UTF-8间变化?
+            if (inter.focus) {
+                WriteToClipboard(hwnd, inter.focus.tostring());
+            }
+            //WriteToClipboard(hwnd, (char8_t*)"u8:\xE5\x8F\xAA\xE5\x9B\xA0\xE4\xBD\xA0\xE5\xA4\xAA\xE7\xBE\x8E\xF0\x9F\x98\x83");
+            //WriteToClipboard(hwnd, u"u16:\u53EA\u56E0\u4F60\u592A\u7F8E\xD83D\xDE03");
+            //WriteToClipboard(hwnd, U"u32:\U000053EA\U000056E0\U00004F60\U0000592A\U00007F8E\U0001F603");
+            return 0;
+        
         case WM_VICE_WINDOW_UPDATE:
             InvalidateRect(hwnd, NULL, true);
 			UpdateWindow(hwnd);
@@ -287,26 +493,6 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
 
 			LeaveCriticalSection(&d3dMutex);
             */
-            /*
-            GetClientRect(hwnd, &rt);
-            DrawTextW(hdc, L"Test", -1, &rt, DT_LEFT | DT_VCENTER | DT_WORD_ELLIPSIS);
-			rt.top += 100;
-            WCHAR buf[48] = { 0 };
-            wsprintfW(buf, L"Cursor: %d %d", inter.cursor.x, inter.cursor.y);
-            DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
-            rt.top += 100;
-            wsprintfW(buf, L"Focus: 0x%p", inter.focus);
-            DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
-            rt.top += 100;
-            auto phover = inter.getHover();
-            wsprintfW(buf, L"Hover: 0x%p\n pos: %.2f", phover, phover ? phover->position.x : NAN);
-            DrawTextW(hdc, buf, -1, &rt, DT_LEFT | DT_VCENTER);
-            rt.top += 100;
-
-
-
-            */
-
             EndPaint(hwnd, &ps);
             //dirty = false;
             return 0;
@@ -316,7 +502,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             return 0;
         case WM_DESTROY:
             DestroyD3D();
-			UninstallHooks();
+            UninstallHooks(GetParent(hwnd));
 			viceWND = NULL;
             PostQuitMessage(0);
             return 0;
@@ -328,6 +514,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     }
 
     LRESULT CALLBACK Vice::MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+        static bool tracked = false;
         switch (msg) {
         //case WM_MOVING:
         //case WM_WINDOWPOSCHANGED:
@@ -339,10 +526,22 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             int childY = mainRect.top;
             // 移动子窗口（不激活、不改变大小）
             SetWindowPos(viceWND, NULL, childX, childY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-
+			dirty = true;
 
             break;
         }
+        case WM_MOUSEMOVE:
+            if (!tracked) {
+                tracked = BeginMouseLeaveTracking(hwnd);
+            }
+            auto pt2 = POINT{ MAKEPOINTS(lParam).x, MAKEPOINTS(lParam).y };
+            printf("MOUSEMOVE from MainWindow; <%3d, %3d>\n", pt2.x, pt2.y);
+            if (Interface::cursor_refresh(inter.cursor, pt2, hwnd))
+                dirty = true;
+            break;
+        case WM_MOUSELEAVE:
+            printf("MOUSELEAVE from MainWindow.\n");
+            tracked = false;
         case WM_KILLFOCUS:
             inter.cursor = { -1, -1 };
             break;
@@ -352,71 +551,120 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             else
                 printf("Hide Cursor %d by %d\n", ShowCursor(FALSE), lParam);
             return 0;
+        case WM_DPICHANGED:
+            //ResetD3D9Dev();
+            //dirty = true;
+			break;
         }
             
-        CallWindowProcW(ogMainWndProc, hwnd, msg, wParam, lParam);
+        return CallWindowProcW(ogMainWndProc, hwnd, msg, wParam, lParam);
     }
-    LRESULT CALLBACK Vice::MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam) {
-        if (nCode >= 0 && SokuLib::window && viceWND) {
+    /*LRESULT CALLBACK Vice::WindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam) {
+        if (nCode >= 0) {
             auto pms = (LPMOUSEHOOKSTRUCT)lParam;
-            if (pms->hwnd == SokuLib::window) {
+            if (SokuLib::window && pms->hwnd == SokuLib::window) {
                 switch (wParam) {
-                
                 case WM_MOUSEMOVE: {
                     auto pt = pms->pt;
                     ScreenToClient(pms->hwnd, &pt);
-                    float scaleX, scaleY;
-                    RECT rt;
-                    GetClientRect(pms->hwnd, &rt);
-                    scaleX = (float)rt.right / inter.sokuW;
-                    scaleY = (float)rt.bottom / inter.sokuH;
-                    pt.x /= scaleX;
-                    pt.y /= scaleY;
-                    if (inter.cursor.x != pt.x || inter.cursor.y != pt.y)
+                    if (Interface::cursor_refresh(inter.cursor, pt, pms->hwnd))
                         dirty = true;
-                    inter.cursor = { pt.x, pt.y };
+                    break;
+                }
+                case WM_NCMOUSEMOVE: case WM_NCMOUSELEAVE: {
+                    inter.cursor = { -1, -1 };
+                    dirty = true;
+                    break;
+                }
+                }
+                return CallNextHookEx(mainMouseHook, nCode, wParam, lParam);
+            } else if (viceWND && pms->hwnd == viceWND) {
+                switch (wParam) {
+                case WM_MOUSEMOVE: {
+                    auto pt = pms->pt;
+                    ScreenToClient(pms->hwnd, &pt);
+                    layout && Interface::cursor_refresh(inter.cursor2, pt, pms->hwnd, layout->windowSize.x, layout->windowSize.y);
                     break;
                 }
                 case WM_NCMOUSEMOVE: case WM_NCMOUSELEAVE: case WM_MOUSELEAVE: {
-                    inter.cursor = { -1, -1 };
-					dirty = true;
+                    inter.cursor2 = { -1, -1 };
                     break;
                 }
                 }
+                return CallNextHookEx(mouseHook, nCode, wParam, lParam);
             }
         }
-        // 传递消息给下一个钩子/窗口
-        return CallNextHookEx(mouseHook, nCode, wParam, lParam);
-    }
-    bool Vice::InstallHooks(HINSTANCE hInstance, HWND hwnd = SokuLib::window) {
-        if (!hwnd || ogMainWndProc) return false;
-        DWORD mainThreadId = GetWindowThreadProcessId(SokuLib::window, NULL);
-        ogMainWndProc = (WNDPROC)SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)MainWindowProc);
-        /*mainHook = SetWindowsHookExW(
-            WH_CALLWNDPROC,
-            MainWindowProcHook,
-            hInstance,
-            mainThreadId
-        );*/
-        mouseHook = SetWindowsHookExW(
-            WH_MOUSE,
-            MainWindowMouseHook,
-            hInstance,
-            mainThreadId
-        );
-        return ogMainWndProc != NULL && mouseHook != NULL;
-    }
-    void Vice::UninstallHooks(HWND hwnd) {
-        if (ogMainWndProc) {
-            SetWindowLongW(hwnd, GWL_WNDPROC, (LONG)ogMainWndProc);
-            ogMainWndProc = NULL;
+        return CallNextHookEx(nullptr, nCode, wParam, lParam);
+    }*/
+    bool Vice::InstallHooks(HINSTANCE hInstance, HWND hwndParent) {
+        if (hwndParent) {
+            if (!ogMainWndProc)
+                ogMainWndProc = (WNDPROC)SetWindowLongW(hwndParent, GWL_WNDPROC, (LONG)MainWindowProc);
+            /*mainHook = SetWindowsHookExW(
+                WH_CALLWNDPROC,
+                MainWindowProcHook,
+                hInstance,
+                mainThreadId
+            );*/
+            /*if (!mainMouseHook) {
+                DWORD mainThreadId = GetWindowThreadProcessId(SokuLib::window, NULL);
+                mainMouseHook = SetWindowsHookExW(WH_MOUSE, WindowMouseHook, hInstance, mainThreadId);
+            }*/
         }
-        if (mouseHook) {
-            UnhookWindowsHookEx(mouseHook);
-            mouseHook = NULL;
+        /*if (viceWND && !mouseHook) {
+            DWORD viceThreadId = GetWindowThreadProcessId(viceWND, NULL);
+            mouseHook = SetWindowsHookExW(WH_MOUSE, WindowMouseHook, hInstance, viceThreadId);
+        }*/
+        return ogMainWndProc;//&& mainMouseHook&& mouseHook;
+    }
+    void Vice::UninstallHooks(HWND hwndParent) {
+        if (hwndParent) {
+            if (ogMainWndProc) {
+                SetWindowLongW(hwndParent, GWL_WNDPROC, (LONG)ogMainWndProc);
+                ogMainWndProc = NULL;
+            }
+            /*if (mainMouseHook) {
+                UnhookWindowsHookEx(mainMouseHook);
+                mainMouseHook = NULL;
+            }*/
         }
+        /*if (viceWND) {
+            if (mouseHook) {
+                UnhookWindowsHookEx(mouseHook);
+                mouseHook = NULL;
+            }
+        }*/
 	}
 
+    bool Interface::checkDMouse() {
+        auto& curi = *reinterpret_cast<const DWORD*>(sokuDMouse.rgbButtons);
+        auto old = oldi; oldi = curi;
+        if (curi && !old) {//some button pressed
+            //POINT pt; GetCursorPos(&pt);
+            //ScreenToClient(SokuLib::window, &pt);
+            //cursor_refresh(cursor, pt);
+            if (!checkInWnd(cursor)) return false;
+            auto oldf = focus;
+            if (sokuDMouse.rgbButtons[0]) {
+                printf("LB Clicked at <%3d, %3d>\n", cursor.x, cursor.y);
+                //focus = getHover();
+                auto n = getHover();
+                if (n) focus = n;
+                return oldf != focus;
+            }
+            if (sokuDMouse.rgbButtons[1]) {
+                printf("RB Clicked at <%3d, %3d>\n", cursor.x, cursor.y);
+                focus = nullptr;
+                return oldf != focus;
+            }
+        }
+        if (sokuDMouse.lZ) {
+            zaccu = sokuDMouse.lZ + ((sokuDMouse.lZ * zaccu >= 0) ? zaccu : 0);
+            printf("Scroll %3d of %3d\n", zaccu, thre);
+            return abs(zaccu) >= thre && (zaccu = 0, switchHover(sokuDMouse.lZ > 0 ? 1 : -1));
+        }
+        return false;
+    }
 
     //inline void Interface::updateHover() {
     //    if (!checkInWnd(cursor)) return;
@@ -498,6 +746,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
 
     }
 
+
 }
 
 bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
@@ -517,57 +766,66 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 	SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
     if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
     //rendering
-        RendererGuard guard; guard.setRenderMode(1);
+        RendererGuard guard; guard.setRenderMode(1).setTexture(0);
         SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(194, 144, 198), 1.0f, 0);
         auto target = inter.focus ? inter.focus : inter.getHover();
-        Vertex vertices[4] = {
-                {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	0.0f,	0.0f},
-                {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	0.0f,	1.0f},
-                {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	1.0f,	1.0f},
-                {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	1.0f,	0.0f},
-        };
-        if (target && target->frameData) {
-            Design::Object *texpos = nullptr, *texframe = nullptr;
-		    layout->getById(&texpos, 10); layout->getById(&texframe, 11);
-            if (texpos && texframe) {
-                float x1 = texpos->x2, y1 = texpos->y2, x2 = texframe->x2, y2 = texframe->y2;
-                float w = abs(x2 - x1), h = abs(y2 - y1);
-                auto r = target->frameData->texSize;
-                float dscale = target->frameData->renderGroup==0 ? 2.0f : 1.0f;
-                float scale = 1.0f;//scale = r.x/r.y > w/h ? w/r.x : h/r.y;
-                w = r.x*scale; h = r.y*scale;
-                r = (target->frameData->offset / dscale * scale).to<short>();
-                vertices[0].x = vertices[2].x = (x1 + x2) / 2 - r.x;
-                vertices[1].x = vertices[3].x = (x1 + x2) / 2 + w - r.x;
-                vertices[0].y = vertices[1].y = (y1 + y2) / 2 - r.y;
-                vertices[2].y = vertices[3].y = (y1 + y2) / 2 + h - r.y;
-                for (int i = 0; i < 4; ++i) {
-				    vertices[i].u = target->sprite.vertices[i].u;
-                    vertices[i].v = target->sprite.vertices[i].v;
-                }
-                if (target->frameData->renderGroup==2 && target->frameData->blendOptionsPtr)
-                    vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = target->frameData->blendOptionsPtr->color;
-                                                            
-                guard.setTexture(0);
-                SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
-                guard.setTexture(target->sprite.dxHandle);  
-                SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
-            }
-        }
+      //  Vertex vertices[4] = {
+      //          {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	0.0f,	0.0f},
+      //          {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	1.0f,	0.0f},
+      //          {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	0.0f,	1.0f},
+      //          {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	1.0f,	1.0f},
+      //  };
+      //  if (target && target->frameData) {
+      //      Design::Object *texpos = nullptr, *texframe = nullptr;
+		    //layout->getById(&texpos, 10); layout->getById(&texframe, 11);
+      //      if (texpos && texframe) {
+      //          float x1 = texpos->x2, y1 = texpos->y2, x2 = texframe->x2, y2 = texframe->y2;
+      //          float w = abs(x2 - x1), h = abs(y2 - y1);
+      //          auto r = target->frameData->texSize;
+      //          float dscale = target->frameData->renderGroup==0 ? 2.0f : 1.0f;
+      //          float scale = 1.0f;//scale = r.x/r.y > w/h ? w/r.x : h/r.y;
+      //          w = r.x*scale; h = r.y*scale;
+      //          r = (target->frameData->offset / dscale * scale).to<short>();
+      //          vertices[0].x = vertices[2].x = (x1 + x2) / 2 - r.x;
+      //          vertices[1].x = vertices[3].x = (x1 + x2) / 2 + w - r.x;
+      //          vertices[0].y = vertices[1].y = (y1 + y2) / 2 - r.y;
+      //          vertices[2].y = vertices[3].y = (y1 + y2) / 2 + h - r.y;
+      //          for (int i = 0; i < 4; ++i) {
+				  //  vertices[i].u = target->sprite.vertices[i].u;
+      //              vertices[i].v = target->sprite.vertices[i].v;
+      //          }
+      //          if (target->frameData->renderGroup==2 && target->frameData->blendOptionsPtr)
+      //              vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = target->frameData->blendOptionsPtr->color;
+      //                                                      
+      //          guard.setTexture(0);
+      //          SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
+      //          guard.setTexture(target->sprite.dxHandle);  
+      //          SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
+      //      }
+      //  }
 
-        layout->render4();
-        
+      //  layout->render4();
+        if (layout) {
+            /*if (target.is_object()) {
+                layout->render("object", (void*)target.get_object());
+            }
+            else if (target.is_player()) {
+                layout->render("player", (void*)target.get_player());
+            }*/
+            if (target.has_value()) layout->render("Basic", (void*)target.get_base());
+            else layout->render("None", nullptr);
+        }
     //SokuLib::renderer.end();
 		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
     }
     
-
+    
 
 
     SokuLib::pd3dDev->SetRenderTarget(0, pOrgBuffer); pOrgBuffer->Release();
     //if (*(bool*)0x896b76) {//renderer is on, d3d_ok
     //if (SokuLib::pd3dDev->TestCooperativeLevel() == D3D_OK) {
-        viceSwapChain->Present(NULL, NULL, NULL, NULL,
+        auto hr = viceSwapChain->Present(NULL, NULL, NULL, NULL,
             //D3DPRESENT_FORCEIMMEDIATE
             D3DPRESENT_INTERVAL_IMMEDIATE
             //D3DPRESENT_DONOTWAIT
@@ -582,7 +840,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     }
     else if (target.is_player()) {
         auto player = target.get_player(); if (player) {
-        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name.data()[0] = std::toupper(name.data()[0]), name) : "Unknown";
+        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name[0] = std::toupper(name[0]), name) : "Unknown";
         auto formatted = std::format("{:8s}(P{:1d}): {:#08x}", 
             name,
             player->teamId+1, 
