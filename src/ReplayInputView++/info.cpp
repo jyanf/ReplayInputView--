@@ -20,6 +20,9 @@ namespace info {
     //HHOOK Vice::mainMouseHook = NULL, Vice::mouseHook = NULL;
     //bool Vice::registered = false;
     HWND Vice::viceWND = NULL, Vice::tipWND = NULL;
+    TOOLINFOW Vice::tipINFO {
+        //.cbSize = sizeof TOOLINFOW,
+    };
     //LPDIRECT3D9 Vice::vicePD3 = NULL;
     //LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
 	LPDIRECT3DSWAPCHAIN9 Vice::viceSwapChain = NULL;
@@ -155,9 +158,7 @@ struct ViceThreadParams {
         */
         return t;
     }
-
-
-
+    HANDLE ScopedActCtx::g_hActCtx = INVALID_HANDLE_VALUE;
 constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     DWORD WINAPI Vice::WindowMain(LPVOID pParams) {
         //SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -189,16 +190,16 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         RECT gameRect;
         GetWindowRect(params.hParentWnd, &gameRect);
         viceWND = CreateWindowExW(
-            WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW,
+            WS_EX_TOOLWINDOW,
             VICE_CLASSNAME,
             L"Defaulting to Players: ",
-            WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX & ~WS_VISIBLE | WS_POPUP,  // 禁止调整大小/最大化
+            WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX,  // 禁止调整大小/最大化
             gameRect.right, gameRect.top,  // 位置跟随游戏窗口右侧
             params.width, params.height,
             params.hParentWnd,
             NULL,
             params.hInstance,
-            NULL
+            &params
         );
         if (!viceWND) goto ExitLoop;
         if (!InstallHooks(params.hInstance, params.hParentWnd)) {
@@ -417,11 +418,59 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         return TrackMouseEvent(&tme);
     }
     LRESULT CALLBACK Vice::WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
-        static bool tracked = false;
+        thread_local static bool tracked = false;
         switch (msg) {
-        case WM_CREATE:
+        case WM_CREATE: {
             CreateD3D(hwnd);
-			return 0;
+            //tipWND creation
+            ScopedActCtx::InitMyActCtx();
+            ScopedActCtx actCtx;
+            auto& params = *reinterpret_cast<ViceThreadParams*>(LPCREATESTRUCT(lp)->lpCreateParams);
+            tipWND = CreateWindowExW(
+                WS_EX_TOPMOST,
+                TOOLTIPS_CLASSW,
+                L"SokuDbgTooltip",
+                WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,// | TTS_BALLOON,
+                CW_USEDEFAULT, CW_USEDEFAULT,
+                CW_USEDEFAULT, CW_USEDEFAULT,
+                hwnd,
+                NULL,
+                params.hInstance,
+                NULL
+            );
+            if (!tipWND) {
+                printf("CreateWindowExW(TOOLTIPS) failed: %lu\n", GetLastError());
+                return 0;
+            }
+            //static thread_local WCHAR tipBuf[256];
+            //wcscpy_s(tipBuf, L"This is a floating tip\n这是一个浮动说明");
+            tipINFO.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE | TTS_BALLOON;
+            tipINFO.hwnd = hwnd;                 // 被监控窗口（viceWND）
+            tipINFO.uId = (UINT_PTR)hwnd;        // 用 HWND 做 id
+            tipINFO.hinst = NULL;                // NULL 表示 lpszText 是内存字符串
+            //ti.lpszText = tipBuf;
+
+            constexpr size_t sz[] = { TTTOOLINFOW_V2_SIZE, TTTOOLINFOW_V3_SIZE, TTTOOLINFOW_V1_SIZE, sizeof(tipINFO)};
+            for (auto s : sz) {
+                tipINFO.cbSize = s;
+                SetLastError(0);
+                LRESULT addRes = SendMessageW(tipWND, TTM_ADDTOOLW, 0, (LPARAM)&tipINFO);
+                printf("Try size %zu: TTM_ADDTOOLW=%ld, GetLastError=%lu, toolcount=%ld\n", 
+                    s, addRes, GetLastError(), SendMessageW(tipWND, TTM_GETTOOLCOUNT, 0, 0));
+                if (addRes) {
+                    break;
+                }
+			}
+            //LRESULT addRes = SendMessageW(tipWND, TTM_ADDTOOLW, 0, (LPARAM)&tipINFO);
+            //DWORD err = GetLastError();
+            //LRESULT count = SendMessageW(tipWND, TTM_GETTOOLCOUNT, 0, 0);
+            //printf("Try IDISHWND: TTM_ADDTOOLW=%ld, GetLastError=%lu, toolcount=%ld\n", addRes, err, count);
+            // 激活并置顶，尝试可见性
+            //SendMessageW(tipWND, TTM_ACTIVATE, TRUE, 0);
+            //ShowWindow(tipWND, SW_SHOWNOACTIVATE);
+            //SetWindowPos(tipWND, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
+            return 0;
+        }
         //case WM_DPICHANGED:
             //ResetD3D9Dev();
             //return 0;
@@ -452,10 +501,27 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             }
             auto pt2 = POINT{ MAKEPOINTS(lp).x, MAKEPOINTS(lp).y };
             printf("MOUSEMOVE from viceWindow; <%3d, %3d>\n", pt2.x, pt2.y);
-            layout&& Interface::cursor_refresh(inter.cursor2, pt2, hwnd, layout->windowSize.x, layout->windowSize.y);
+            
+            if (layout && Interface::cursor_refresh(inter.cursor2, pt2, hwnd, layout->windowSize.x, layout->windowSize.y) && tipWND) {
+                if (pt2.y % 100 < 10) {
+                    static thread_local WCHAR tipBuf2[128];
+                    swprintf_s(tipBuf2, _countof(tipBuf2), L"%d, %d", pt2.x, pt2.y);
+                    tipINFO.lpszText = tipBuf2;
+                    //SendMessageW(tipWND, TTM_SETTOOLINFO, 0, (LPARAM)&tipINFO);
+                    SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
+                    ClientToScreen(hwnd, &pt2);
+                    SendMessageW(tipWND, TTM_TRACKPOSITION, 0, MAKELPARAM(pt2.x + 16, pt2.y + 16));
+                    SendMessageW(tipWND, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tipINFO);
+					SendMessageW(tipWND, TTM_ACTIVATE, TRUE, 0);//确保启用?
+                }
+                else {
+                    SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
+                }
+            }
             break;
         case WM_MOUSELEAVE:
             printf("MOUSELEAVE from viceWindow.\n");
+            SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
             tracked = false;
         case WM_KILLFOCUS:
             inter.cursor2 = { -1, -1 };
@@ -503,7 +569,14 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         case WM_DESTROY:
             DestroyD3D();
             UninstallHooks(GetParent(hwnd));
-			viceWND = NULL;
+            viceWND = NULL;
+            if (tipWND && IsWindow(tipWND)) {
+                SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
+                SendMessageW(tipWND, TTM_DELTOOL, 0, (LPARAM)&tipINFO);
+                DestroyWindow(tipWND);
+                tipWND = nullptr;
+                tipINFO = {sizeof TOOLINFOW};
+            }
             PostQuitMessage(0);
             return 0;
         case WM_VICE_WINDOW_DESTROY:
@@ -514,7 +587,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     }
 
     LRESULT CALLBACK Vice::MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-        static bool tracked = false;
+        thread_local static bool tracked = false;
         switch (msg) {
         //case WM_MOVING:
         //case WM_WINDOWPOSCHANGED:
@@ -637,6 +710,10 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
 	}
 
     bool Interface::checkDMouse() {
+        if ((ztimer -= ztimer > 0 ? 1 : 0) == 0) {
+			if (zaccu) printf("Scroll accu reset.\n");
+            zaccu = 0;
+        }
         auto& curi = *reinterpret_cast<const DWORD*>(sokuDMouse.rgbButtons);
         auto old = oldi; oldi = curi;
         if (curi && !old) {//some button pressed
@@ -655,13 +732,20 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             if (sokuDMouse.rgbButtons[1]) {
                 printf("RB Clicked at <%3d, %3d>\n", cursor.x, cursor.y);
                 focus = nullptr;
+				index = -1;
                 return oldf != focus;
             }
         }
-        if (sokuDMouse.lZ) {
-            zaccu = sokuDMouse.lZ + ((sokuDMouse.lZ * zaccu >= 0) ? zaccu : 0);
-            printf("Scroll %3d of %3d\n", zaccu, thre);
-            return abs(zaccu) >= thre && (zaccu = 0, switchHover(sokuDMouse.lZ > 0 ? 1 : -1));
+        else if (sokuDMouse.lZ) {
+            if (!checkInWnd(cursor)) return false;
+            int d = abs(sokuDMouse.lZ * 4 / (ztimer + 4));//decay if big and fast enough
+            ztimer = zcool;
+            d = max(d, zthre/10); d = min(d, zthre);//~thre
+            d *= sokuDMouse.lZ >= 0 ? 1:-1;
+            zaccu = d + ((sokuDMouse.lZ * zaccu >= 0) ? zaccu : 0);
+            printf("Scroll %3d(%d) of %3d\n", zaccu, d, zthre);
+            return abs(zaccu) >= zthre 
+                && (zaccu = 0, switchHover(sokuDMouse.lZ < 0 ? 1 : -1));
         }
         return false;
     }

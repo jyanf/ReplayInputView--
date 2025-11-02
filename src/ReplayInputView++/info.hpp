@@ -9,12 +9,16 @@
 //#include <ShellScalingApi.h>
 #include <windowsx.h>
 #include <WinUser.h>
+#include <CommCtrl.h>
 #include <map>
 #include <array>
 #include <variant>
+
 #include "../main.hpp"
 #include "tex.hpp"
 #include "gui.hpp"
+
+#pragma comment(lib, "comctl32.lib")
 
 namespace info {
 using SokuLib::v2::GameObjectBase;
@@ -94,7 +98,7 @@ using Design = gui::RivDesign;
 			}
 		};
 		std::vector<Phover> hovers;
-		int zaccu = 0; const int thre = WHEEL_DELTA;
+		int zaccu = 0, ztimer = 0; const int zthre = WHEEL_DELTA, zcool = 16;
 		DWORD oldi = 0;
 		std::mutex inserting;
 	public:
@@ -104,6 +108,13 @@ using Design = gui::RivDesign;
 		//std::variant<const GameObjectBase*, const GameObject*, const Player*> focus;
 		Interface(int reserve) {
 			hovers.reserve(reserve);
+		}
+		inline void init() {
+			hovers.clear();
+			index = -1;
+			cursor = cursor2 = { -1, -1 };
+			zaccu = ztimer = 0; oldi = 0;
+			focus = nullptr;
 		}
 		constexpr static int sokuW = 640, sokuH = 480;
 		inline static bool checkInWnd(const Anchor& pos) {
@@ -133,6 +144,7 @@ using Design = gui::RivDesign;
 			}
 			const auto size = getCount();
 			index = (index + size + dir) % size;
+			if(dir) printf("Hover switched %d of %d.\n", index+1, size);
 			return true;
 
 		}
@@ -144,6 +156,7 @@ using Design = gui::RivDesign;
 		inline Phover getHover() {
 			if (index >= 0) {
 				std::lock_guard lock(inserting);
+				if (index >= hovers.size()) index = 0;
 				return hovers[index];
 			}
 			return nullptr;
@@ -164,7 +177,7 @@ using Design = gui::RivDesign;
 		bool checkDMouse();
 		inline void clear() {
 			hovers.clear();
-			index = -1;
+			//index = -1;
 		}
 
 	};
@@ -173,6 +186,7 @@ using Design = gui::RivDesign;
 		static WNDPROC ogMainWndProc;
 		//static HHOOK mainMouseHook, mouseHook;
 		static HWND viceWND, tipWND;
+		static TOOLINFOW tipINFO;
 		//static LPDIRECT3D9 vicePD3;
 		//static LPDIRECT3DDEVICE9 vicePD3D;
 		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
@@ -261,8 +275,7 @@ using Design = gui::RivDesign;
 			//createWnd();
 			/*Sleep(100);*/
 			//hideWnd();
-			inter.cursor = { -1, -1 }; inter.cursor2 = { -1, -1 };
-			inter.focus = nullptr;
+			inter.init();
 			delayedInit();
 			//if (!layout.has_value())
 				//layout.emplace("rivpp/layout.xml");
@@ -280,7 +293,67 @@ using Design = gui::RivDesign;
 	};
 
 	void drawObjectHover(GameObjectBase* object, float time);
-
+	
+	class ScopedActCtx {
+		static HANDLE g_hActCtx;
+		ULONG_PTR m_cookie;
+		bool m_active;
+	public:
+		ScopedActCtx() : m_cookie(0), m_active(false) {
+			if (g_hActCtx != INVALID_HANDLE_VALUE) {
+				if (ActivateActCtx(g_hActCtx, &m_cookie)) m_active = true;
+			}
+			INITCOMMONCONTROLSEX iccex{ .dwSize = sizeof(iccex), .dwICC = ICC_WIN95_CLASSES };
+			InitCommonControlsEx(&iccex);
+		}
+		~ScopedActCtx() {
+			if (m_active) DeactivateActCtx(0, m_cookie);
+		}
+		// non-copyable
+		ScopedActCtx(const ScopedActCtx&) = delete;
+		ScopedActCtx& operator=(const ScopedActCtx&) = delete;
+		inline static bool InitMyActCtx(HMODULE hdll = hDllModule) {
+			if (g_hActCtx != INVALID_HANDLE_VALUE) return true;
+#if 1
+			auto res= FindResource(hdll, MAKEINTRESOURCE(2), RT_MANIFEST);
+			if (!res) {
+				printf("FindResource failed: %lu\n", GetLastError());
+				return false;
+			}
+			ACTCTXW act = {
+				.cbSize = sizeof(act),
+				.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID | ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID,
+				.lpAssemblyDirectory = basePath.c_str(),
+				.lpResourceName = MAKEINTRESOURCEW(2),
+				.hModule = hdll,
+			};
+#else
+			auto path = (basePath / L"v6.manifest");
+			DWORD attr = GetFileAttributesW(path.c_str());
+			if (attr == INVALID_FILE_ATTRIBUTES || (attr & FILE_ATTRIBUTE_DIRECTORY)) {
+				std::wcerr << L"Manifest file not found:" <<path.c_str() << L"\n";
+				return false;
+			}
+			ACTCTXW act = {
+				.cbSize = sizeof(act),
+				.dwFlags = 0,
+				.lpSource = path.c_str(),
+			};
+#endif
+			g_hActCtx = CreateActCtxW(&act);
+			if (g_hActCtx == INVALID_HANDLE_VALUE) {
+				printf("CreateActCtx failed: %lu\n", GetLastError());
+				return false;
+			}
+			return true;
+		}
+		inline static void ShutdownMyActCtx() {
+			if (g_hActCtx != INVALID_HANDLE_VALUE) {
+				ReleaseActCtx(g_hActCtx);
+				g_hActCtx = INVALID_HANDLE_VALUE;
+			}
+		}
+	};
 }
 
 typedef bool (SokuLib::Battle::* VBattleRender)();

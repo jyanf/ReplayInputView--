@@ -32,7 +32,8 @@ static LagWatcher lag_saver, lag_buffer;
 static bool enabled = false, unflushed = false;
 void flushWatcher() {
 #ifdef _DEBUG
-	printf("lag_saver %d buffer %d\n", lag_saver.size(), lag_buffer.size());
+	if (lag_saver.size() + lag_buffer.size())
+		printf("lag_saver %d buffer %d\n", lag_saver.size(), lag_buffer.size());
 #endif // _DEBUG
 	if (!unflushed) return;
 	lag_buffer.swap(lag_saver);

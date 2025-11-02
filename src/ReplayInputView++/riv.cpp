@@ -145,12 +145,11 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 						vice.inter.insert(object);
 					}
 				);
-				vice.inter.switchHover(1);
+				vice.inter.switchHover(0);
 			}
-			//vice.dirty = vice.inter.checkDMouse() || vice.dirty;
-			if (vice.inter.checkDMouse() || vice.dirty) {
+			if (vice.inter.checkDMouse()) {
 				//vice.updateWnd();
-				vice.dirty = true;
+				vice.dirty.store(true);
 			}			
 		}
 		// fix story blend

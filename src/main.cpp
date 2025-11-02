@@ -165,5 +165,15 @@ extern "C" __declspec(dllexport) bool CheckVersion(const BYTE hash[16])
 }
 extern "C" int APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID lpReserved)
 {
+	switch (fdwReason) {
+	case DLL_PROCESS_ATTACH:
+		info::ScopedActCtx::InitMyActCtx(hModule);
+		break;
+	case DLL_PROCESS_DETACH:
+		info::ScopedActCtx::ShutdownMyActCtx();
+		break;
+	default:
+		break;
+	}
 	return TRUE;
 }

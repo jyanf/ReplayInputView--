@@ -80,19 +80,22 @@ else()
     message(FATAL_ERROR "Boost not found!")
 endif()
 
+file(GLOB PROJ_SRC_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+)
+file(GLOB PROJ_HDR_FILES 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}/*.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp
+)
 # Module
 add_library("${PROJECT_NAME}"
-        MODULE
-        src/main.cpp
+    MODULE
         ${RC_FILES}
-        src/${PROJECT_NAME}/riv.cpp
-        src/${PROJECT_NAME}/box.cpp
-        src/${PROJECT_NAME}/panel.cpp
-        src/${PROJECT_NAME}/tex.cpp
-        src/${PROJECT_NAME}/info.cpp
-        src/${PROJECT_NAME}/gui.cpp
+        ${PROJ_SRC_FILES}
+        ${PROJ_HDR_FILES}
 )
-target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
+target_compile_options("${PROJECT_NAME}" PRIVATE /ZI)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}" ${Boost_INCLUDE_DIRS})
 target_link_directories("${PROJECT_NAME}" PRIVATE ${SOKULIB_PATH}/lib)
@@ -123,10 +126,19 @@ add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
 	VERBATIM
 )
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0))
+add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD COMMAND
+    mt.exe -manifest \"${CMAKE_CURRENT_SOURCE_DIR}/src/v6.manifest\" "-inputresource:\"${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${PROJECT_NAME}.dll;#2\"" "-outputresource:\"${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${PROJECT_NAME}.dll;#2\""
+  COMMENT
+    "Appending manifest for common-control-v6 dependency."
+)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND cmake --install . --config $<CONFIG>)
 
 if(MSVC)
     set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_COMMAND "${GAME_FOLDER_TH123}/th123.exe")
     set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${GAME_FOLDER_TH123}")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src FILES ${PROJ_SRC_FILES} ${PROJ_HDR_FILES})
 endif()

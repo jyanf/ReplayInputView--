@@ -13,7 +13,6 @@
 #include <iostream>
 #include <map>
 #include <set>
-#include <CommCtrl.h>
 
 namespace gui {
 	using string = std::string;
@@ -149,9 +148,14 @@ namespace gui {
 			int ret = 0;
 			if (handle) {
 				if (boxw <= 0) boxw = str.length() * (height + (int)charSpaceX);
-				if (boxh < height) boxh = height + (int)charSpaceY + 10;
-				if (useOffset) boxh = 10000;
-				SokuLib::textureMgr.createTextTexture(&ret, str.c_str(), *handle, boxw, boxh, &boxw, &boxh);
+				if (useOffset)
+					boxh = 10000;
+				else if (boxh < height)
+					boxh = height + (int)charSpaceY + 10;
+				int rw, rh;
+				SokuLib::textureMgr.createTextTexture(&ret, str.c_str(), *handle, boxw, boxh, &rw, &rh);
+				if (rw <= boxw) boxw = rw;
+				if (rh <= boxh) boxh = rh;
 			}
 			return ret;
 		}
