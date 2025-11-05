@@ -5,6 +5,7 @@
 #include <IFileReader.hpp>
 #include <FrameData.hpp>
 #include <Player.hpp>
+#include <GameData.hpp>
 
 #include "tex.hpp"
 #include <variant>
@@ -13,14 +14,18 @@
 #include <iostream>
 #include <map>
 #include <set>
+#include <ranges>
+#include <mutex>
 
 namespace gui {
-	using string = std::string;
-	using string_view = std::string_view;
+	using base_char = char;
+	using string = std::basic_string<base_char>;
+	using string_view = std::basic_string_view<string::value_type>;
 
 	namespace xml {
-		using std::istringstream;
-		using boost::property_tree::ptree, boost::property_tree::read_xml;
+		//using std::istringstream;
+		using ptree = boost::property_tree::basic_ptree<string, string>;
+		using boost::property_tree::read_xml;
 		using boost::property_tree::xml_parser::no_comments, boost::property_tree::xml_parser::trim_whitespace;
 		using SokuLib::IFileReader;
 		static const auto _init_reader = reinterpret_cast<bool(__fastcall*)(IFileReader** ret, int _, LPCSTR filename)>(0x40d1e0);
@@ -32,8 +37,31 @@ namespace gui {
 				It begin() const noexcept { return b; }
 				It end()   const noexcept { return e; }
 			};
+			static UINT get_doc_codepage(const std::string& s);
 		public:
-
+			static UINT gameCP, fileCP;
+			inline static std::wstring convertW(const char* s) {
+				std::wstring buf;
+				int len = MultiByteToWideChar(xml::XmlHelper::fileCP, 0, (LPCCH)s, -1, nullptr, 0);
+				buf.resize(len, L'\0');
+				MultiByteToWideChar(xml::XmlHelper::fileCP, 0, (LPCCH)s, -1, buf.data(), len);
+				return buf;
+			}
+			inline static std::string convertM(const wchar_t* s, UINT codepage = xml::XmlHelper::gameCP) {
+				std::string buf;
+				int len = WideCharToMultiByte(codepage, 0, (LPCWCH)s, -1, nullptr, 0, NULL, NULL);
+				buf.resize(len, '\0');
+				WideCharToMultiByte(codepage, 0, (LPCWCH)s, -1, buf.data(), len, NULL, NULL);
+				return buf;
+			}
+			inline static std::string convertFG(const char* s) {
+				if (fileCP != gameCP) {
+					return convertM(convertW(s).c_str());
+				}
+				else {
+					return std::string(s);
+				}
+			}
 			// 辅助函数：从 equal_range 返回的 pair 创建 range
 			inline explicit XmlHelper(const std::string& name) {
 				try {
@@ -44,12 +72,12 @@ namespace gui {
 					MessageBoxA(nullptr, msg.c_str(), "RIV Error", MB_ICONERROR | MB_OK);
 					throw std::runtime_error(msg);
 				}
-				
 			}
 			inline ptree& get() { return doc; }
 
-			static istringstream read_file(const string& name);
-			static void decrypt(string& buf);
+			
+			static std::istringstream read_file(const std::string& name);
+			static void decrypt(std::string& buf);
 			template <typename It> inline static iterator_range<It> make_range(std::pair<It, It> p) noexcept { return { p.first, p.second }; }
 			template<typename T> static std::vector<T> get_array(const ptree& node, const std::string& key, char sep = ',');
 			
@@ -144,7 +172,7 @@ namespace gui {
 		inline void setColor(int c1, int c2) { r1 = c1 >> 16; g1 = c1 >> 8; b1 = c1; r2 = c2 >> 16; g2 = c2 >> 8; b2 = c2; }
 		inline void prepare() { if (!handle) { handle = new SokuLib::SWRFont(); handle->create(); }  handle->setIndirect(*this); }
 
-		inline int newText(const string& str, int& boxw, int& boxh) const {
+		inline int newText(const std::string& str, int& boxw, int& boxh) const {
 			int ret = 0;
 			if (handle) {
 				if (boxw <= 0) boxw = str.length() * (height + (int)charSpaceX);
@@ -164,21 +192,28 @@ namespace gui {
 
 	class _hover : protected virtual _box {
 	public:
+#ifdef _DEBUG
 		string description = "<description>";
+#else
+		string description;
+#endif // _DEBUG
 		inline void load(const xml::ptree& node) {
 			auto desc = node.get_optional<string>("<xmlattr>.description");
 			if (desc) description = *desc;
 		}
+		//_hover() = default;
 		inline _hover(const xml::ptree& node) {
 			load(node);
 		}
 		inline bool check(int cx, int cy) const {
 			return x1 <= cx && cx < x2 && y1 <= cy && cy < y2;
 		}
-		inline virtual void debug() const {
-			//push string to console
+		inline virtual bool debug(const SokuLib::Vector2i& cursor);
+		using Callback = std::function<void(void*)>;
+		inline virtual bool onClick(const SokuLib::Vector2i& cursor, const Callback& cb) {
+			//if (!check(cursor.x, cursor.y)) return false;
+			return false;
 		}
-		//void update();
 	};
 	class _align {
 		enum Align : unsigned char {
@@ -211,15 +246,13 @@ namespace gui {
 	};
 	
 	class _hider {
-	public:
 		using checker = std::function<bool(void*)>;
-
 	protected:
 		const checker* rule = nullptr;  // 指向规则函数
-		using manager = std::map<std::string, checker>;
+		using manager = std::map<string, checker>;
 		//static manager Rules;
-
 	public:
+		bool visible = true;
 		static manager& Rules();
 		_hider(const xml::ptree& node) {
 			load(node);
@@ -237,26 +270,34 @@ namespace gui {
 			auto cl = xml::XmlHelper::get_class(node);
 			rule = Get(cl);
 		}
-		inline bool verify(void* ctx) const {
-			return !rule || (*rule)(ctx);
+		inline bool verify(void* ctx) {
+			return visible = (!rule || (*rule)(ctx));
 		}
 	};
 
 	class Container : 
-		protected virtual _box,
+		//protected virtual _box,
 		//public virtual _align,
+		protected _hover,
 		public _hider
 	{
 	protected:
+		inline static SokuLib::Sprite helper;
 		//const std::array<int, 9> tile_edges{ 0 };//id of 9-slice box
 		//std::optional<int> back_ref;
+		inline static void setBorder(SokuLib::Sprite& sp, const _box& uv) {
+			sp.vertices[0].u = sp.vertices[2].u = uv.x1;
+			sp.vertices[0].v = sp.vertices[1].v = uv.y1;
+			sp.vertices[1].u = sp.vertices[3].u = uv.x2;
+			sp.vertices[2].v = sp.vertices[3].v = uv.y2;
+		}
 		struct _back_ref {
 			CDesign::Sprite* ref= nullptr;
-			void getBorder(_box& t, int i) const {									// ___________
+			void getBorder(_box& t, int i) const {								// ___________
 				if (ref)														//|_0_|_1_|_2_|
 					t = riv::tex::Tex::getBorder(i, 3, 3, ref->sprite);			//|_3_|_4_|_5_|
 			}																	//|_6_|_7_|_8_|
-			inline static void draw(const _box& area, const _box& uv) {
+			/*inline static void draw(const _box& area, const _box& uv) {
 				SokuLib::DxVertex v[4] = {
 					{ area.x1, area.y1, 0.0f, 1.0f, 0xFFFFFFFF, uv.x1, uv.y1 },
 					{ area.x1, area.y2, 0.0f, 1.0f, 0xFFFFFFFF, uv.x1, uv.y2 },
@@ -264,7 +305,7 @@ namespace gui {
 					{ area.x2, area.y2, 0.0f, 1.0f, 0xFFFFFFFF, uv.x2, uv.y2 },
 				};
 				SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(SokuLib::DxVertex));
-			}
+			}*/
 			inline void render(const _box& area) const {
 				if (!ref) return;
 				auto dsize = ref->sprite.size / 3.0f;
@@ -280,16 +321,23 @@ namespace gui {
 					area.y2,
 					area.y2 + dsize.y,
 				};
-				SokuLib::textureMgr.setTexture(ref->sprite.dxHandle, 0);
+				//SokuLib::textureMgr.setTexture(ref->sprite.dxHandle, 0);
+				//helper.dxHandle = ref->sprite.dxHandle;
 				// 3x3 grid
 				for (int row = 0; row < 3; ++row) {
 					for (int col = 0; col < 3; ++col) {
 						int idx = row * 3 + col;
 						_box uv; getBorder(uv, idx);
-						_box dst;
-						dst.x1 = dx[col]; dst.x2 = dx[col + 1];
-						dst.y1 = dy[row]; dst.y2 = dy[row + 1];
-						draw(dst, uv);//can be inline and use TRIANGLELIST
+						//_box dst;
+						//dst.x1 = dx[col]; dst.x2 = dx[col + 1];
+						//dst.y1 = dy[row]; dst.y2 = dy[row + 1];
+						//draw(dst, uv);//can be inline and use TRIANGLELIST
+						//helper.setTexture2(ref->sprite.dxHandle, dsize.x * col, dsize.y * row, dsize.x, dsize.y);
+						helper.dxHandle = ref->sprite.dxHandle;
+						setBorder(helper, uv);
+						helper.setColor(0xFFFFFFFF);
+						helper.renderScreen(dx[col], dy[row], dx[col + 1], dy[row + 1]);
+						//helper.render
 					}
 				}
 				
@@ -303,10 +351,9 @@ namespace gui {
 		}
 	public:
 		using noderef = const xml::ptree&;
-		bool visible = true;
 		//Container() = default;
 		void load(noderef node);
-		Container(noderef node) : _hider(node) {
+		Container(noderef node) : _hider(node), _hover(node) {
 			load(node);
 			this->area() = { 0, 0, 0, 0 };
 		}
@@ -316,7 +363,7 @@ namespace gui {
 			for (auto ptr : children)
 				delete ptr;
 		}
-		inline void verify(void* ctx) { visible = _hider::verify(ctx); }
+		//inline void verify(void* ctx) { visible = _hider::verify(ctx); }
 		//Container() { visible = true; }
 		inline virtual void update(_box& parentArea, void* ctx) {
 			verify(ctx);
@@ -324,6 +371,8 @@ namespace gui {
 				if (child) child->update(*this, ctx);
 			}
 		}
+		virtual bool debug(const SokuLib::Vector2i& cursor) override;
+		virtual bool onClick(const SokuLib::Vector2i& cursor, const Callback& cb) override;
 		inline virtual void render() const {
 			if(!visible) return;
 			back.render(this->area());
@@ -353,7 +402,7 @@ namespace gui {
 			parentArea.hold(this->area());
 		}
 		inline virtual void render() const override { return; }
-
+		inline virtual bool debug(const SokuLib::Vector2i& cursor) override { return false; }
 	};
 
 	class Value {
@@ -365,6 +414,7 @@ namespace gui {
 		std::variant<unsigned, int, float, double> val{ 0 };
 		//float val = 0.0f;
 		enum Type : int {
+			BOOL,
 			CHAR, SHORT, INT,
 			BYTE, USHORT, UINT,
 			FLOAT, DOUBLE,
@@ -386,7 +436,7 @@ namespace gui {
 				if constexpr (std::is_arithmetic_v<T>)
 					return static_cast<float>(v);
 				else
-					return 0.0f;
+					return NAN;
 				}, val);
 		}
 		inline virtual int geti() const {
@@ -411,7 +461,7 @@ namespace gui {
 			offsetX = node.get_optional<int>("<xmlattr>.xoffset").value_or(offsetX);
 			offsetY = node.get_optional<int>("<xmlattr>.yoffset").value_or(offsetY);
 		}
-		Element(noderef node) : Container(node) {
+		Element(noderef node, const Layout* l = nullptr) : Container(node) {
 			load(node);
 		}
 		Element(const Element&) = delete; Element(Element&&) noexcept = default;
@@ -424,7 +474,7 @@ namespace gui {
 		}
 		//virtual void render() const override;
 	};
-	class Icon : public Element, public _hover {
+	class Icon : public Element {
 	protected:
 		const CDesign::Sprite* ref_icons = nullptr;
 		//bool active = false;//
@@ -432,13 +482,19 @@ namespace gui {
 		int w, h;
 	public:
 		void load(noderef node);
-		Icon(noderef node) : Element(node), _hover(node) {
+		Icon(noderef node, const Layout* l = nullptr) : Element(node, l) {
 			load(node);
 		}
 		inline void getBorder(_box& uv) const {
 			if (ref_icons && index>=0) {
 				uv = riv::tex::Tex::getBorder(index, cols, rows, ref_icons->sprite);
 			}
+		}
+		inline static void setBorder(SokuLib::Sprite& sp, const _box& uv) {
+			sp.vertices[0].u = sp.vertices[2].u = uv.x1;
+			sp.vertices[0].v = sp.vertices[1].v = uv.y1;
+			sp.vertices[1].u = sp.vertices[3].u = uv.x2;
+			sp.vertices[2].v = sp.vertices[3].v = uv.y2;
 		}
 		//Icon(int id) : tileId(id) {}
 		//template <int sx, int sy, int gx, int gy, int ox = 0, int oy = 0> void render(riv::tex::Tex);
@@ -459,7 +515,7 @@ namespace gui {
 	public:
 		void load(noderef node);
 		Text() = default;
-		Text(noderef node) : Element(node) {
+		Text(noderef node, const Layout* l = nullptr) : Element(node, l) {
 			load(node);
 		}
 		Text(const Text&) = delete; Text(Text&&) noexcept = default;
@@ -467,7 +523,8 @@ namespace gui {
 		inline void setText(const string& str) {
 			if (!font) return;
 			if (dxHandle) SokuLib::textureMgr.remove(dxHandle);
-			auto handle = font->newText(str, boxw, boxh);
+			auto strcv = xml::XmlHelper::convertFG(str.c_str());
+			auto handle = font->newText(strcv, boxw, boxh);
 			SokuLib::Sprite::setTexture2(handle, 0, 0, boxw, boxh);
 			//x2 = x1 + boxw; y2 = y1 + boxh;
 		}
@@ -486,14 +543,15 @@ namespace gui {
 			if (!visible || !dxHandle) return;
 			Element::render();
 			//_align::apply(rx, this->, x2 - x1, y2 - y1, boxw, boxh);
-			SokuLib::Sprite& sp= *const_cast<Text*>(this);//damn
+			SokuLib::Sprite& sp= *const_cast<std::remove_cvref_t<decltype(*this)>*>(this);//damn
 			sp.render(basept.x, basept.y);
 		}
 	};
 	class TitleBar : public Text {
+		float sshadow = 1.0f;
 	public:
 		//void load(noderef node);
-		inline TitleBar(noderef node) : Text(node) {
+		inline TitleBar(noderef node, const Layout* l = nullptr) : Text(node, l) {
 			//load(node);
 		}
 		TitleBar(TitleBar&&) noexcept = default;
@@ -502,6 +560,21 @@ namespace gui {
 		//	Text::update(*this, ctx);
 		//}
 		//virtual _box area() override;
+		inline virtual void render() const override {
+			if (!visible || !dxHandle) return;
+			Element::render();
+			SokuLib::Sprite& sp = *const_cast<std::remove_cvref_t<decltype(*this)>*>(this);
+			//render more shadow
+			if (font && font->shadow) {
+				sp.setColor(0xFF111111);
+				sp.render(basept.x - sshadow, basept.y - sshadow);
+				sp.render(basept.x + sshadow, basept.y - sshadow);
+				sp.render(basept.x - sshadow, basept.y + sshadow);
+				sp.render(basept.x + sshadow, basept.y + sshadow);
+				sp.setColor(0xFFFFFFFF);
+			}
+			sp.render(basept.x, basept.y);
+		}
 	};
 	class Number : public Element {
 	protected:
@@ -512,8 +585,8 @@ namespace gui {
 		//std::optional<float> hide_if;
 		//std::vector<int> offsets;
 	public:
-		void load(noderef node, const Layout& l);
-		Number(noderef node, const Layout& l) : Element(node) {
+		void load(noderef node, const Layout* l);
+		Number(noderef node, const Layout* l = nullptr) : Element(node) {
 			load(node, l);
 		}
 		inline void rounding(float v) {
@@ -528,13 +601,13 @@ namespace gui {
 		virtual void update(_box& parea, void* ctx) override;
 		virtual void render() const override;
 	};
-	class Color : public Element, public _hover {
+	class Color : public Element {
 		int w = 18, h = 18;
 		const Value* ref_val = nullptr;
 		unsigned int color = 0xFFFFFFFF;
 	public:
-		void load(noderef node, const Layout& l);
-		inline Color(noderef node, const Layout& l) : Element(node), _hover(node) {
+		void load(noderef node, const Layout* l);
+		inline Color(noderef node, const Layout* l) : Element(node, l) {
 			load(node, l);
 		}
 		inline virtual void update(_box& parea, void* ctx) override {
@@ -547,16 +620,19 @@ namespace gui {
 		}
 		inline virtual void render() const {
 			Element::render();
-			SokuLib::DxVertex verts[4] = {
+			/*SokuLib::DxVertex verts[4] = {
 				{x1 + 0.5f, y1 + 0.5f,	0.f, 1.f,	color, 0,0},
 				{x1 + 0.5f, y2 + 0.5f,	0.f, 1.f,	color, 0,1},
 				{x2 + 0.5f, y1 + 0.5f,	0.f, 1.f,	color, 1,0},
 				{x2 + 0.5f, y2 + 0.5f,	0.f, 1.f,	color, 1,1},
-			};
-			SokuLib::textureMgr.setTexture(NULL, 0);
-			SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, verts, sizeof(*verts));
+			};*/
+			//SokuLib::textureMgr.setTexture(NULL, 0);
+			//SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, verts, sizeof(*verts));
+			helper.dxHandle = 0;
+			helper.setColor(color);
+			helper.renderScreen(x1, y1, x2, y2);
 		}
-		virtual void debug() const override;//output string
+		virtual bool debug(const SokuLib::Vector2i& cursor) override;//output string
 	};
 	class Sprite : public Element, SokuLib::Sprite {
 		//SokuLib::Vector2f scale;
@@ -570,7 +646,7 @@ namespace gui {
 			frameH = node.get_optional<int>("<xmlattr>.height").value_or(frameH);
 			crop = node.get_optional<bool>("<xmlattr>.crop").value_or(crop);
 		}
-		inline Sprite(noderef node) : Element(node) {
+		inline Sprite(noderef node, const Layout* l = nullptr) : Element(node, l) {
 			load(node);
 			SokuLib::DxVertex verts[] = {
 				{0, 0,	0.0f, 1.0f,	0xFFFFFFFF,	0.0f,	0.0f},
@@ -609,19 +685,30 @@ namespace gui {
 	class Canva : public Element, public _stacker {
 		//std::variant<Text, Icon, std::nullopt_t> name;
 		//std::vector<Element*> elements;
+	protected:
+		const Value* ref_ptr = nullptr;
+		float hideif = NAN;
 	public:
-		void load(noderef node, const Layout& l);
-		inline Canva(noderef node, const Layout& l, bool stk = true) : Element(node), _stacker(node, stk) {
+		void load(noderef node, const Layout* l);
+		inline Canva(noderef node, const Layout* l, bool stk = true) : Element(node, l), _stacker(node, stk) {
 			load(node, l);
 		}
-		void verify2();//hide_if?
+		inline void verify2(void* ctx) {//hide_if
+			if (ref_ptr) {
+				float v = ref_ptr->getf();
+				visible &= !(v == hideif);
+			}
+		}
 		inline virtual void update(_box& parea, void* ctx) override {
 			_box& b = this->area();
 			//b = parea.basept;
 			Element::update(parea, ctx);
 			//parea.basept = { b.x1, b.y2 };
-			stack(parea);
-			parea.hold(b);
+			verify2(ctx);
+			if (visible) {
+				stack(parea);
+				parea.hold(b);
+			}
 		}
 	};
 	class Grider : public Canva {
@@ -630,15 +717,15 @@ namespace gui {
 		int maxInRow = 1, gridSizeX = 0, gridSizeY = 0;
 		//std::vector<Icon> icons;
 	public:
-		void load(noderef node, const Layout& l);
-		inline Grider(noderef node, const Layout& l) : Canva(node, l) {
+		void load(noderef node, const Layout* l);
+		inline Grider(noderef node, const Layout* l) : Canva(node, l) {
 			load(node, l);
 		}
 		virtual void update(_box& parea, void* ptr);
 		//virtual void render() const override;
 	};
 
-	class Layout : public Container {
+	class Layout : public Container, public _stacker {
 		//std::map<string, Canva> canvases;
 		union {
 			std::vector<Layout*> object;
@@ -648,7 +735,7 @@ namespace gui {
 		std::vector<TitleBar> titles;
 	public:
 		void load(noderef node);
-		inline Layout(noderef node) : Container(node) {
+		inline Layout(noderef node) : Container(node) {//stack true
 			new (&name) std::vector<string>();
 			load(node);
 		}
@@ -661,6 +748,20 @@ namespace gui {
 		//void stack();//align and hold
 		virtual void update(_box& parea, void* ctx) override;
 		virtual void render() const override;
+		inline virtual bool debug(const SokuLib::Vector2i& cursor) override {
+			if (Container::debug(cursor)) return true;
+			for (auto& t : titles | std::views::reverse) {
+				if (t.debug(cursor)) {
+					return true;
+				}
+			}
+			for (auto l : object | std::views::reverse) {
+				if (!l) continue;
+				if (l->debug(cursor))
+					return true;
+			}
+			return false;
+		}
 		static inline void inheriting(std::map<string, Layout>& layouts, Layout& current);
 	};
 
@@ -677,22 +778,37 @@ namespace gui {
 	//	//virtual void render() override;
 	//};
 	class Console {
-		static HWND hwndTT;
+		string lines;
+		//POINT cursorpt{ 0,0 };
 	public:
-		inline Console(const xml::ptree& node) {
-			load(node);
-			//create();
+		POINT clientpt{ 0,0 };
+		inline Console() {
+			lines.reserve(512);
+			//load(node);
 		}
-		void load(const xml::ptree& node);
-		inline static void create(HWND parentWnd) {
-			if (hwndTT || !parentWnd) return;
-			
+		//void load(const xml::ptree& node);
+		//~Console() { }
+
+		inline void clear() {
+			lines.clear();
 		}
-		inline static void cancel() {
-			if (!hwndTT) return;
+		//inline void getCursor(int& cx, int& cy) {
+		//	cx = cursorpt.x; cy = cursorpt.y;
+		//}
+		//inline void setCursor(int& cx, int& cy) {
+		//	cursorpt.x = cx; cursorpt.y = cy;
+		//}
+		
+		inline void inspect(POINT& pt, WCHAR* ret, size_t _max = 256) {
+			auto ws = xml::XmlHelper::convertW(lines.c_str());
+			//if (std::wstring_view(ret) == ws) { return; }
+			ws._Copy_s(ret, _max, ws.length());
+			//clientpt = pt;
 		}
-		~Console() {
-			cancel();
+		inline void push(const string& str, const SokuLib::Vector2f& v) {
+			// = v;
+			lines += str;
+			lines += '\n';
 		}
 
 	};
@@ -701,12 +817,15 @@ namespace gui {
 		std::optional<TitleBar> version;
 		SokuLib::Vector2i basePoint{ 0, 0 };
 		std::map<string, Layout> sublayouts;
-		std::optional<Console> console;
+		Console console;
 		static std::map<int, Font> _fonts;
 		static CDesign* _current;
 		static Console* _console;
+		static _hover* _hoverbuffer;
 	public:
+		std::mutex updating; string currentLayout;
 		SokuLib::Vector2i windowSize{ 240, 980 };
+		int hint_timer = 0;
 		inline static const Font& getFont(int id) {
 			auto it = _fonts.find(id);
 			if (it != _fonts.end()) return it->second;
@@ -722,24 +841,76 @@ namespace gui {
 			if (_current) _current->getById(&obj, id);
 			return obj;
 		}
-		inline static void pushConsole(const string& str) {
-			if (!_console) return;
-			//_console->push(str);
+		//inline static void getCursor(int& cx, int& cy) {
+		//	if (!_console) return;
+		//	_console->getCursor(cx, cy);
+		//}
+		inline static bool pushConsole(const string& str, const SokuLib::Vector2f& v) {
+			if (!_console) return false;
+			_console->push(str, v);
+			return true;
+		}
+		inline static bool setBuffer(_hover* c) {
+			return _hoverbuffer = c;
+		}
+		inline bool clickBuffer(const SokuLib::Vector2i& cursor, const _hover::Callback& cb) {
+			const auto scp= std::lock_guard(updating);
+			if (!_hoverbuffer) return false;
+			return _hoverbuffer->onClick(cursor, cb);
 		}
 		RivDesign(const string& name = "rivpp/layout.xml", const string& name2 = "rivpp/layout_plus.txt") : CDesign() {
 			auto temp = std::map<int, Font>{ {-1, Font()}, };
 			_fonts.swap(temp);
 			_current = nullptr;
 			_console = nullptr;
+			_hoverbuffer = nullptr;
 			load(name, name2);
 		}
+		~RivDesign() {
+			_current = nullptr;
+			_console = nullptr;
+			_hoverbuffer = nullptr;
+			_fonts.clear();
+		}
 		void load(const string&, const string& name2);
-		void render(const string& cl, void* ctx);
+		bool render(const string& cl, void* ctx);
+		
+		inline bool debug_mini(const SokuLib::Vector2i& cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
+			if (cursor.x < 0 || cursor.y < 0) {
+				return false;
+			}
+			auto scp = std::lock_guard(updating);
+			console.clear();
+			if (_hoverbuffer && _hoverbuffer->debug(cursor)) {
+				console.inspect(pt, ret, _max);
+				return true;
+			}
+			else
+				return (_hoverbuffer = nullptr);
+		}
+		inline bool debug(SokuLib::Vector2i cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
+			bool hit = false;
+			if (updating.try_lock()) {
+				console.clear();
+				console.clientpt = { cursor.x, cursor.y };
+				if (cursor.x < 0 || cursor.y < 0) {
+					return updating.unlock(), false;
+				}
+				auto it = sublayouts.find(currentLayout);
+				if (it != sublayouts.end()) {
+					hit |= _hoverbuffer && _hoverbuffer->debug(cursor) || (_hoverbuffer = nullptr, it->second.debug(cursor));
+					if (hit) console.inspect(pt, ret, _max);
+				}
+				updating.unlock();
+			} else puts("debuging try lock failed");
+			return hit;
+		}
 		virtual void clear() override {
 			CDesign::clear(); CDesign::objectMap.clear();
-			_current = nullptr; _console = nullptr;
+			_current = nullptr; _console = nullptr; _hoverbuffer = nullptr;
 			sublayouts.clear();
-			version.reset(); console.reset();
+			currentLayout.clear();
+			version.reset(); //console.reset();
 		}
 	};
 	
@@ -780,14 +951,59 @@ namespace gui {
 			val = 0<=obj.skillIndex&&obj.skillIndex<lim && obj.gameData.owner ? obj.gameData.owner->effectiveSkillLevel[obj.skillIndex] : -1;
 		}
 	};
-	class ValueSpec_Countdown {
+	/*class ValueSpec_Countdown {
 
 	};
 	class ValueSpec_Hitstop : public Value {
 	public:
 		bool check_count1();
-	};
-	class FrameFlags : public Grider {
+	};*/
+	/*class FrameFlags : public Grider {
 
+	};*/
+	inline int get_player_id(const SokuLib::v2::GameObjectBase* target) {
+		using SokuLib::v2::GameObjectBase, SokuLib::v2::GameDataManager;
+		if (GameDataManager::instance) {
+			//auto& player = *reinterpret_cast<std::array<SokuLib::v2::Player*, 4>*>(&SokuLib::v2::GameDataManager::instance->players);
+			for (int i = 0; i < PLAYERS_NUMBER; ++i) {
+				if (GameDataManager::instance->enabledPlayers[i] && GameDataManager::instance->players[i] == target) {
+					return i + 1;
+				}
+			}
+		}
+		return 0;
+	}
+	class Link : public Canva {
+		//const Value* ref_ptr = nullptr;
+
+	public:
+		inline void load(noderef node, const Layout* l) {
+			//auto idv = node.get_optional<int>("<xmlattr>.value_id");
+			//if (idv && l) ref_ptr = l->getValue(*idv);
+			if (description.empty()) {
+				description = "%s";
+			}
+			if (std::isnan(hideif)) hideif = 0;
+		}
+		inline Link(noderef node, const Layout* l) : Canva(node, l) {
+			load(node, l);
+		}
+		/*inline void update(_box& parea, void* ctx) override {
+			Canva::update(parea, ctx);
+		}*/
+		inline virtual bool onClick(const SokuLib::Vector2i& cursor, const Callback& cb) override {
+			if (!visible || !cb) return false;
+			//return Element::onClick(cb);
+			DWORD ptr = ref_ptr ? ref_ptr->geti() : 0;
+			if (!ptr || !_hover::check(cursor.x, cursor.y)) { return false; }
+			cb((void*)ptr);
+			return true;
+		}
+		inline virtual bool debug(const SokuLib::Vector2i& cursor) override {
+			if (!ref_ptr || !visible || !check(cursor.x, cursor.y) || description.empty()) return false;
+			string temp; temp.resize((description.size() + 12));
+			sprintf(temp.data(), description.c_str(), std::format("0x{:08x}", ref_ptr->geti()).c_str());
+			return RivDesign::pushConsole(temp, { x2,y2 }) && RivDesign::setBuffer(this);//Element::debug(cursor);
+		}
 	};
 }

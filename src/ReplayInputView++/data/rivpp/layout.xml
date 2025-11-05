@@ -71,7 +71,7 @@
 	</static>
 
 	<!--numbers-->
-	<number id="300" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="2">
+	<number id="300" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-15" size="0" floatsize="2">
 		<image name="font-plain.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
 	<number id="301" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="0">
@@ -107,5 +107,11 @@
 	<!--Cursor hint-->
 	<static id="1" xposition="0" yposition="100" mirror="0">
 		<image name="hint.png" xposition="20" yposition="0" width="240" height="680"/>
+	</static>
+	<static id="2" xposition="0" yposition="0" mirror="0">
+		<image name="cursor.png" xposition="0" yposition="0" width="32" height="32"/>
+	</static>
+	<static id="3" xposition="140" yposition="0" mirror="0">
+		<image name="copy-hint.png" xposition="0" yposition="0" width="100" height="24"/>
 	</static>
 </layout>

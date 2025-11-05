@@ -1,8 +1,10 @@
 #include "gui.hpp"
 
-#include <Windows.h>
 #include <boost/lexical_cast.hpp>
-#include <GameData.hpp>
+#include <regex>
+#include <unordered_map>
+
+#include <Windows.h>
 #include <GameObject.hpp>
 #include <DrawUtils.hpp>
 
@@ -42,13 +44,14 @@ namespace gui {
 	}
 
 
-
+	UINT xml::XmlHelper::gameCP = CP_ACP, xml::XmlHelper::fileCP = CP_UTF8;
 	std::map<int, Font> RivDesign::_fonts;
 	CDesign* RivDesign::_current = nullptr;
 	Console* RivDesign::_console = nullptr;
-	HWND Console::hwndTT = NULL;
-#define SIMPLE_IS_PLAYER(o) (o.frameState.actionId< 800)
-#define SIMPLE_IS_OBJECT(o) (o.frameState.actionId>=800)
+	_hover* RivDesign::_hoverbuffer = nullptr;
+	//HWND Console::hwndTT = NULL;
+#define SIMPLE_IS_PLAYER(o) ((o).frameState.actionId< 800)
+#define SIMPLE_IS_OBJECT(o) ((o).frameState.actionId>=800)
 	_hider::manager& _hider::Rules() {
 		static manager Rules{
 			//{"always", [](void*) { return true; }},
@@ -80,11 +83,14 @@ namespace gui {
 			}},
 			{"flag-stance-none", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
-				return obj.gameData.frameData 
-					&& !obj.gameData.frameData->frameFlags.crouch 
-					&& !obj.gameData.frameData->frameFlags.stand
-					&& !obj.gameData.frameData->frameFlags.down
-					&& !obj.gameData.frameData->frameFlags.guarding;
+				if (!obj.gameData.frameData) return false;
+				auto flags = obj.gameData.frameData->frameFlags;
+				return SIMPLE_IS_PLAYER(obj)
+					&& !flags.crouch 
+					&& !flags.stand
+					&& !flags.down
+					&& !flags.guarding
+					&& !flags.airborne;
 			}},
 			{"flag-stance-airborne", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
@@ -132,7 +138,7 @@ namespace gui {
 			}},
 			{"flag-uncancelable", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
-				return obj.gameData.frameData && !obj.gameData.frameData->frameFlags.cancellable;
+				return SIMPLE_IS_PLAYER(obj) && obj.gameData.frameData && !obj.gameData.frameData->frameFlags.cancellable;
 			}},
 			{"flag-move-cancelable", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
@@ -204,7 +210,10 @@ namespace gui {
 			}},
 						
 			
-			
+			{"center", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::AnimationObject*>(ptr);
+				return abs(obj.center.x) > FLT_EPSILON || abs(obj.center.y) > FLT_EPSILON;
+			}},
 			{"blend-options", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::AnimationObject*>(ptr);
 				using FD = SokuLib::v2::FrameData;
@@ -215,8 +224,82 @@ namespace gui {
 	}
 	
 	namespace xml {
-		istringstream xml::XmlHelper::read_file(const string& name) {
+		UINT XmlHelper::get_doc_codepage(const std::string& s) {
+			static const std::unordered_map<std::string, int> encoding_to_codepage = {
+				// === Unicode ===
+				{"utf-8", 65001}, {"utf8", 65001}, {"utf_8", 65001},
+				{"utf-7", 65000}, {"utf7", 65000}, {"utf_7", 65000},
+				{"utf-16", 1200}, {"utf16", 1200}, {"utf_16", 1200}, {"utf16le", 1200}, {"utf-16le", 1200},
+				{"utf-16be", 1201}, {"utf16be", 1201},
+				{"utf-32", 12000}, {"utf32", 12000}, {"utf-32be", 12001}, {"utf32be", 12001},
+
+				// === Windows ===
+				{"windows-1250", 1250}, {"win1250", 1250}, {"cp1250", 1250},
+				{"windows-1251", 1251}, {"win1251", 1251}, {"cp1251", 1251},
+				{"windows-1252", 1252}, {"win1252", 1252}, {"cp1252", 1252},
+				{"windows-1253", 1253}, {"win1253", 1253}, {"cp1253", 1253},
+				{"windows-1254", 1254}, {"win1254", 1254}, {"cp1254", 1254},
+				{"windows-1255", 1255}, {"win1255", 1255}, {"cp1255", 1255},
+				{"windows-1256", 1256}, {"win1256", 1256}, {"cp1256", 1256},
+				{"windows-1257", 1257}, {"win1257", 1257}, {"cp1257", 1257},
+				{"windows-1258", 1258}, {"win1258", 1258}, {"cp1258", 1258},
+
+				// === East Asian Encodings ===
+				{"shift_jis", 932}, {"shift-jis", 932}, {"sjis", 932}, {"ms932", 932},
+				{"gb2312", 936}, {"gbk", 936}, {"gb_2312", 936},
+				{"big5", 950}, {"big-5", 950}, {"big_5", 950},
+				{"euc-jp", 51932}, {"euc_jp", 51932},
+				{"euc-kr", 51949}, {"euc_kr", 51949},
+				{"euc-cn", 51936}, {"euc_cn", 51936},
+				{"iso-2022-jp", 50220}, {"iso_2022_jp", 50220},
+				{"iso-2022-kr", 50225}, {"iso_2022_kr", 50225},
+				{"hz-gb-2312", 52936}, {"hz_gb_2312", 52936},
+				{"gb18030", 54936},
+
+				// === ISO Latin ===
+				{"iso-8859-1", 28591}, {"latin1", 28591}, {"iso8859-1", 28591},
+				{"iso-8859-2", 28592}, {"latin2", 28592},
+				{"iso-8859-5", 28595}, {"cyrillic", 28595},
+				{"iso-8859-7", 28597}, {"greek", 28597},
+				{"iso-8859-8", 28598}, {"hebrew", 28598},
+				{"iso-8859-9", 28599}, {"turkish", 28599},
+				{"iso-8859-15", 28605}, {"latin9", 28605},
+
+				// === DOS / OEM ===
+				{"ibm437", 437}, {"cp437", 437},
+				{"ibm850", 850}, {"cp850", 850},
+				{"ibm852", 852}, {"cp852", 852},
+				{"ibm866", 866}, {"cp866", 866},
+				{"dos-720", 720},
+				{"dos-862", 862},
+				{"ibm864", 864},
+				{"koi8-r", 20866}, {"koi8r", 20866},
+				{"koi8-u", 21866}, {"koi8u", 21866},
+
+				// === Mac ===
+				{"macintosh", 10000}, {"mac", 10000}, {"x-mac-japanese", 10001},
+				{"x-mac-chinesetrad", 10002}, {"x-mac-chinesesimp", 10008},
+				{"x-mac-korean", 10003}, {"x-mac-cyrillic", 10007},
+				{"x-mac-greek", 10006}, {"x-mac-hebrew", 10005},
+
+				// === ASCII ===
+				{"us-ascii", 20127}, {"ascii", 20127}, {"ansi_x3.4-1968", 20127},
+			};
+			//auto declOpt = doc.get_optional<string>("<xmlattr>.encoding");
+			std::smatch m;
+			if (std::regex_search(s, m, std::regex(R"(encoding\s*=\s*["']([^"']+)["'])"))) {
+				auto name = m[1].str(); std::transform(name.begin(), name.end(), name.begin(), tolower);
+				auto it = encoding_to_codepage.find(name);
+				if (it != encoding_to_codepage.end()) {
+					std::cout << "encoding=" << name <<"; cp=" << it->second <<std::endl;
+					return it->second;
+				}
+			}
+			return CP_UTF8;
+		}
+		std::istringstream XmlHelper::read_file(const std::string& name) {
 			IFileReader* reader = nullptr;
+			printf("Reading file: %s\n", name.c_str());
 			if (!_init_reader(&reader, 0, name.c_str())) {
 				delete reader;
 				throw std::runtime_error("failed to init reader");
@@ -229,10 +312,11 @@ namespace gui {
 			}
 			delete reader;
 			decrypt(buf);
+			fileCP = get_doc_codepage(buf);
 			return std::istringstream(buf); // 将字符串内容绑定进流
 		}
 
-		void XmlHelper::decrypt(string& buf) {//credit shady-packer
+		void XmlHelper::decrypt(std::string& buf) {//credit shady-packer
 			// Decrypt
 			uint8_t a = 0x8b, b = 0x71;
 			//auto len = buf.length();
@@ -288,7 +372,8 @@ namespace gui {
 	}
 	void Value::load(const xml::ptree& node) {
 		auto typeStr = node.get_optional<string>("<xmlattr>.type").value_or("int");
-		if (typeStr == "char") type = CHAR;
+		if (typeStr == "bool") type = BOOL;
+		else if(typeStr == "char") type = CHAR;
 		else if (typeStr == "byte" || typeStr == "uchar") type = BYTE;
 		else if (typeStr == "short") type = SHORT;
 		else if (typeStr == "ushort") type = USHORT;
@@ -316,6 +401,7 @@ namespace gui {
 			addr += *it;
 		}
 		switch (type) {
+		case BOOL: val = *(bool*)addr; return;
 		case CHAR: val = *(char*)addr; return;
 		case BYTE: val = *(unsigned char*)addr; return;
 		case SHORT: val = *(short*)addr; return;
@@ -328,13 +414,24 @@ namespace gui {
 		}
 	}
 
+	bool _hover::debug(const SokuLib::Vector2i& cursor) {
+		//push string to console
+		if (!check(cursor.x, cursor.y) || description.empty()) return false;
+		return RivDesign::pushConsole(description, { x2,y2 })
+			&& RivDesign::setBuffer(this)
+			;
+	}
+
 	void Container::load(noderef node) {
 #ifdef _DEBUG
 		auto id = 200;
 #else
-		auto bk = node.get_child_optional("back");
-		auto id = bk ? bk->get_optional<int>("<xmlattr>.ref_id").value_or(0) : 0;
+		auto id = 0;
 #endif // _DEBUG
+		if (auto bk = node.get_child_optional("back")) {
+			id = bk->get_optional<int>("<xmlattr>.ref_id").value_or(id);
+		};
+		
 		id && (back.ref = RivDesign::getSprite(id));
 		
 		for (auto& [key, child] : node) {
@@ -343,6 +440,25 @@ namespace gui {
 				addChildren(new Pad(child));
 		}
 
+	}
+	bool Container::debug(const SokuLib::Vector2i& cursor) {
+		if (!visible) return false;
+		//bool hit = false;
+		for (auto* child : children | std::views::reverse) {
+			if (child && child->debug(cursor))
+				return RivDesign::setBuffer(this);
+		}
+		return _hover::debug(cursor);
+	}
+	bool Container::onClick(const SokuLib::Vector2i& cursor, const Callback& cb) {
+		if (!visible) return false;
+		//bool hit = false;
+		for (auto* child : children | std::views::reverse) {
+			if (child && child->onClick(cursor, cb)) {
+				return true;
+			}
+		}
+		return _hover::onClick(cursor, cb);
 	}
 	void Icon::load(noderef node) {
 		auto id = node.get_optional<int>("<xmlattr>.ref_id");
@@ -367,15 +483,16 @@ namespace gui {
 			ref_num = reinterpret_cast<decltype(ref_num)>(temp);
 		}
 	}
-	void Number::load(noderef node, const Layout& l) {
+	void Number::load(noderef node, const Layout* l) {
 		auto idv = node.get_optional<int>("<xmlattr>.value_id");
 		auto idn = node.get_optional<int>("<xmlattr>.number_id");
 		if (!idv || !idn) return;
-		bind(l, *idv, *idn);
+		if (l)
+			bind(*l, *idv, *idn);
 		//auto hide = node.get_optional<float>("<xmlattr>.hide_if");
 		//if (hide) hide_if = *hide;
 	}
-	void Grider::load(noderef node, const Layout& l) {
+	void Grider::load(noderef node, const Layout* l) {
 		maxInRow = node.get_optional<int>("<xmlattr>.rowmax").value_or(maxInRow);
 		gridSizeX = node.get_optional<int>("<xmlattr>.xgrid").value_or(gridSizeX);
 		gridSizeY = node.get_optional<int>("<xmlattr>.ygrid").value_or(gridSizeY);
@@ -383,18 +500,34 @@ namespace gui {
 			addChildren(new Canva(child, l));
 		}*/
 	}
-	void Color::load(noderef node, const Layout& l) {
+	void Color::load(noderef node, const Layout* l) {
 		w = node.get_optional<int>("<xmlattr>.width").value_or(w);
 		h = node.get_optional<int>("<xmlattr>.height").value_or(h);
 		auto idv = node.get_optional<int>("<xmlattr>.value_id");
-		if (!idv) return;
-		ref_val = l.getValue(*idv);
-		back.ref = RivDesign::getSprite(201);
+		if (!idv || !l) return;
+		ref_val = l->getValue(*idv);
+		//back.ref = RivDesign::getSprite(201);
+		if (description.empty()) {
+			description = "%s";
+		}
 	}
-	void Color::debug() const {
-		//_hover::description = std::move(std::format("{:08x}", color));
+	bool Color::debug(const SokuLib::Vector2i& cursor) {
+		if (!visible || !check(cursor.x, cursor.y) || description.empty()) return false;
+		//no child
 		//if 0x00FFFFFF then show 0xFFFFFF
-		_hover::debug();
+		unsigned char a = (color >> 24) & 0xFF;
+		unsigned int rgb = color & 0x00FFFFFF;
+		string temp; temp.resize((description.size() + 12));
+		if (a) {
+			//temp = std::move(std::format("{:02X}#{:06X}", a, rgb));
+			sprintf(temp.data(), description.c_str(), std::format("{:02X}#{:06X}", a, rgb).c_str());
+		} else {
+			//temp = std::move(std::format("#{:06X}", rgb));
+			sprintf(temp.data(), description.c_str(), std::format("#{:06X}", rgb).c_str());
+
+		}
+		return RivDesign::pushConsole(temp, { x2,y2 }) && RivDesign::setBuffer(this);
+		
 	}
 	void Text::load(noderef node) {
 		auto ft = node.get_optional<int>("<xmlattr>.font_id");
@@ -406,33 +539,45 @@ namespace gui {
 		if (str && !str->empty()) setText(*str);
 
 	}
-	void Canva::load(noderef node, const Layout& l) {
+	void Canva::load(noderef node, const Layout* l) {
 		for (auto& [key, child] : node) {
 			Element* elem = nullptr;
 			if (key == "textbox") {
-				elem = addChildren(new Text(child));
+				elem = addChildren(new Text(child, l));
 			}
 			else if (key == "number") {
 				elem = addChildren(new Number(child, l));
 			}
 			else if (key == "icon") {
-				elem = addChildren(new Icon(child));
+				elem = addChildren(new Icon(child, l));
 			}
 			else if (key == "sprite") {
-				elem = addChildren(new Sprite(child));
+				elem = addChildren(new Sprite(child, l));
 			}
 			else if (key == "color") {
 				elem = addChildren(new Color(child, l));
 			}
+
 			else if (key == "field") {
 				elem = addChildren(new Canva(child, l, false));
 			}
 			else if (key == "grid") {
 				elem = addChildren(new Grider(child, l));
 			}
-
+			else if (key == "link") {
+				elem = addChildren(new Link(child, l));
+			}
 		}
-
+		auto cond = xml::XmlHelper::get_array<int>(node, "hide_if", '=');
+		int idv = 0;
+		if (cond.size() >= 2) {
+			idv = cond[0];
+			hideif = cond[1];
+		} else {
+			idv = node.get_optional<float>("<xmlattr>.value_id").value_or(0);
+			if (cond.size() == 1) hideif = cond[0];
+		}
+		if (idv && l) ref_ptr = l->getValue(idv);
 	}
 	void Layout::load(noderef node) {
 		for (auto& [k, v] : xml::XmlHelper::make_range(node.equal_range("title")))
@@ -460,10 +605,13 @@ namespace gui {
 		//for (auto& [key, v] : xml::XmlHelper::make_range(node.equal_range("field"))) {
 		for (auto& [key, v] : node) {
 			if (key == "field") {
-				addChildren(new Canva(v, *this));
+				addChildren(new Canva(v, this));
 			}
 			else if (key == "grid") {
-				addChildren(new Grider(v, *this));
+				addChildren(new Grider(v, this));
+			}
+			else if (key == "link") {
+				addChildren(new Link(v, this));
 			}
 			
 		}
@@ -500,7 +648,7 @@ namespace gui {
 		CDesign::loadResource(name.c_str());
 #ifdef _DEBUG
 		for (auto& [i,obj] : CDesign::objectMap) {
-			if (*(DWORD*)obj != SokuLib::ADDR_VTBL_CDESIGN_SPRITE) continue;
+			if (i < 100 || *(DWORD*)obj != SokuLib::ADDR_VTBL_CDESIGN_SPRITE) continue;
 			obj->active = true;
 			obj->y2 += 400;
 			obj->setColor(0xA0FFFFFF);
@@ -542,7 +690,7 @@ namespace gui {
 		}
 		//console
 
-
+		_console = &console;
 	
 	}
 
@@ -581,11 +729,8 @@ namespace gui {
 		Element::render();
 		//this->ref_icons
 		if (!visible) return;
-		if (check(-1, -1)) {
-			debug();
-		}
 		if (!ref_icons) return;
-		_box uv{}; getBorder(uv);
+		/*_box uv{}; getBorder(uv);
 		const SokuLib::DxVertex vertices[] = {
 			{x1, y1,	0.0f, 1.0f,	0xFFFFFFFF,	uv.x1,	uv.y1},
 			{x2, y1,	0.0f, 1.0f, 0xFFFFFFFF,	uv.x2,	uv.y1},
@@ -593,7 +738,16 @@ namespace gui {
 			{x2, y2,	0.0f, 1.0f, 0xFFFFFFFF,	uv.x2,	uv.y2},
 		};
 		SokuLib::textureMgr.setTexture(ref_icons->sprite.dxHandle, 0);
-		SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (const void*)vertices, sizeof(SokuLib::DxVertex));
+		SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (const void*)vertices, sizeof(SokuLib::DxVertex));*/
+		helper.setColor(0xFFFFFFFF);
+		//auto sz = ref_icons->sprite.size;
+		//int ox = ref_icons->sprite.
+		//int dx = cols > 0 ? sz.x / cols : 0, dy = rows > 0 ? sz.y / rows : 0;
+		//helper.setTexture2(ref_icons->sprite.dxHandle, index%cols * dx, index/cols * dy, dx, dy);
+		_box uv{}; getBorder(uv);
+		helper.dxHandle = ref_icons->sprite.dxHandle;
+		setBorder(helper, uv);
+		helper.renderScreen(x1, y1, x2, y2);
 	}
 	void Grider::update(_box& parea, void* ctx) {
 		visible = false;
@@ -615,8 +769,10 @@ namespace gui {
 		}
 		
 		//parea.basept.y = b.y2;
-		stack(parea);
-		parea.hold(b);
+		if (visible) {
+			stack(parea);
+			parea.hold(b);
+		}
 	}
 	
 	void Sprite::cropping() {
@@ -761,7 +917,7 @@ namespace gui {
 			});
 		temp.draw();
 		SokuLib::textureMgr.setTexture(dxHandle, 0); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
-		//SokuLib::textureMgr.setTexture(0, 0); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));//white back
+		//SokuLib::SpriteEx::rotate
 		//base pt
 		temp.setFillColor(0xFFAAAAAA);
 		temp.setPosition(pos.to<int>() - SokuLib::Vector2i{ 2,2 }); temp.setSize({ 4,4 });
@@ -785,7 +941,8 @@ namespace gui {
 			tt.update(b, ctx);
 		}
 		Container::update(parea, ctx);
-		parea.basept = b.basept;
+		stack(parea);
+		//parea.basept = b.basept;
 		parea.hold(b);
 	}
 	void Layout::render() const {
@@ -801,13 +958,23 @@ namespace gui {
 	}
 
 
-	void RivDesign::render(const string& cl, void* ctx) {
-		_box base(basePoint);
-		Object* hint = nullptr;
-		getById(&hint, 1);
+	bool RivDesign::render(const string& cl, void* ctx) {
+		//if (!ctx) return false;
 		auto it = sublayouts.find(cl);
-		if (hint)
-			hint->active = it == sublayouts.end();
+		if (it == sublayouts.end() && !cl.empty()) {
+			return false;
+		}
+
+		_box base(basePoint);
+		Sprite *hint = nullptr, *cursor = nullptr, *copied = nullptr;
+		getById(&hint, 1); getById(&cursor, 2); getById(&copied, 3);
+		//if (hint)
+			//hint->active = it == sublayouts.end();
+		if (copied && hint_timer > 0) {
+			copied->active = --hint_timer;
+			copied->setColor(SokuLib::DrawUtils::DxSokuColor::White * (min(hint_timer, 40) / 40.f));
+		}
+		
 		CDesign::render4();
 		if (version) {
 			version->update(base, ctx);
@@ -816,14 +983,23 @@ namespace gui {
 		if (it != sublayouts.end()) {
 			auto& layout = it->second;
 			layout.area() = base;
-			layout.update(base, ctx);
+			if (updating.try_lock()){
+				layout.update(base, ctx);
+				currentLayout = cl;
+				updating.unlock();
+			} else puts("updating try lock failed");
 			layout.render();
 		} else {
 			
 		}
-		//console
+		if (cursor) {
+			cursor->active = console.clientpt.x > 0 && console.clientpt.y > 0;
+			cursor->renderPos(console.clientpt.x - cursor->sprite.size.x / 2, console.clientpt.y - cursor->sprite.size.y / 2);
+			cursor->active = false;
+		}
+		
+		return true;
 	}
-
 
 
 }

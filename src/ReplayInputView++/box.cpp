@@ -292,6 +292,9 @@ void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color bord
 		//size /= scale;
 		//pos -= size / 2.f;
 		//pos.x = roundf(pos.x); //pos.y = roundf(pos.y);
+#ifdef ANCHOR_BORDER_CLAMP
+		pos.x = std::clamp(pos.x, 0.f, 1280.f); pos.y = std::clamp(pos.y, SokuLib::camera.bottomEdge, 840.f);
+#endif
 		pos.x = ceilf(pos.x); pos.y = ceilf(pos.y);
 		pos.y *= -1;
 		//rectangle.setPosition(pos.to<int>());

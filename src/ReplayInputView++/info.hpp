@@ -20,6 +20,8 @@
 
 #pragma comment(lib, "comctl32.lib")
 
+#define ANCHOR_BORDER_CLAMP
+
 namespace info {
 using SokuLib::v2::GameObjectBase;
 using SokuLib::v2::GameObject;
@@ -87,12 +89,12 @@ using Design = gui::RivDesign;
 					return std::get<const GameObject*>(*this);
 				return nullptr;
 			}
-			//inline operator bool() const { return has_value(); }
+			inline operator bool() const { return has_value(); }
 			inline operator const GameObjectBase* () const { return get_base(); }
 			inline operator GameObjectBase* () const { return const_cast<GameObjectBase*>(get_base()); }
 			inline const GameObjectBase* operator->() const noexcept { return get_base(); }
 			inline const GameObjectBase& operator*() const noexcept { return *get_base(); }
-			inline operator DWORD () const noexcept { return DWORD(get_base()); }
+			explicit inline operator DWORD () const noexcept { return DWORD(get_base()); }
 			inline std::string tostring() const {
 				return std::format("{:#08x}", DWORD(*this));
 			}
@@ -102,8 +104,8 @@ using Design = gui::RivDesign;
 		DWORD oldi = 0;
 		std::mutex inserting;
 	public:
-		constexpr static int toler = 5;
-		Anchor cursor = { -1, -1 }, cursor2 = { -1, -1 };
+		constexpr static Anchor toler = { 6, 6 };
+		Anchor cursor = toler * -2, cursor2 = toler * -2;
 		Phover focus = nullptr;
 		//std::variant<const GameObjectBase*, const GameObject*, const Player*> focus;
 		Interface(int reserve) {
@@ -112,7 +114,7 @@ using Design = gui::RivDesign;
 		inline void init() {
 			hovers.clear();
 			index = -1;
-			cursor = cursor2 = { -1, -1 };
+			cursor = cursor2 = toler * -2;
 			zaccu = ztimer = 0; oldi = 0;
 			focus = nullptr;
 		}
@@ -121,13 +123,18 @@ using Design = gui::RivDesign;
 			return !(pos.x < 0 || pos.y < 0 || pos.x > sokuW || pos.y > sokuH);
 		}
 		inline static bool checkHover(const Anchor& c, const Anchor& p) {
-			return abs(c.x - p.x) <= toler && abs(c.y - p.y) <= toler;
+			return abs(c.x - p.x) <= toler.x && abs(c.y - p.y) <= toler.y;
 		}
 		
 		inline bool insert(const Phover& o) {
 			Anchor pos = o->isGui ? o->position.to<int>() : Anchor {
+#ifdef ANCHOR_BORDER_CLAMP
+				.x = int(SokuLib::camera.scale * (SokuLib::camera.translate.x + std::clamp(o->position.x, 0.f, 1280.f))),
+				.y = int(SokuLib::camera.scale * (SokuLib::camera.translate.y - std::clamp(o->position.y, SokuLib::camera.bottomEdge, 840.f)))
+#else
 				.x = int(SokuLib::camera.scale * (SokuLib::camera.translate.x + o->position.x)),
 				.y = int(SokuLib::camera.scale * (SokuLib::camera.translate.y - o->position.y))
+#endif
 			};
 			if (!checkInWnd(pos) || !checkHover(pos, cursor))
 				return false;
@@ -191,18 +198,19 @@ using Design = gui::RivDesign;
 		//static LPDIRECT3DDEVICE9 vicePD3D;
 		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
 		static std::optional<Design> layout;
+		inline static bool followMainWnd = false;
 		//static Design& layout;
 		
 		constexpr static UINT WM_VICE_WINDOW_DESTROY = WM_USER + 0x233;
 		constexpr static UINT WM_VICE_WINDOW_UPDATE = WM_USER + 0x234;
 		constexpr static UINT WM_MAIN_TOGGLECURSOR = WM_USER + 0x235;
 
-		constexpr static int WIDTH = 240, HEIGHT = 1080;
+		constexpr static int WIDTH = 240, HEIGHT = 980;
 	public:
 		static std::atomic_bool viceDisplay, dirty;
 		static Interface inter; friend class Interface;
 
-		static bool CreateD3D(HWND&);
+		static bool CreateD3D(HWND);
 		inline static bool DestroyD3D();
 		static bool createWnd();
 		inline static void delayedInit() {
@@ -232,6 +240,7 @@ using Design = gui::RivDesign;
 			if (viceDisplay) {
 				showCursor(false, 4);
 			}
+			followMainWnd = false;
 		}
 		inline static void showWnd(HWND hwnd = viceWND) {
 			if (!hwnd) return;
@@ -265,6 +274,7 @@ using Design = gui::RivDesign;
 		//static LRESULT CALLBACK WindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 		//static LRESULT CALLBACK MainWindowMouseHook(int nCode, WPARAM wParam, LPARAM lParam);
 
+		static void resetViceSP(HWND hwnd, bool resize = false);
 		inline static void wndTitle(const std::wstring& title) {
 			if (viceWND)
 				SetWindowTextW(viceWND, title.c_str());
@@ -283,10 +293,10 @@ using Design = gui::RivDesign;
 		}
 		~Vice() {
 			destroyWnd();
-			if (layout.has_value()) {
+			/*if (layout.has_value()) {//loading problem, test only
 				layout->clear();
 				layout.reset();
-			}
+			}*/
 		}
 		static bool __fastcall CBattle_Render(SokuLib::Battle* This);
 		static void ResetD3D9Dev();

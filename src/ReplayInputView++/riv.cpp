@@ -234,7 +234,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 					vice.inter.toler + 20, 20, Vector2f{ 0, 360 },
 					{ 0 }, 1, Color::White);*/
 				Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-					vice.inter.toler + 10, 20, Vector2f{0, 360},
+					vice.inter.toler.x + 20, 20, Vector2f{0, 360},
 					{ 0 }, 1, Color(int(0xFF * interp) * 0x01010101)* Color::Yellow);
 				
 				guard.resetRenderState();
@@ -244,7 +244,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 					auto count = vice.inter.getCount();
 					float rs = 360.0f / (count ? count : 1);
 					Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-						vice.inter.toler, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
+						vice.inter.toler.x, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
 						{ 0 }, 1, Color::Black);
 				}
 			}

@@ -95,7 +95,7 @@ add_library("${PROJECT_NAME}"
         ${PROJ_SRC_FILES}
         ${PROJ_HDR_FILES}
 )
-target_compile_options("${PROJECT_NAME}" PRIVATE /ZI)
+target_compile_options("${PROJECT_NAME}" PRIVATE /Zi)
 target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 CURL_STATICLIB _CRT_SECURE_NO_WARNINGS $<$<CONFIG:Debug>:_DEBUG>)
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}" ${Boost_INCLUDE_DIRS})
 target_link_directories("${PROJECT_NAME}" PRIVATE ${SOKULIB_PATH}/lib)

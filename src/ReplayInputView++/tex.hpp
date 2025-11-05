@@ -54,10 +54,11 @@ using Color = SokuLib::DrawUtils::DxSokuColor;
 			return { u, v, u + du, v + dv };
 		}
 
-		static inline FloatRect getBorder(int index, int col, int row, const SokuLib::SpriteBase& ref) {
+		static inline FloatRect getBorder(int index, int col, int row, const SokuLib::Sprite& ref) {
 			index %= col * row;
-			const auto& vert1 = ref.vertices[0];
-			const auto& vert2 = ref.vertices[3];
+			int fx = ref.scale.x < 0 ? 1 : 0, fy = ref.scale.y < 0 ? 2 : 0;
+			const auto& vert1 = ref.vertices[0 + fx + fy];
+			const auto& vert2 = ref.vertices[3 - fx - fy];
 			FloatRect uv {
 				vert1.u, vert1.v,
 				vert2.u, vert2.v,

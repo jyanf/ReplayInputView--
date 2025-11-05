@@ -3,6 +3,8 @@
 #include <optional>
 #include <string>
 
+#include <GameData.hpp>
+
 VBattleRender ogSceneBattleRender{};
 
 namespace info {
@@ -76,15 +78,16 @@ struct ViceThreadParams {
             return false;
         }
 		CloseHandle(hViceThread); // 不需要保留线程句柄
+		followMainWnd = true;
 		return true;
 	}
-    bool Vice::CreateD3D(HWND& hwnd) {
+    bool Vice::CreateD3D(HWND hwnd) {
         if (!d3dWindowed) {
             //MessageBoxW(NULL, L"当前为全屏模式，无法创建Direct3D设备！", L"错误", MB_ICONERROR);
 			//hideWnd(hwnd);
             return false;
 		}
-        if (hwnd && !viceSwapChain) {
+        if (hwnd && layout && !viceSwapChain) {
             D3DPRESENT_PARAMETERS d3dpp{ 0 };
             d3dpp.Windowed = TRUE;
             d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -96,15 +99,9 @@ struct ViceThreadParams {
             }*/
             d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;//mode.Format;
             d3dpp.hDeviceWindow = hwnd;
-            static HWND chached = NULL;
-            static WINDOWINFO wi{ 0 };
-            if (chached != hwnd) {
-                GetWindowInfo(hwnd, &wi);
-                chached = hwnd;
-            }
 
-            d3dpp.BackBufferWidth = wi.rcClient.right - wi.rcClient.left;
-            d3dpp.BackBufferHeight = wi.rcClient.bottom - wi.rcClient.top;
+            d3dpp.BackBufferWidth = layout->windowSize.x;
+            d3dpp.BackBufferHeight = layout->windowSize.y;
             d3dpp.EnableAutoDepthStencil = 1;
             d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
             d3dpp.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
@@ -135,8 +132,9 @@ struct ViceThreadParams {
                     return false;
                 }
             }*/
+			return true;
         }
-		return true;
+		return false;
     }
     bool Vice::DestroyD3D()
     {
@@ -157,6 +155,11 @@ struct ViceThreadParams {
         } else t = false;
         */
         return t;
+    }
+    static auto adjust_window_size(SIZE org, LONG style) {
+        RECT rc = { 0, 0, org.cx, org.cy };
+        AdjustWindowRectEx(&rc, style, FALSE, WS_EX_TOOLWINDOW);
+		return SIZE{ rc.right - rc.left, rc.bottom - rc.top };
     }
     HANDLE ScopedActCtx::g_hActCtx = INVALID_HANDLE_VALUE;
 constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
@@ -189,13 +192,20 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         //if (!viceWND) {
         RECT gameRect;
         GetWindowRect(params.hParentWnd, &gameRect);
+		SIZE viceSize = { params.width, params.height };
+        auto style = WS_OVERLAPPEDWINDOW 
+            //& ~WS_THICKFRAME 
+            & ~WS_MAXIMIZEBOX 
+			& ~WS_MINIMIZEBOX;
+		viceSize = adjust_window_size(viceSize, style);
+		printf("Creating Vice Window of (%d,%d) adjusted size (%d, %d)\n", params.width, params.height, viceSize.cx, viceSize.cy);
         viceWND = CreateWindowExW(
             WS_EX_TOOLWINDOW,
             VICE_CLASSNAME,
             L"Defaulting to Players: ",
-            WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX & ~WS_MINIMIZEBOX,  // 禁止调整大小/最大化
+            style,
             gameRect.right, gameRect.top,  // 位置跟随游戏窗口右侧
-            params.width, params.height,
+            viceSize.cx, viceSize.cy,
             params.hParentWnd,
             NULL,
             params.hInstance,
@@ -410,7 +420,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             CloseClipboard();
         }
     }
-    
+    namespace { constexpr int bufsz = 256; }
     inline static bool BeginMouseLeaveTracking(HWND hwnd) {
         TRACKMOUSEEVENT tme = { sizeof(tme) };
         tme.dwFlags = TME_LEAVE;
@@ -418,19 +428,22 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         return TrackMouseEvent(&tme);
     }
     LRESULT CALLBACK Vice::WindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+		//return DefWindowProcW(hwnd, msg, wp, lp);
         thread_local static bool tracked = false;
         switch (msg) {
         case WM_CREATE: {
+			resetViceSP(hwnd, true);
             CreateD3D(hwnd);
             //tipWND creation
             ScopedActCtx::InitMyActCtx();
             ScopedActCtx actCtx;
             auto& params = *reinterpret_cast<ViceThreadParams*>(LPCREATESTRUCT(lp)->lpCreateParams);
             tipWND = CreateWindowExW(
-                WS_EX_TOPMOST,
+                WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW 
+                | WS_EX_TRANSPARENT,//credit https://zhuanlan.zhihu.com/p/1925854171443208696
                 TOOLTIPS_CLASSW,
                 L"SokuDbgTooltip",
-                WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,// | TTS_BALLOON,
+                WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX | TTS_BALLOON,
                 CW_USEDEFAULT, CW_USEDEFAULT,
                 CW_USEDEFAULT, CW_USEDEFAULT,
                 hwnd,
@@ -444,7 +457,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             }
             //static thread_local WCHAR tipBuf[256];
             //wcscpy_s(tipBuf, L"This is a floating tip\n这是一个浮动说明");
-            tipINFO.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE | TTS_BALLOON;
+            tipINFO.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_TRANSPARENT | TTF_CENTERTIP;
             tipINFO.hwnd = hwnd;                 // 被监控窗口（viceWND）
             tipINFO.uId = (UINT_PTR)hwnd;        // 用 HWND 做 id
             tipINFO.hinst = NULL;                // NULL 表示 lpszText 是内存字符串
@@ -455,9 +468,11 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 tipINFO.cbSize = s;
                 SetLastError(0);
                 LRESULT addRes = SendMessageW(tipWND, TTM_ADDTOOLW, 0, (LPARAM)&tipINFO);
-                printf("Try size %zu: TTM_ADDTOOLW=%ld, GetLastError=%lu, toolcount=%ld\n", 
+                printf("Try cbsize %zu: TTM_ADDTOOLW=%ld, GetLastError=%lu, toolcount=%ld\n", 
                     s, addRes, GetLastError(), SendMessageW(tipWND, TTM_GETTOOLCOUNT, 0, 0));
                 if (addRes) {
+                    SendMessageW(tipWND, TTM_SETMAXTIPWIDTH, 0, params.width);
+                    SendMessageW(tipWND, TTM_SETDELAYTIME, TTDT_AUTOMATIC, 50);
                     break;
                 }
 			}
@@ -469,62 +484,80 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             //SendMessageW(tipWND, TTM_ACTIVATE, TRUE, 0);
             //ShowWindow(tipWND, SW_SHOWNOACTIVATE);
             //SetWindowPos(tipWND, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE);
-            return 0;
+            break;
         }
-        //case WM_DPICHANGED:
-            //ResetD3D9Dev();
-            //return 0;
+        
         // 拦截焦点相关消息
-        case WM_SETFOCUS: case WM_ACTIVATE: case WM_ACTIVATEAPP:
+        case WM_SETFOCUS:
+        case WM_ACTIVATE: case WM_ACTIVATEAPP:
             return 0;
         // 拦截输入
+        //case WM_LBUTTONUP: 
+        case WM_RBUTTONUP: case WM_MBUTTONUP:
         case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
-        case WM_LBUTTONUP: case WM_RBUTTONUP: case WM_MBUTTONUP:
         //case WM_NCRBUTTONUP:
         case WM_NCRBUTTONDOWN: 
         //case WM_NCLBUTTONDOWN:
-        case WM_NCLBUTTONDBLCLK: case WM_LBUTTONDBLCLK: case WM_NCRBUTTONDBLCLK: case WM_RBUTTONDBLCLK:
+        //case WM_NCLBUTTONDBLCLK:
+        case WM_LBUTTONDBLCLK: case WM_NCRBUTTONDBLCLK: case WM_RBUTTONDBLCLK:
         case WM_MOUSEWHEEL:
         case WM_KEYDOWN: case WM_KEYUP: case WM_CHAR:
             //ProcessClick(lp);
             return 0;
         case WM_MOUSEACTIVATE:
             return MA_NOACTIVATE;
+        case WM_SETCURSOR://wtf? fix it
+            if (LOWORD(lp) == HTCLIENT) {
+                SetCursor(NULL);
+                return TRUE;
+            }
+            return DefWindowProc(hwnd, msg, wp, lp);
         
         case WM_SIZE:
             dirty = true;
-            return 0;
+            break;
 
         case WM_MOUSEMOVE:
             if (!tracked) {
                 tracked = BeginMouseLeaveTracking(hwnd);
             }
             auto pt2 = POINT{ MAKEPOINTS(lp).x, MAKEPOINTS(lp).y };
-            printf("MOUSEMOVE from viceWindow; <%3d, %3d>\n", pt2.x, pt2.y);
-            
+
+            static thread_local WCHAR tipBuf2[bufsz];
             if (layout && Interface::cursor_refresh(inter.cursor2, pt2, hwnd, layout->windowSize.x, layout->windowSize.y) && tipWND) {
-                if (pt2.y % 100 < 10) {
-                    static thread_local WCHAR tipBuf2[128];
-                    swprintf_s(tipBuf2, _countof(tipBuf2), L"%d, %d", pt2.x, pt2.y);
+                printf("MOUSEMOVE from viceWindow; <%3d, %3d>\n", pt2.x, pt2.y);
+                if (layout->debug(inter.cursor2, pt2, tipBuf2, bufsz)) {
+                    //swprintf_s(tipBuf2, _countof(tipBuf2), L"%d, \n%d", pt2.x, pt2.y);
                     tipINFO.lpszText = tipBuf2;
                     //SendMessageW(tipWND, TTM_SETTOOLINFO, 0, (LPARAM)&tipINFO);
                     SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
                     ClientToScreen(hwnd, &pt2);
-                    SendMessageW(tipWND, TTM_TRACKPOSITION, 0, MAKELPARAM(pt2.x + 16, pt2.y + 16));
+                    /*RECT rcScreen;
+                    SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+                    SIZE tipSize{};
+                    SendMessageW(tipWND, TTM_GETBUBBLESIZE, 0, (LPARAM)&tipINFO);
+                    if (pt2.x + tipSize.cx > rcScreen.right) pt2.x -= tipSize.cx + 20;
+                    if (pt2.y + tipSize.cy > rcScreen.bottom) pt2.y -= tipSize.cy + 20;*/
+					//pt2.x += 8; pt2.y += 8;
+					pt2.y += 12;
+                    SendMessageW(tipWND, TTM_TRACKPOSITION, 0, MAKELPARAM(pt2.x, pt2.y));
                     SendMessageW(tipWND, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tipINFO);
-					SendMessageW(tipWND, TTM_ACTIVATE, TRUE, 0);//确保启用?
+					//SendMessageW(tipWND, TTM_ACTIVATE, TRUE, 0);//确保启用?
                 }
                 else {
                     SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
                 }
             }
+			dirty = true;//for a cursor...
             break;
         case WM_MOUSELEAVE:
             printf("MOUSELEAVE from viceWindow.\n");
             SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
             tracked = false;
         case WM_KILLFOCUS:
-            inter.cursor2 = { -1, -1 };
+            inter.cursor2 = Interface::toler * -2;
+            layout && layout->debug(inter.cursor2, pt2, tipBuf2, bufsz);
+            dirty = true;//for a cursor...
             break;
         case WM_EXITSIZEMOVE:
             // 拖拽结束，焦点设置回主窗口
@@ -532,20 +565,46 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 SetForegroundWindow(SokuLib::window);
                 // SetFocus(GetDlgItem(hMainWnd, IDC_MAIN_BUTTON));
             }
+			followMainWnd = false;
             break;
         case WM_NCRBUTTONUP:
             //WriteToClipboard(hwnd, "s:只因你太美");//多字节，但是剪贴板的解释在GBK和UTF-8间变化?
             if (inter.focus) {
                 WriteToClipboard(hwnd, inter.focus.tostring());
+                layout && (layout->hint_timer = 160);
             }
             //WriteToClipboard(hwnd, (char8_t*)"u8:\xE5\x8F\xAA\xE5\x9B\xA0\xE4\xBD\xA0\xE5\xA4\xAA\xE7\xBE\x8E\xF0\x9F\x98\x83");
             //WriteToClipboard(hwnd, u"u16:\u53EA\u56E0\u4F60\u592A\u7F8E\xD83D\xDE03");
             //WriteToClipboard(hwnd, U"u32:\U000053EA\U000056E0\U00004F60\U0000592A\U00007F8E\U0001F603");
             return 0;
-        
+        case WM_NCLBUTTONDBLCLK:
+            followMainWnd = true;
+            resetViceSP(hwnd, true);
+            return 0;
+        case WM_LBUTTONUP:
+            //inter.focus = SokuLib::v2::GameDataManager::instance->activePlayers[0];
+            if (layout && layout->clickBuffer(inter.cursor2, 
+                [](void* ptr) {
+					if (!ptr) return;
+                    if (gui::get_player_id((GameObjectBase*)ptr))
+                        inter.focus = (Player*)ptr;
+                    else 
+						inter.focus = (GameObject*)ptr;
+                }
+            ))
+			    dirty = true;
+            return 0;
+
         case WM_VICE_WINDOW_UPDATE:
             InvalidateRect(hwnd, NULL, true);
 			UpdateWindow(hwnd);
+            //if (layout && layout->debug(inter.cursor2, pt2, tipBuf2, 256)) {
+            if (layout && layout->debug_mini(inter.cursor2, pt2, tipBuf2, bufsz)) {
+				tipINFO.lpszText = tipBuf2;
+                SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
+            }
+            else
+                SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
             return 0;
         case WM_PAINT: {
             PAINTSTRUCT ps;
@@ -585,20 +644,73 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         }
         return DefWindowProcW(hwnd, msg, wp, lp);
     }
+    static void setViceSP(HWND hwnd, POINT xy, SIZE wh) {
+		if (!hwnd) return;
+        bool noMove = (xy.x < 0 || xy.y < 0);
+        bool noSize = (wh.cx <= 0 || wh.cy <= 0);
+        // 获取窗口当前矩形
+        RECT rcCur{};
+        GetWindowRect(hwnd, &rcCur);
+        if (noMove) {
+            xy.x = rcCur.left;
+            xy.y = rcCur.top;
+        }
+        if (noSize) {
+            wh.cx = rcCur.right - rcCur.left;
+            wh.cy = rcCur.bottom - rcCur.top;
+        }
+        RECT desired = { xy.x, xy.y, xy.x + wh.cx, xy.y + wh.cy };
+        HMONITOR hMon = MonitorFromRect(&desired, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO mi{ .cbSize = sizeof(mi) };
+        if (!GetMonitorInfoW(hMon, &mi)) {
+            // 若失败，退回到系统主监视器工作区
+            mi.rcWork.left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+            mi.rcWork.top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+            mi.rcWork.right = mi.rcWork.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            mi.rcWork.bottom = mi.rcWork.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
+        }
+        auto fixx = GetSystemMetrics(SM_CXFRAME), fixy = GetSystemMetrics(SM_CYFRAME);
+        wh.cx = std::clamp(wh.cx, 1L, mi.rcWork.right - mi.rcWork.left + fixx);
+        wh.cy = std::clamp(wh.cy, 1L, mi.rcWork.bottom - mi.rcWork.top + fixy);
 
+        // 限制位置：保持窗口完全在工作区内
+        LONG limx = max(mi.rcWork.left, mi.rcWork.right - wh.cx) ; 
+        LONG limy = max(mi.rcWork.top, mi.rcWork.bottom - wh.cy);
+        xy.x = std::clamp(xy.x, mi.rcWork.left, limx + fixx);
+        xy.y = std::clamp(xy.y, mi.rcWork.top, limy);
+        UINT flags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED;
+        if (noMove) flags |= SWP_NOMOVE;
+        if (noSize) flags |= SWP_NOSIZE;
+        SetWindowPos(hwnd, NULL, xy.x, xy.y, wh.cx, wh.cy, flags);
+    }
+        static HWND adjusted_size_chached = NULL;
+        static SIZE vice_adjusted_size{ 0 };
+    void Vice::resetViceSP(HWND hwnd, bool resize) {
+        if (adjusted_size_chached != hwnd) {
+            //WINDOWINFO wi{ .cbSize = sizeof(WINDOWINFO) };
+            //GetWindowInfo(hwnd, &wi);
+			RECT rcWindow;
+			GetWindowRect(hwnd, &rcWindow);
+            adjusted_size_chached = hwnd;
+            vice_adjusted_size = { rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top };
+        }
+        RECT mainRect;
+        GetWindowRect(SokuLib::window, &mainRect);
+        int childX = mainRect.right;
+        int childY = mainRect.top;
+        setViceSP(hwnd, { childX, childY }, resize ? vice_adjusted_size : SIZE{-1,-1});
+	}
     LRESULT CALLBACK Vice::MainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         thread_local static bool tracked = false;
         switch (msg) {
         //case WM_MOVING:
         //case WM_WINDOWPOSCHANGED:
         case WM_SIZE: case WM_MOVE: {
-            RECT mainRect;
-            GetWindowRect(SokuLib::window, &mainRect);
-            // 计算子窗口新位置（主窗口位置 + 偏移）
-            int childX = mainRect.right;
-            int childY = mainRect.top;
-            // 移动子窗口（不激活、不改变大小）
-            SetWindowPos(viceWND, NULL, childX, childY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+            if (followMainWnd |= !(style & WS_CAPTION) || !(style & WS_THICKFRAME)) {
+                resetViceSP(viceWND, false);
+                //SetWindowPos(viceWND, NULL, childX, childY, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+            }
 			dirty = true;
 
             break;
@@ -616,7 +728,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             printf("MOUSELEAVE from MainWindow.\n");
             tracked = false;
         case WM_KILLFOCUS:
-            inter.cursor = { -1, -1 };
+            inter.cursor = Interface::toler * -2;
             break;
         case WM_MAIN_TOGGLECURSOR:
             if (wParam)
@@ -726,7 +838,9 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 printf("LB Clicked at <%3d, %3d>\n", cursor.x, cursor.y);
                 //focus = getHover();
                 auto n = getHover();
-                if (n) focus = n;
+				//if (n) focus = n;//implicitly converted to GameObjectBase*
+				//if (n) focus.swap(n);
+                if (n) { focus = std::move(n); }
                 return oldf != focus;
             }
             if (sokuDMouse.rgbButtons[1]) {
@@ -890,14 +1004,37 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 
       //  layout->render4();
         if (layout) {
-            /*if (target.is_object()) {
-                layout->render("object", (void*)target.get_object());
+			void* ctx = nullptr;
+			gui::string_view name;
+			std::vector<std::string>::const_iterator it, end;
+            static const std::vector<std::string> Ofallbacks = { "Basic", "Mini", "None"};
+			static const std::vector<std::string> Pfallbacks = { "Player", "Basic", "Mini", "None"};
+            if (target.is_object()) {
+				it = Ofallbacks.begin(); end = Ofallbacks.end();
+				ctx = (void*)target.get_object();
+				name = "Object";
             }
             else if (target.is_player()) {
-                layout->render("player", (void*)target.get_player());
-            }*/
-            if (target.has_value()) layout->render("Basic", (void*)target.get_base());
-            else layout->render("None", nullptr);
+				it = Pfallbacks.begin(); end = Pfallbacks.end();
+                ctx = (void*)target.get_player();
+                name = SokuLib::getCharName(((Player*)ctx)->characterIndex);
+                if (name.empty() && it!=end) {
+                    name = *it++;
+                }
+            } else if (ctx = (void*)target.get_base()) {
+				name = "Basic";
+				it = Ofallbacks.begin()+1; end = Ofallbacks.end();
+            } else {
+				name = "None";
+            }
+            //while (it!=end && !layout->render(*it, ctx)) { it++; }
+            while (!layout->render(std::string(name), ctx)) {
+                if (it != end) {
+                    name = *it++;
+                }
+                else break;
+            }
+            
         }
     //SokuLib::renderer.end();
 		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
@@ -924,10 +1061,12 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     }
     else if (target.is_player()) {
         auto player = target.get_player(); if (player) {
-        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name[0] = std::toupper(name[0]), name) : "Unknown";
-        auto formatted = std::format("{:8s}(P{:1d}): {:#08x}", 
+        std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name[0] = std::toupper(name[0]), name) : "Player";
+        int pid = gui::get_player_id(player);
+        auto formatted = pid ? std::format("(P{:1d})", pid) : "";
+        formatted = std::format("{:8s}{}: 0x{:08x}", 
             name,
-            player->teamId+1, 
+            formatted, 
             (DWORD)player
         );
         auto buf = std::wstring(MultiByteToWideChar(CP_UTF8, 0, formatted.c_str(), (int)formatted.size(), nullptr, 0), 0);
@@ -938,7 +1077,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 		auto object = target.get_object(); if (object) {
         auto player = object->gameData.owner;
 		int teamid = player ? player->teamId+1 : 0;
-        auto formatted = std::format("Object{}: {:#08x}", 
+        auto formatted = std::format("Object{}: 0x{:08x}", 
                 teamid > 0 ? std::format("(P{:1d})", teamid) : std::string(""), 
                 (DWORD)object
         );
