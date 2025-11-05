@@ -12,6 +12,8 @@
 //#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <iostream>
+#include <string>
+#include <vector>
 #include <map>
 #include <set>
 #include <ranges>
@@ -103,6 +105,7 @@ namespace gui {
 
 	}
 	//using _box = riv::tex::FloatRect;
+	
 	struct _box : riv::tex::FloatRect {
 		using Rect = riv::tex::FloatRect;
 		using Vector2f = riv::tex::Vector2f;
@@ -148,12 +151,12 @@ namespace gui {
 	using SokuLib::CDesign;
 	class Layout;
 
-
+	using noderef = const xml::ptree&;
 	using FontDesc = SokuLib::FontDescription;
 	class Font : public FontDesc {//credit shady-loader
 		SokuLib::SWRFont* handle = nullptr;
 	public:
-		void load(const xml::ptree& node);
+		void load(noderef node);
 		inline Font() {
 			weight = 400; height = 15;
 			italic = shadow = useOffset = false;
@@ -162,7 +165,7 @@ namespace gui {
 			r1 = g1 = b1 = b2 = r2 = g2 = 0xff;
 			strcpy_s(faceName, SokuLib::defaultFontName);
 		}
-		inline Font(const xml::ptree& node) : Font() {
+		inline Font(noderef node) : Font() {
 			load(node);
 		}
 		//inline Font(const Font&) = delete;
@@ -197,12 +200,12 @@ namespace gui {
 #else
 		string description;
 #endif // _DEBUG
-		inline void load(const xml::ptree& node) {
+		inline void load(noderef node) {
 			auto desc = node.get_optional<string>("<xmlattr>.description");
 			if (desc) description = *desc;
 		}
 		//_hover() = default;
-		inline _hover(const xml::ptree& node) {
+		inline _hover(noderef node) {
 			load(node);
 		}
 		inline bool check(int cx, int cy) const {
@@ -254,7 +257,7 @@ namespace gui {
 	public:
 		bool visible = true;
 		static manager& Rules();
-		_hider(const xml::ptree& node) {
+		_hider(noderef node) {
 			load(node);
 		};
 		inline static void Register(const string& name, const checker& fn) {
@@ -266,7 +269,7 @@ namespace gui {
 				return &it->second;
 			return nullptr;
 		}
-		void load(const xml::ptree& node) {
+		void load(noderef node) {
 			auto cl = xml::XmlHelper::get_class(node);
 			rule = Get(cl);
 		}
@@ -350,7 +353,6 @@ namespace gui {
 			return p;
 		}
 	public:
-		using noderef = const xml::ptree&;
 		//Container() = default;
 		void load(noderef node);
 		Container(noderef node) : _hider(node), _hover(node) {
@@ -422,9 +424,9 @@ namespace gui {
 		} type = INT;
 		std::vector<unsigned int> offsets;
 	public:
-		void load(const xml::ptree& node);
+		void load(noderef node);
 		inline Value() = default;
-		inline Value(const xml::ptree& node) {
+		inline Value(noderef node) {
 			offsets.reserve(1);
 			load(node);
 		}
@@ -525,7 +527,7 @@ namespace gui {
 			if (dxHandle) SokuLib::textureMgr.remove(dxHandle);
 			auto strcv = xml::XmlHelper::convertFG(str.c_str());
 			auto handle = font->newText(strcv, boxw, boxh);
-			SokuLib::Sprite::setTexture2(handle, 0, 0, boxw, boxh);
+			SokuLib::Sprite::setTexture2(handle, 0, 0, boxw, boxh+2);//fix shadow crop
 			//x2 = x1 + boxw; y2 = y1 + boxh;
 		}
 		//inline void setBox(int w, int h) { boxw = w; boxh = h; }
@@ -582,6 +584,7 @@ namespace gui {
 		const Value* ref_val = nullptr;
 		CDesign::Number* ref_num = nullptr;
 		float rounded;
+		float maxi = NAN, mini = NAN;
 		//std::optional<float> hide_if;
 		//std::vector<int> offsets;
 	public:
@@ -666,10 +669,10 @@ namespace gui {
 	public:
 		_stacker() = default;
 		inline _stacker(bool en) : enabled(en) {}
-		inline void load(const xml::ptree& node) {
+		inline void load(noderef node) {
 			enabled = node.get_optional<bool>("<xmlattr>.stack").value_or(enabled);
 		}
-		inline _stacker(const xml::ptree& node, bool def = true) : _stacker(def) {
+		inline _stacker(noderef node, bool def = true) : _stacker(def) {
 			load(node);
 		}
 		inline void stack(_box& bp) {
@@ -922,7 +925,7 @@ namespace gui {
 	class ValueSpec_ShaderColor : public Value {
 		//unsigned int shaderColor = 0;
 	public:
-		inline ValueSpec_ShaderColor(const xml::ptree& node) : Value(node) {}
+		inline ValueSpec_ShaderColor(noderef node) : Value(node) {}
 		inline virtual void update(void* ctx) override {
 			using data = SokuLib::v2::GameObjectBase;
 			if (!ctx) return;
@@ -935,14 +938,14 @@ namespace gui {
 				shaderColor.a = 0xFF;
 			val = shaderColor.color;
 		}
-		inline virtual float getf() const override { return 0; }
+		inline virtual float getf() const override { return NAN; }
 		/*inline virtual int geti() const override {
 			return shaderColor;
 		}*/
 	};
 	class ValueSpec_SkillLevel : public Value {
 	public:
-		inline ValueSpec_SkillLevel(const xml::ptree& node) : Value() {}
+		inline ValueSpec_SkillLevel(noderef node) : Value() {}
 		inline virtual void update(void* ctx) override {
 			using data = SokuLib::v2::GameObjectBase;
 			if (!ctx) return;
@@ -961,6 +964,16 @@ namespace gui {
 	/*class FrameFlags : public Grider {
 
 	};*/
+	class ValueSpec_CancelLevel : public Value {
+	public:
+		inline ValueSpec_CancelLevel(noderef node) : Value(node) {}
+		inline virtual void update(void* ctx) override {
+			Value::update(ctx);
+			val = geti() / 10;
+		}
+		//inline virtual float getf() const override { return NAN; };
+	};
+
 	inline int get_player_id(const SokuLib::v2::GameObjectBase* target) {
 		using SokuLib::v2::GameObjectBase, SokuLib::v2::GameDataManager;
 		if (GameDataManager::instance) {

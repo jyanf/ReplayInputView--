@@ -42,10 +42,10 @@ This xml has expanded features out of original soku layout system, implemented b
 	</window>
 	<fonts>
 		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
-		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1"/>
-		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xFFffffff" color_bottom="0xFF7070a0"/>
-		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xFFffffff" color_bottom="0xFFcccccc"/>
-		<font id="6"	class="field-names-blue"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xFFffffff" color_bottom="0xFF7070a0"/>
+		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1" color_bottom="0xa0a0a0"/>
+		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xffffff" color_bottom="0x7070a0"/>
+		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xffffff"/>
+		<font id="6"	class="field-names-blue"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xffffff" color_bottom="0x7070a0"/>
 		<font id="10"	class="field-string-plain"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="16" spacing="1"/>
 		<font id="11"	class="field-string-small"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="12"/>
 		<font id="12"	class="field-string-monos"	name="Cascadia Code"			stroke="true"	bold="true"		wrap="true" height="16" xspacing="0" yspacing="-3"/>
@@ -58,7 +58,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox>
 		</field>
 	</sublayout>
-	<sublayout class="Mini" > <pad width="207" height="169"/> <back ref_id="221"/>
+	<sublayout class="Mini" > <pad width="208" height="169"/> <back ref_id="221"/>
 		<title font_id="2" xoffset="-1" yoffset="-29" height="24"> <pad width="80" height="24"/> <back ref_id="211"/>
 			&#32;Basic&#32;
 		</title>
@@ -108,6 +108,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			<value class="pose-duration" id="16" type="ushort">
 				<offset hex="0x14C"/>
 			</value>
+			<value class="looping-sequence" id="17" type="bool">
+				<offset hex="0x15C"/><offset hex="0x14"/>
+			</value>
 			<value class="collision-type" id="20" type="int">
 				<offset hex="0x190"/>
 			</value>
@@ -123,20 +126,20 @@ This xml has expanded features out of original soku layout system, implemented b
 			</value>
 			
 		</values>
-		<field class="position"> <pad width="207" height="20"/>
+		<field class="position"> <pad width="208" height="20"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="" >Position</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[(              ,              )]]>
 			</textbox>
-			<number value_id="1" number_id="300" xoffset="128" yoffset="-2"/>
+			<number value_id="1" number_id="300" xoffset="128" yoffset="-2" max="99999.99"/>
 			<number value_id="2" number_id="300" xoffset="204" yoffset="-2"/>
 		</field>
 		<field class="center" >
-			<pad width="207" height="12"/>
+			<pad width="208" height="12"/>
 			
 		</field>
 		<field class="speed">
-			<pad width="207" height="20"/>
+			<pad width="208" height="20"/>
 			<back ref_id="200"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Speed</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
@@ -145,9 +148,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			<textbox font_id="10" width="" height="" xoffset="156" yoffset="1">g=</textbox>
 			<number value_id="3" number_id="300" xoffset="106" yoffset="-2"/>
 			<number value_id="4" number_id="300" xoffset="157" yoffset="-2"/>
-			<number value_id="5" number_id="300" xoffset="213" yoffset="-2"/>
+			<number value_id="5" number_id="300" xoffset="213" yoffset="-2" max="9.99" min="-9.99"/>
 		</field>
-		<field class="frame-state"> <pad width="207" height="70"/> 
+		<field class="frame-state"> <pad width="208" height="70"/> 
 			<textbox font_id="5" xoffset="3" yoffset="25" width="" height="">Pattern</textbox>
 			<textbox font_id="12" width="170" height="" xoffset="46" yoffset="0">
 				<![CDATA[| ACT | SEQ | curF |<br>]]>
@@ -163,10 +166,10 @@ This xml has expanded features out of original soku layout system, implemented b
 			<number value_id="15" number_id="312" xoffset="111" yoffset="48"/>
 			<number value_id="13" number_id="310" xoffset="159" yoffset="48"/>
 			<number value_id="16" number_id="314" xoffset="199" yoffset="48"/>
-			<icon ref_id="102" tile="1,1,0" class="looping-sequence" xoffset="10" yoffset="30"/>
+			<field hide_if="17=0" xoffset="10" yoffset="30"><icon ref_id="100" tile="13,2,0"/></field>
 		</field>
 		<field class="collision">
-			<pad width="207" height="20"/>
+			<pad width="208" height="20"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Collision</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[{ type:   ; count:        }]]>
@@ -174,7 +177,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
 			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
 		</field>
-		<field class="skill-tag"> <pad width="207" height="20"/>
+		<field class="skill-tag"> <pad width="208" height="20"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Skill tag</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[{ index:    ; level:      }]]>
@@ -182,15 +185,15 @@ This xml has expanded features out of original soku layout system, implemented b
 			<number value_id="25" number_id="301" xoffset="128" yoffset="-3"/>
 			<number value_id="26" number_id="301" xoffset="199" yoffset="-3"/>
 		</field>
-		<field class="hitstop"> <pad width="207" height="20"/>
+		<field class="hitstop"> <pad width="208" height="20"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Hitstop</textbox>
 			<number value_id="30" number_id="301" xoffset="88" yoffset="-1"/>
 		</field>
 		<field><pad height="10"/></field>
 	</sublayout>
-	<sublayout class="Frame-flags"> <pad width="207" height="55"/> <back ref_id="222"/>
+	<sublayout class="Frame-flags"> <pad width="208" height="55"/> <back ref_id="222"/>
 		<title font_id="2" xoffset="136" yoffset="-29" height="24"> <pad height="24"/> <back ref_id="212"/>
-			&#32;&#32;&#32;&#32;Flags&#32;&#32;
+			<![CDATA[<color 7fff7f>    Flags  </color>]]>
 		</title>
 		<values>
 			<value class="owner" id="1" type="ptr">
@@ -207,7 +210,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			</value>
 		</values>
 		<field class="column-test">
-			<field class="column1" stack="false" xoffset="4" yoffset="5">
+			<field class="column1" stack="false" xoffset="1" yoffset="1"> <back ref_id="223"/>
 				<pad width="96" height="48"/>
 				<grid class="grid-attack-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
 					<!--always invisible so Pad is not counted-->
@@ -243,7 +246,7 @@ This xml has expanded features out of original soku layout system, implemented b
 					
 				</grid>
 			</field>
-			<field class="column2" stack="false" xoffset="110" yoffset="5">
+			<field class="column2" stack="false" xoffset="111" yoffset="1"> <back ref_id="222"/>
 				<pad width="96" height="48"/>
 				<grid class="grid-frame-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
 					<icon class="flag-stance-none" ref_id="100" tile="13,2,3" description="Stance: none."/>
@@ -285,19 +288,24 @@ This xml has expanded features out of original soku layout system, implemented b
 				</grid>
 			</field>
 		</field>
-		<grid class="extra-icons" xgrid="24" ygrid="24" rowmax="8" xoffset="4" yoffset="5">
-			<link class="ptr-parentA" value_id="5" description="ParentA (box bounding) pointer.&#10;[%s]&#10;点击此处"> <back ref_id="200"/>
-				<icon ref_id="100" tile="13,2,24"/>
-			</link>
-			<link class="ptr-owner" value_id="1" description="Owner or self pointer.&#10;[%s]&#10;"> <back ref_id="200"/>
+		<grid class="extra-icons" xgrid="24" ygrid="24" rowmax="8" xoffset="1" yoffset="10">
+			<link class="ptr-owner" value_id="1" description="Click to jump:[%s]&#10;Owner or self pointer.&#10;"> <back ref_id="200"/>
 				<icon ref_id="100" tile="13,2,25"/>
 			</link>
+			<link class="ptr-parentA" value_id="5" description="点击此处[%s]&#10;ParentA (box bounding) pointer."> <back ref_id="200"/>
+				<icon ref_id="100" tile="13,2,24"/>
+			</link>
+			
 			<!--icon class="ptr-parentA" ref_id="100" tile="13,2,24" description="ParentA(box bounding)">
 				<link value_id="5" description="ParentA(box bounding) pointer: %s&#10;`click`"/>
 			</icon-->
 		</grid>
+		<field><pad height="15"/></field>
 	</sublayout>
-	<sublayout class="Tex">
+	<sublayout class="Tex"> <back ref_id="224"/>
+		<title font_id="2" xoffset="136" yoffset="-29" height="24"> <pad height="24"/> <back ref_id="214"/>
+			<![CDATA[<color ffffff>   Sprite  </color>]]>
+		</title>
 		<values>
 			<value class="color" id="1" type="uint">
 				<offset hex="0x110"/>
@@ -357,6 +365,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			
 		</values>
 		<field class="sprite">
+			<icon ref_id="103" width="128" height="128"/>
 			<sprite crop="false" xoffset="0" yoffset="0" width="128" height="128"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="6">Color</textbox>
@@ -406,16 +415,34 @@ This xml has expanded features out of original soku layout system, implemented b
 		
 	</sublayout>
 	<sublayout class="Object" inherit="Basic">
-		<pad width="207" height="200"/>
+		<pad width="208" height="200"/>
 		<title xoffset="0" yoffset="-25">Object
 			<back ref_id="214"/>
 		</title>
 	</sublayout>
 	<sublayout class="Player" inherit="Basic">
-		<pad width="207" height="400"/>
+		<pad width="208" height="400"/>
 		<title xoffset="0" yoffset="-25">Player
 			<back ref_id="214"/>
 		</title>
+		<values>
+			<value id="10" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x10"/>
+			</value>
+			<value id="11" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x12"/>
+			</value>
+		</values>
+		<field class="cancel-levels">
+			<field class="action-lock" stack="true">
+				<pad height="20"/>
+				<number number_id="361" value_id="10" max="6" min="0" xoffset="100"/>
+			</field>
+			<field class="move-lock" stack="true">
+				<pad height="20"/>
+				<number number_id="361" value_id="11" max="6" min="0" xoffset="100"/>
+			</field>
+		</field>
 	</sublayout>
 	<sublayout class="suwako" inherit="Player"><!--lowercase first letter, i.e. keep the character name same as is in .dat path-->
 		<title xoffset="0" yoffset="-25">Suwako
@@ -427,7 +454,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<value id="3" class="punish-type" type="int"><offset hex="0x898"/></value>
 		</values>
 		<field class="22-curse" hide_if="1=0"><!-- "1=0" means hide when value of id_1 is 0 -->
-			<pad width="207" height="20"/>
+			<pad width="208" height="20"/>
 			<field class="curse-type" stack="false" xoffset="5" description="Curse type: &#10;{0:None, 1:Red, 2:Green, 3:Blue}"><!--disable vertical stack and add offset to make group-->
 				<pad width="100" height="20"/>
 				<number value_id="1" number_id="301" xoffset="106" yoffset="-2"/>

@@ -56,10 +56,10 @@ namespace gui {
 		static manager Rules{
 			//{"always", [](void*) { return true; }},
 			//{"never", [](void*) { return false; }},
-			{"looping-sequence", [](void* ptr) {
+			/*{"looping-sequence", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
 				return obj.gameData.sequenceData && obj.gameData.sequenceData->isLoop;
-			}},
+			}},*/
 
 			{"flag-stance-standing", [](void* ptr) {
 				auto& obj= *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
@@ -365,8 +365,8 @@ namespace gui {
 		charSpaceX = node.get_optional<int>("<xmlattr>.xspacing").value_or(node.get_optional<int>("<xmlattr>.spacing").value_or(charSpaceX));
 		charSpaceY = node.get_optional<int>("<xmlattr>.yspacing").value_or(charSpaceY);
 		setColor(
-			xml::XmlHelper::get_hex(node, "color_top").value_or(0xFFFFFFFF),
-			xml::XmlHelper::get_hex(node, "color_bottom").value_or(0xFFFFFFFF)
+			xml::XmlHelper::get_hex(node, "color_top").value_or(0xFFFFFF),
+			xml::XmlHelper::get_hex(node, "color_bottom").value_or(0xFFFFFF)
 		);
 		prepare();
 	}
@@ -491,6 +491,8 @@ namespace gui {
 			bind(*l, *idv, *idn);
 		//auto hide = node.get_optional<float>("<xmlattr>.hide_if");
 		//if (hide) hide_if = *hide;
+		maxi = node.get_optional<float>("<xmlattr>.max").value_or(maxi);
+		mini = node.get_optional<float>("<xmlattr>.min").value_or(mini);
 	}
 	void Grider::load(noderef node, const Layout* l) {
 		maxInRow = node.get_optional<int>("<xmlattr>.rowmax").value_or(maxInRow);
@@ -593,6 +595,8 @@ namespace gui {
 					nv = new ValueSpec_ShaderColor(v);
 				else if (cl == "skill-level")
 					nv = new ValueSpec_SkillLevel(v);
+				else if (cl == "cancel-level")
+					nv = new ValueSpec_CancelLevel(v);
 				//else if (cl == "hitstop")
 					//nv = new Value(v);
 				else
@@ -700,6 +704,8 @@ namespace gui {
 		if (visible && ref_val) {
 			auto val = ref_val->getf();
 			//visible = !(hide_if && val-*hide_if < FLT_EPSILON);
+			if (val > maxi) val = maxi;
+			if (val < mini) val = mini;
 			rounding(val);
 		}
 	}
