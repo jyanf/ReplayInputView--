@@ -131,13 +131,13 @@ This xml has expanded features out of original soku layout system, implemented b
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[(              ,              )]]>
 			</textbox>
-			<number value_id="1" number_id="300" xoffset="128" yoffset="-2" max="99999.99"/>
-			<number value_id="2" number_id="300" xoffset="204" yoffset="-2"/>
+			<number value_id="1" number_id="300" xoffset="128" yoffset="-2" max="99999.00" min="-99999.00"/>
+			<number value_id="2" number_id="300" xoffset="204" yoffset="-2" max="99999.00" min="-99999.00"/>
 		</field>
-		<field class="center" >
+		<!--field class="center" >
 			<pad width="208" height="12"/>
 			
-		</field>
+		</field-->
 		<field class="speed">
 			<pad width="208" height="20"/>
 			<back ref_id="200"/>
@@ -152,7 +152,7 @@ This xml has expanded features out of original soku layout system, implemented b
 		</field>
 		<field class="frame-state"> <pad width="208" height="70"/> 
 			<textbox font_id="5" xoffset="3" yoffset="25" width="" height="">Pattern</textbox>
-			<textbox font_id="12" width="170" height="" xoffset="46" yoffset="0">
+			<textbox font_id="12" width="170" xoffset="46" yoffset="0">
 				<![CDATA[| ACT | SEQ | curF |<br>]]>
 				<![CDATA[|     |     |      |<br>]]>
 				<![CDATA[====================<br>]]>
@@ -166,7 +166,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			<number value_id="15" number_id="312" xoffset="111" yoffset="48"/>
 			<number value_id="13" number_id="310" xoffset="159" yoffset="48"/>
 			<number value_id="16" number_id="314" xoffset="199" yoffset="48"/>
-			<field hide_if="17=0" xoffset="10" yoffset="30"><icon ref_id="100" tile="13,2,0"/></field>
+			<field class="facing-right" show_if="6=1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,3" description="Facing right."/></field>
+			<field class="facing-left" show_if="6=-1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,4" description="Facing left."/></field>
+			<field class="looping-sequence" hide_if="17=0" xoffset="16" yoffset="46"><icon ref_id="102" tile="13,3,5" description="Current sequence looping."/></field>
 		</field>
 		<field class="collision">
 			<pad width="208" height="20"/>
@@ -174,6 +176,36 @@ This xml has expanded features out of original soku layout system, implemented b
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[{ type:   ; count:        }]]>
 			</textbox>
+			<field class="result-none" show_if="20=0" xoffset="92" description="Collision result: none."><!--below as description only-->
+				<pad width="20" height="20"/>
+			</field>
+			<field class="result-hit" show_if="20=1" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit player."/>
+			</field>
+			<field class="result-blocked" show_if="20=2" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: blocked."/>
+			</field>
+			<field class="result-parried" show_if="20=3" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: parried."/>
+			</field>
+			<field class="result-high-density" show_if="20=4" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with higher density."/>
+			</field>
+			<field class="result-absorbed" show_if="20=5" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with absorption level."/>
+			</field>
+			<field class="result-high-density" show_if="20=6" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: bullet grazed."/>
+			</field>
+			<field class="result-hit-armor" show_if="20=7" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit armor."/>
+			</field>
+			<field class="result-high-density" show_if="20=8" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with same density."/>
+			</field>
+			<field class="result-high-density" show_if="20=9" xoffset="92">
+				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit entity."/>
+			</field>
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
 			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
 		</field>
@@ -208,6 +240,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			<value class="parentA" id="5" type="ptr">
 				<offset hex="0x174"/>
 			</value>
+			<value class="forced-counter" id="10" type="short">
+				<offset hex="0x1A2"/>
+			</value>
 		</values>
 		<field class="column-test">
 			<field class="column1" stack="false" xoffset="1" yoffset="1"> <back ref_id="223"/>
@@ -231,7 +266,7 @@ This xml has expanded features out of original soku layout system, implemented b
 					<icon class="attack-ungrazable" ref_id="101" tile="13,2,13" description="Ungrazable."/>
 					<icon class="attack-drain" ref_id="101" tile="13,2,14" description="Drain on graze."/>
 					
-					<icon class="attack-self???" ref_id="101" tile="13,2,6" description="Self-hurt attack."/>
+					<icon class="attack-friendly-fire" ref_id="101" tile="13,2,6" description="Friendly fire attack."/>
 					
 					<icon class="attack-unreflectable" ref_id="101" tile="13,2,19" description="Unreflectable"/>
 					
@@ -288,21 +323,28 @@ This xml has expanded features out of original soku layout system, implemented b
 				</grid>
 			</field>
 		</field>
+		
 		<grid class="extra-icons" xgrid="24" ygrid="24" rowmax="8" xoffset="1" yoffset="10">
-			<link class="ptr-owner" value_id="1" description="Click to jump:[%s]&#10;Owner or self pointer.&#10;"> <back ref_id="200"/>
-				<icon ref_id="100" tile="13,2,25"/>
+			<link class="ptr-owner" value_id="1" description="Click to jump:[%s]&#10;Owner(/self) pointer.&#10;"> <back ref_id="200"/>
+				<icon ref_id="102" tile="13,3,26"/>
 			</link>
-			<link class="ptr-parentA" value_id="5" description="点击此处[%s]&#10;ParentA (box bounding) pointer."> <back ref_id="200"/>
-				<icon ref_id="100" tile="13,2,24"/>
+			<link class="ptr-ally" value_id="2" description="Click to jump:[%s]&#10;Ally pointer for now,&#10; changed by bullet reflection.&#10;"> <back ref_id="200"/>
+				<icon ref_id="102" tile="13,3,27"/>
 			</link>
-			
+			<link class="ptr-opponent" value_id="3" description="Click to jump:[%s]&#10;Opponent pointer for now.&#10;"> <back ref_id="200"/>
+				<icon ref_id="102" tile="13,3,28"/>
+			</link>
+			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+				<icon ref_id="102" tile="13,3,29"/>
+			</link>
+			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="Forced counter hit"/></field>
 			<!--icon class="ptr-parentA" ref_id="100" tile="13,2,24" description="ParentA(box bounding)">
 				<link value_id="5" description="ParentA(box bounding) pointer: %s&#10;`click`"/>
 			</icon-->
 		</grid>
 		<field><pad height="15"/></field>
 	</sublayout>
-	<sublayout class="Tex"> <back ref_id="224"/>
+	<sublayout class="Tex"> <pad width="208" height="155"/> <back ref_id="224"/> 
 		<title font_id="2" xoffset="136" yoffset="-29" height="24"> <pad height="24"/> <back ref_id="214"/>
 			<![CDATA[<color ffffff>   Sprite  </color>]]>
 		</title>

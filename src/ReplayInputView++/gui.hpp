@@ -689,8 +689,8 @@ namespace gui {
 		//std::variant<Text, Icon, std::nullopt_t> name;
 		//std::vector<Element*> elements;
 	protected:
-		const Value* ref_ptr = nullptr;
-		float hideif = NAN;
+		const Value *ref_ptr = nullptr, *ref_ptr2 = nullptr;
+		float hideif = NAN, showif = NAN;
 	public:
 		void load(noderef node, const Layout* l);
 		inline Canva(noderef node, const Layout* l, bool stk = true) : Element(node, l), _stacker(node, stk) {
@@ -700,6 +700,12 @@ namespace gui {
 			if (ref_ptr) {
 				float v = ref_ptr->getf();
 				visible &= !(v == hideif);
+				
+			}
+			if (ref_ptr2) {
+				float v = ref_ptr2->getf();
+				if (std::isnormal(showif))
+					visible &= (v == showif);	
 			}
 		}
 		inline virtual void update(_box& parea, void* ctx) override {

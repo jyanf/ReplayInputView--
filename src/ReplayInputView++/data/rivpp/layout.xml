@@ -13,9 +13,9 @@
 	<static class="attack-flags-icon" id="101" xposition="0" yposition="200" mirror="0">
 		<image name="attack-flag-icons.png" xposition="0" yposition="0" width="312" height="48"/>
 	</static>
-	<!--static class="extra-icon" id="102" xposition="0" yposition="48" mirror="0">
-		<image name="extra-icons.png" xposition="0" yposition="0" width="72" height="24"/>
-	</static-->
+	<static class="extra-icon" id="102" xposition="0" yposition="48" mirror="0">
+		<image name="extra-icons.png" xposition="0" yposition="0" width="312" height="72"/>
+	</static>
 	<static class="sprite-back" id="103" xposition="0" yposition="0">
 		<image name="transparent-big.png" xposition="0" yposition="0" width="128" height="128"/>
 	</static>

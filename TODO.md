@@ -1,5 +1,7 @@
 # Task
 
+- [ ] d3d9STENCIL并集绘制框
+
 - [ ] sprite可自定义基点/白框
 
 - [x] NC问题

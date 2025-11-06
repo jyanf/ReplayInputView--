@@ -580,6 +580,16 @@ namespace gui {
 			if (cond.size() == 1) hideif = cond[0];
 		}
 		if (idv && l) ref_ptr = l->getValue(idv);
+		cond = xml::XmlHelper::get_array<int>(node, "show_if", '=');
+		if (cond.size() >= 2) {
+			idv = cond[0];
+			showif = cond[1];
+		}
+		else {
+			idv = node.get_optional<float>("<xmlattr>.value_id").value_or(0);
+			if (cond.size() == 1) showif = cond[0];
+		}
+		if (idv && l) ref_ptr2 = l->getValue(idv);
 	}
 	void Layout::load(noderef node) {
 		for (auto& [k, v] : xml::XmlHelper::make_range(node.equal_range("title")))

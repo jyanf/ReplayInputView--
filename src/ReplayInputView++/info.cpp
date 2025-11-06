@@ -103,6 +103,7 @@ struct ViceThreadParams {
             d3dpp.BackBufferWidth = layout->windowSize.x;
             d3dpp.BackBufferHeight = layout->windowSize.y;
             d3dpp.EnableAutoDepthStencil = 1;
+            //auto SokuBackBufferFormat = *(D3DFORMAT*)0x8a0fac;
             d3dpp.AutoDepthStencilFormat = D3DFMT_D24S8;
             d3dpp.Flags = D3DPRESENTFLAG_DISCARD_DEPTHSTENCIL;
             d3dpp.PresentationInterval = D3DPRESENT_INTERVAL_IMMEDIATE;// no vsync?
