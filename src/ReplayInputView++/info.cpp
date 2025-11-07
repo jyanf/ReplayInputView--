@@ -41,6 +41,9 @@ struct ViceThreadParams {
 	int width, height;
 };
     bool Vice::createWnd() {
+        if (!d3dWindowed) {
+            return false;
+        }
         HANDLE duplicatedHandle = NULL;
         // 复制伪句柄为可跨线程的有效句柄
         if (!DuplicateHandle(
@@ -135,7 +138,7 @@ struct ViceThreadParams {
             }*/
 			return true;
         }
-		return false;
+		return true;
     }
     bool Vice::DestroyD3D()
     {
@@ -218,11 +221,11 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             goto ExitLoop;
         }
 
-        ShowWindow(viceWND, SW_SHOWNOACTIVATE);
-        UpdateWindow(viceWND);
-        viceDisplay = true;
-
-        showCursor(true, 1);
+        showWnd(viceWND);
+        //ShowWindow(viceWND, SW_SHOWNOACTIVATE);
+        //UpdateWindow(viceWND);
+        //viceDisplay = true;
+        //showCursor(true, 1);
 
         while (true) {
             // 等待：要么主线程结束（句柄有信号），要么有窗口消息到来（返回WAIT_OBJECT_0 + 1）
@@ -573,6 +576,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             if (inter.focus) {
                 WriteToClipboard(hwnd, inter.focus.tostring());
                 layout && (layout->hint_timer = 160);
+                dirty = true;
             }
             //WriteToClipboard(hwnd, (char8_t*)"u8:\xE5\x8F\xAA\xE5\x9B\xA0\xE4\xBD\xA0\xE5\xA4\xAA\xE7\xBE\x8E\xF0\x9F\x98\x83");
             //WriteToClipboard(hwnd, u"u16:\u53EA\u56E0\u4F60\u592A\u7F8E\xD83D\xDE03");
@@ -847,7 +851,8 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             if (sokuDMouse.rgbButtons[1]) {
                 printf("RB Clicked at <%3d, %3d>\n", cursor.x, cursor.y);
                 focus = nullptr;
-				index = -1;
+				//index = -1;
+                switchHover(0);
                 return oldf != focus;
             }
         }
@@ -952,10 +957,11 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 {using riv::tex::RendererGuard, riv::tex::Vertex;
     auto ret = (This->*ogSceneBattleRender)();
     bool d = dirty;
-    if(!viceDisplay|| !dirty || !layout.has_value() || !TryEnterCriticalSection(&info::d3dMutex))
+    if(!viceDisplay 
+    || !viceSwapChain 
+    || !layout || !d && !layout->hint_timer 
+    || !TryEnterCriticalSection(&info::d3dMutex))
 		return ret;
-    if (!viceSwapChain)
-		return LeaveCriticalSection(&info::d3dMutex), ret;
     LPDIRECT3DSURFACE9 pBackBuffer = NULL, pOrgBuffer = NULL;
     if (FAILED(viceSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer))
     || FAILED(SokuLib::pd3dDev->GetRenderTarget(0, &pOrgBuffer))

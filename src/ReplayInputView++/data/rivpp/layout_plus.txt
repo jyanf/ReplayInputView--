@@ -44,7 +44,8 @@ This xml has expanded features out of original soku layout system, implemented b
 		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
 		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1" color_bottom="0xa0a0a0"/>
 		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xffffff" color_bottom="0x7070a0"/>
-		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xffffff"/>
+		<font id="4"	class="field-names-big"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="true" height="18" spacing="0" color_bottom="0xa0a0a0"/>
+		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0"/>
 		<font id="6"	class="field-names-blue"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xffffff" color_bottom="0x7070a0"/>
 		<font id="10"	class="field-string-plain"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="16" spacing="1"/>
 		<font id="11"	class="field-string-small"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="12"/>
@@ -180,31 +181,31 @@ This xml has expanded features out of original soku layout system, implemented b
 				<pad width="20" height="20"/>
 			</field>
 			<field class="result-hit" show_if="20=1" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit player."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit player."/>
 			</field>
 			<field class="result-blocked" show_if="20=2" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: blocked."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: blocked."/>
 			</field>
 			<field class="result-parried" show_if="20=3" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: parried."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: parried."/>
 			</field>
 			<field class="result-high-density" show_if="20=4" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with higher density."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with higher density."/>
 			</field>
 			<field class="result-absorbed" show_if="20=5" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with absorption level."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with absorption level."/>
 			</field>
 			<field class="result-high-density" show_if="20=6" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: bullet grazed."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: bullet grazed."/>
 			</field>
 			<field class="result-hit-armor" show_if="20=7" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit armor."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit armor."/>
 			</field>
 			<field class="result-high-density" show_if="20=8" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with same density."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with same density."/>
 			</field>
 			<field class="result-high-density" show_if="20=9" xoffset="92">
-				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit entity."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit entity."/>
 			</field>
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
 			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
@@ -439,7 +440,7 @@ This xml has expanded features out of original soku layout system, implemented b
 				<textbox font_id="11" xoffset="0" yoffset="0">
 				<![CDATA[*          ;]]>
 				</textbox>
-				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode: {0:NONE, 1:ADD, 2:SUBSTRACT, 3:MULTIPLY}&#10;and fixed color:&#10;%s" />
+				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode: {  0:NONE,&#10;	1:NORMAL, 2:ADD, 3:SUB, 4:MUL }&#10;Fixed color:&#10;	%s" />
 				<number value_id="4" number_id="310" xoffset="133" yoffset="-4"/>
 				<number value_id="6" number_id="320" xoffset="43" yoffset="-7"/>
 				<number value_id="7" number_id="320" xoffset="76" yoffset="-7"/>
@@ -457,12 +458,110 @@ This xml has expanded features out of original soku layout system, implemented b
 		
 	</sublayout>
 	<sublayout class="Object" inherit="Basic"> <pad width="208" height="300"/> <back ref_id="225"/>
-		<title xoffset="0" yoffset="-25"> <back ref_id="215"/>
-			Object
+		<title xoffset="0" yoffset="-25"> <pad width="60" height="24"/> <back ref_id="215"/> 
+			<![CDATA[ Object   ]]>
 		</title>
+		<values>
+			<value id="1" class="graze-counter" type="short"><offset hex="0x394"/></value>
+			<value id="2" class="collided-counter" type="short"><offset hex="0x396"/></value>
+			<value id="3" class="entity-hp" type="short"><offset hex="0x184"/></value>
+			<value id="4" class="collision-limit" type="char"><offset hex="0x194"/></value>
+			<value id="5" class="layer" type="char"><offset hex="0x358"/></value>
+			<value id="10" class="parent-player" type="ptr"><offset hex="0x364"/></value>
+			<value id="11" class="parent-object" type="ptr"><offset hex="0x368"/></value>
+			<value id="12" class="parent-playerB" type="ptr"><offset hex="0x398"/></value>
+			<value id="13" class="parent-objectB" type="ptr"><offset hex="0x39C"/></value>
+			<value id="20" class="move-lock" type="short">
+				<offset hex="0x15C"/><offset hex="0x10"/>
+			</value>
+			<value id="21" class="action-lock" type="short">
+				<offset hex="0x15C"/><offset hex="0x12"/>
+			</value>
+			<value id="23" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x10"/>
+			</value>
+			<value id="24" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x12"/>
+			</value>
+			<value id="100" class="gpShort[0]" type="short"><offset hex="0x36c"/></value>
+			<value id="101" class="gpShort[1]" type="short"><offset hex="0x36e"/></value>
+			<value id="102" class="gpShort[2]" type="short"><offset hex="0x370"/></value>
+			<value id="103" class="gpShort[3]" type="short"><offset hex="0x372"/></value>
+			<value id="104" class="gpShort[4]" type="short"><offset hex="0x374"/></value>
+			<value id="105" class="gpShort[5]" type="short"><offset hex="0x376"/></value>
+			<value id="110" class="gpFloat[0]" type="float"><offset hex="0x378"/></value>
+			<value id="111" class="gpFloat[1]" type="float"><offset hex="0x37C"/></value>
+			<value id="112" class="gpFloat[2]" type="float"><offset hex="0x380"/></value>
+			<value id="113" class="!!customData[0]" type="float">
+				<offset hex="0x35C"/><offset hex="0x0"/>
+			</value>
+			<value id="114" class="!!customData[1]" type="float">
+				<offset hex="0x35C"/><offset hex="0x4"/>
+			</value>
+			<value id="115" class="init-sequence" type="float">
+				<offset hex="0x35C"/><offset hex="0x8"/>
+			</value>
+		</values>
+		<field class="general-counters"> <pad width="208" height="72"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[3] &#10; customData[0~2]"><![CDATA[General<br> counters]]></textbox>
+			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
+				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
+				<field description="[5] Uninitialized, &#10; usually a random value." yoffset="3"> <pad width="40" height="16"/>
+					<number number_id="314" value_id="105" xoffset="45" yoffset="-5"/>
+				</field>
+			</grid>
+			<grid class="gpFloat-and-customData" xgrid="70" ygrid="16" rowmax="3" xoffset="0" stack="true"> <pad width="200" height="32"/>
+				<number number_id="316" value_id="110" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="111" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="112" xoffset="69" yoffset="-2"/>
+				<field yoffset="3" description="The first 2 of customData[n], &#10;usually means angle&amp;speed."> <pad width="140" height="16"/>
+					<textbox font_id="10" xoffset="-10" yoffset="-2">*</textbox>
+					<number number_id="316" value_id="113" xoffset="69" yoffset="-5"/>
+				</field>
+				<number number_id="316" value_id="114" xoffset="69" yoffset="-2"/>
+				<field description="customData[2], generally used to &#10;specify sequenceId on object creation." yoffset="3"> <pad width="56" height="16"/>
+					<number number_id="313" value_id="115" xoffset="54" yoffset="-5"/>
+				</field>
+			</grid>
+		</field>
+		<field class="collide"> <pad width="208" height="30"/>
+			<textbox font_id="4" xoffset="0" yoffset="4">&#32;Hits&#32;</textbox>
+			<number value_id="4" number_id="331" xoffset="80" yoffset="8"/>
+			<textbox font_id="4" xoffset="0" yoffset="4">&#32;Recover&#32;</textbox>
+			<field hide_if="1=0" xoffset="60" yoffset="1">
+				<textbox font_id="5" xoffset="0"><![CDATA[Graze<br> recovered]]> </textbox>
+				<number value_id="1" number_id="341" xoffset="80" yoffset="1"/>
+			</field>
+			<field hide_if="2=0" xoffset="120" yoffset="1">
+				<textbox font_id="5" xoffset="0"><![CDATA[Collide<br> recovered]]></textbox>
+				<number value_id="2" number_id="341" xoffset="80" yoffset="1"/>
+			</field>
+		</field>
+		<field class="density-levels"> <pad width="208" height="24"/>
+			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
+				<textbox font_id="5" xoffset="3" yoffset="4" description="相杀等级">Density level</textbox>
+				<number number_id="351" value_id="23" max="5" min="0" xoffset="25"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="23" yoffset=""/>
+				<number number_id="332" value_id="20" xoffset="86" yoffset="1"/>
+			</field>
+			<field class="action-lock" xoffset="70" stack="true" hide_if="21=0"> <pad height="24"/>
+				<textbox font_id="5" xoffset="3" yoffset="4" description="用于紫的隙间">Absorb level</textbox>
+				<number number_id="351" value_id="24" max="5" min="0" xoffset="25"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="23" yoffset=""/>
+				<number number_id="332" value_id="21" xoffset="86" yoffset="1"/>
+			</field>
+		</field>
+		<field class="flag-entity">
+			<textbox font_id="4"></textbox>
+			<number value_id="3" number_id="341" xoffset="90" yoffset="-3"/>
+		</field>
 	</sublayout>
 	<sublayout class="Player" inherit="Basic"> <pad width="208" height="312"/> <back ref_id="225"/>
-		<title font_id="2" xoffset="0" yoffset="-29"> <pad width="180" height="24"/> <back ref_id="215"/>
+		<title font_id="2" xoffset="0" yoffset="-29"> <pad width="60" height="24"/> <back ref_id="215"/>
 			&#32;Player&#32;&#32;&#32;
 		</title>
 		<values>
@@ -545,15 +644,17 @@ This xml has expanded features out of original soku layout system, implemented b
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<number number_id="314" value_id="105" xoffset="45" yoffset="-2"/>
+				<field description="[5] Uninitialized, &#10; usually a random value."> <pad width="36" height="16"/>
+					<number number_id="314" value_id="105" xoffset="40" yoffset="-2"/>
+				</field>
 			</grid>
-			<grid class="gpFloat" xgrid="70" ygrid="16" rowmax="3" xoffset="9" stack="true"> <pad width="200" height="32"/>
-				<number number_id="316" value_id="110" xoffset="60" yoffset="-2"/>
-				<number number_id="316" value_id="111" xoffset="60" yoffset="-2"/>
-				<number number_id="316" value_id="112" xoffset="60" yoffset="-2"/>
-				<number number_id="316" value_id="113" xoffset="60" yoffset="-2"/>
-				<number number_id="316" value_id="114" xoffset="60" yoffset="-2"/>
-				<number number_id="316" value_id="115" xoffset="60" yoffset="-2"/>
+			<grid class="gpFloat" xgrid="70" ygrid="16" rowmax="3" xoffset="0" stack="true"> <pad width="200" height="32"/>
+				<number number_id="316" value_id="110" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="111" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="112" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="113" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="114" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="115" xoffset="69" yoffset="-2"/>
 			</grid>
 		</field>
 		<field class="hp-player"> <pad width="208" height="30"/>
@@ -564,7 +665,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<icon ref_id="203" tile="13,1,2" xoffset="156" yoffset=""/>
 			<field _hide_if="4=0"><number number_id="324" value_id="4" xoffset="218" yoffset="-11"/></field>
 			<number number_id="324" value_id="5" xoffset="218" yoffset="0"/>
-			<field _hide_if="32=1" xoffset="180" yoffset="19" description="Accumulated damage,&#10; used for super armor."> <pad width="30" height="12"/>
+			<field _hide_if="32=1" xoffset="180" yoffset="19" description="Accumulated damage,&#10; used for super armor."> <pad width="27" height="12"/>
 				<number number_id="324" value_id="6" xoffset="38" yoffset="-8"/>
 			</field>
 		</field>

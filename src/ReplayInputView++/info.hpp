@@ -258,9 +258,8 @@ using Design = gui::RivDesign;
 		}
 		inline static bool toggleWnd() {
 			if (!viceWND) {
-				createWnd();
+				return createWnd();
 				//Sleep(200);
-				return true;
 			}
 			if (viceDisplay)
 				hideWnd();
