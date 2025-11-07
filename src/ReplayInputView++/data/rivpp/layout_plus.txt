@@ -121,7 +121,7 @@ This xml has expanded features out of original soku layout system, implemented b
 				<offset hex="0x18C"/>
 			</value>
 			<value class="skill-level" id="26" type="char"/>
-			<value class="hitstop" id="30" type="short">
+			<value use_clip="true" class="hitstop" id="30" type="short">
 				<offset hex="0x196"/>
 			</value>
 			
@@ -180,31 +180,31 @@ This xml has expanded features out of original soku layout system, implemented b
 				<pad width="20" height="20"/>
 			</field>
 			<field class="result-hit" show_if="20=1" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit player."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit player."/>
 			</field>
 			<field class="result-blocked" show_if="20=2" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: blocked."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: blocked."/>
 			</field>
 			<field class="result-parried" show_if="20=3" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: parried."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: parried."/>
 			</field>
 			<field class="result-high-density" show_if="20=4" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with higher density."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with higher density."/>
 			</field>
 			<field class="result-absorbed" show_if="20=5" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with absorption level."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with absorption level."/>
 			</field>
 			<field class="result-high-density" show_if="20=6" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: bullet grazed."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: bullet grazed."/>
 			</field>
 			<field class="result-hit-armor" show_if="20=7" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit armor."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit armor."/>
 			</field>
 			<field class="result-high-density" show_if="20=8" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with same density."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: met bullet with same density."/>
 			</field>
 			<field class="result-high-density" show_if="20=9" xoffset="92">
-				<icon ref_id="102" tile="13,3,12" width="20" height="20" description="Collision result: hit entity."/>
+				<icon ref_id="104" tile="13,3,12" width="20" height="20" description="Collision result: hit entity."/>
 			</field>
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
 			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
@@ -337,14 +337,14 @@ This xml has expanded features out of original soku layout system, implemented b
 			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,29"/>
 			</link>
-			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="Forced counter hit"/></field>
+			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="Forced to induce counter hit."/></field>
 			<!--icon class="ptr-parentA" ref_id="100" tile="13,2,24" description="ParentA(box bounding)">
 				<link value_id="5" description="ParentA(box bounding) pointer: %s&#10;`click`"/>
 			</icon-->
 		</grid>
 		<field><pad height="15"/></field>
 	</sublayout>
-	<sublayout class="Tex"> <pad width="208" height="155"/> <back ref_id="224"/> 
+	<sublayout class="Tex"> <pad width="208" height="170"/> <back ref_id="224"/> 
 		<title font_id="2" xoffset="136" yoffset="-29" height="24"> <pad height="24"/> <back ref_id="214"/>
 			<![CDATA[<color ffffff>   Sprite  </color>]]>
 		</title>
@@ -414,7 +414,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18" description="Render Color:  %s"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="26">Shader</textbox>
-			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18" description="Shader's type and color:  %s"/>
+			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18" description="Shader's type: {0:NONE, 1:GRAYSCALE, 2:OVERLAY, 3:GLOW} &#10; with shader color:  %s"/>
 			<number value_id="3" number_id="310" xoffset="211" yoffset="21"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="46">Scale X-Y</textbox>
@@ -439,7 +439,7 @@ This xml has expanded features out of original soku layout system, implemented b
 				<textbox font_id="11" xoffset="0" yoffset="0">
 				<![CDATA[*          ;]]>
 				</textbox>
-				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode and fixed color:&#10;%s" />
+				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode: {0:NONE, 1:ADD, 2:SUBSTRACT, 3:MULTIPLY}&#10;and fixed color:&#10;%s" />
 				<number value_id="4" number_id="310" xoffset="133" yoffset="-4"/>
 				<number value_id="6" number_id="320" xoffset="43" yoffset="-7"/>
 				<number value_id="7" number_id="320" xoffset="76" yoffset="-7"/>
@@ -456,34 +456,321 @@ This xml has expanded features out of original soku layout system, implemented b
 	<sublayout class="Basic" inherit="Mini,Frame-flags,Attack-flags,Tex">
 		
 	</sublayout>
-	<sublayout class="Object" inherit="Basic">
-		<pad width="208" height="200"/>
-		<title xoffset="0" yoffset="-25">Object
-			<back ref_id="214"/>
+	<sublayout class="Object" inherit="Basic"> <pad width="208" height="300"/> <back ref_id="225"/>
+		<title xoffset="0" yoffset="-25"> <back ref_id="215"/>
+			Object
 		</title>
 	</sublayout>
-	<sublayout class="Player" inherit="Basic">
-		<pad width="208" height="400"/>
-		<title xoffset="0" yoffset="-25">Player
-			<back ref_id="214"/>
+	<sublayout class="Player" inherit="Basic"> <pad width="208" height="312"/> <back ref_id="225"/>
+		<title font_id="2" xoffset="0" yoffset="-29"> <pad width="180" height="24"/> <back ref_id="215"/>
+			&#32;Player&#32;&#32;&#32;
 		</title>
 		<values>
-			<value id="10" class="cancel-level" type="short">
+			<value id="1" class="hp" type="short"><offset hex="0x184"/></value>
+			<value id="2" class="hp-max" type="short"><offset hex="0x186" /></value>
+			<value id="3" class="hp-red" type="short"><offset hex="0x498"/></value>
+			<value id="4" class="delta-hp"/>
+			<value id="5" class="real-damage"/>
+			<value id="6" class="raw-damage" type="int"><offset hex="0x188"/></value>
+			<value id="10" class="move-lock" type="short">
 				<offset hex="0x15C"/><offset hex="0x10"/>
 			</value>
-			<value id="11" class="cancel-level" type="short">
+			<value id="11" class="action-lock" type="short">
 				<offset hex="0x15C"/><offset hex="0x12"/>
 			</value>
+			<value id="13" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x10"/>
+			</value>
+			<value id="14" class="cancel-level" type="short">
+				<offset hex="0x15C"/><offset hex="0x12"/>
+			</value>
+			<value id="20" class="player-stun"/>
+			<value id="21" class="untech" type="short"><offset hex="0x4BA"/></value>
+			<value id="30" class="multi-attack" type="float"><offset hex="0x530"/></value>
+			<value id="31" class="multi-defend" type="float"><offset hex="0x534"/></value>
+			<value id="32" class="multi-power" type="float"><offset hex="0x538"/></value>
+			<value id="33" class="multi-spell" type="float"><offset hex="0x544"/></value>
+			<value id="34" class="multi-special" type="float"><offset hex="0x548"/></value>
+			<value id="35" class="multi-meter" type="float"><offset hex="0x54C"/></value>
+			<value id="36" class="multi-life-steal" type="float"><offset hex="0x550"/></value>
+			<value id="37" class="multi-discard" type="float"><offset hex="0x554"/></value>
+			<value id="38" class="multi-dmg-reflect" type="float"><offset hex="0x558"/></value>
+			<value id="39" class="multi-limit" type="float"><offset hex="0x53C"/></value>
+			<value id="40" class="multi-speed" type="float"><offset hex="0x4D0"/></value>
+			<value id="41" use_clip="true" class="multi-xmove" type="float"><offset hex="0x564"/></value>
+			<value id="42" use_clip="true" class="multi-ymove" type="float"><offset hex="0x568"/></value>
+			<value id="43" class="bonus-rate" type="float"><offset hex="0x540"/></value>
+			<value id="44" class="grimoire" type="short"><offset hex="0x560"/></value>
+			<value id="45" class="tengu-fans" type="short"><offset hex="0x834"/></value>
+			<value id="46" class="dolls" type="float"><offset hex="0x840"/></value>
+			<value id="47" class="control-rods" type="float"><offset hex="0x844"/></value>
+			<value id="48" class="count-drops" type="short"><offset hex="0x850"/></value>
+			<value id="50" use_clip="true" class="timer-meleeinvul"		  type="short"><offset hex="0x51C"/></value>
+			<value id="51" use_clip="true" class="timer-grabinvul"        type="short"><offset hex="0x51E"/></value>
+			<value id="52" use_clip="true" class="timer-projinvul"        type="short"><offset hex="0x520"/></value>
+			<value id="53" use_clip="true" class="timer-graze"            type="short"><offset hex="0x522"/></value>
+			<value id="54" use_clip="true" class="timer-confusiondebuff"  type="short"><offset hex="0x524"/></value>
+			<value id="55" use_clip="true" class="timer-sordebuff"        type="short"><offset hex="0x526"/></value>
+			<value id="56" class="timer-healcharm"        type="short"><offset hex="0x528"/></value>
+			<value id="57" class="timer-magicpotion"  type="float"><offset hex="0x848"/></value>
+			<value id="58" class="timer-stopwatch"    type="short"><offset hex="0x84C"/></value>
+			<value id="59" class="timer-dragonstar"   type="short"><offset hex="0x84E"/></value>
+			<value id="60" class="timer-dropinvul"    type="short"><offset hex="0x852"/></value>
+			<value id="61" class="can-graze-melee" type="bool"><offset hex="0x56C"/></value>
+			<value id="62" class="crush-on-wb"     type="bool"><offset hex="0x56D"/></value>
+			<value id="63" class="skillsmax"     type="bool"><offset hex="0x56E"/></value>
+			<value id="65" use_clip="true" class="timestop" type="short"><offset hex="0x4A8"/></value>
+			<value id="66" class="timer-poise" type="short"><offset hex="0x4BC"/></value>
+			<value id="67" use_clip="true" class="timer-nogain" type="short"><offset hex="0x7f8"/></value>
+			<value id="68" use_clip="true" class="spellstop" type="short"><offset hex="0x4A6"/></value>
+
+			<value id="100" class="gpShort[0]" type="short"><offset hex="0x7d0"/></value>
+			<value id="101" class="gpShort[1]" type="short"><offset hex="0x7d2"/></value>
+			<value id="102" class="gpShort[2]" type="short"><offset hex="0x7d4"/></value>
+			<value id="103" class="gpShort[3]" type="short"><offset hex="0x7d6"/></value>
+			<value id="104" class="gpShort[4]" type="short"><offset hex="0x7d8"/></value>
+			<value id="105" class="gpShort[5]" type="short"><offset hex="0x7da"/></value>
+			<value id="110" class="gpFloat[0]" type="float"><offset hex="0x7dc"/></value>
+			<value id="111" class="gpFloat[1]" type="float"><offset hex="0x7e0"/></value>
+			<value id="112" class="gpFloat[2]" type="float"><offset hex="0x7e4"/></value>
+			<value id="113" class="gpFloat[3]" type="float"><offset hex="0x7e8"/></value>
+			<value id="114" class="gpFloat[4]" type="float"><offset hex="0x7ec"/></value>
+			<value id="115" class="gpFloat[5]" type="float"><offset hex="0x7f0"/></value>
 		</values>
-		<field class="cancel-levels">
-			<field class="action-lock" stack="true">
-				<pad height="20"/>
-				<number number_id="361" value_id="10" max="6" min="0" xoffset="100"/>
+		<field class="general-counters"> <pad width="208" height="72"/>
+			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[6]"><![CDATA[General<br> counters]]></textbox>
+			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
+				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
+				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
+				<number number_id="314" value_id="105" xoffset="45" yoffset="-2"/>
+			</grid>
+			<grid class="gpFloat" xgrid="70" ygrid="16" rowmax="3" xoffset="9" stack="true"> <pad width="200" height="32"/>
+				<number number_id="316" value_id="110" xoffset="60" yoffset="-2"/>
+				<number number_id="316" value_id="111" xoffset="60" yoffset="-2"/>
+				<number number_id="316" value_id="112" xoffset="60" yoffset="-2"/>
+				<number number_id="316" value_id="113" xoffset="60" yoffset="-2"/>
+				<number number_id="316" value_id="114" xoffset="60" yoffset="-2"/>
+				<number number_id="316" value_id="115" xoffset="60" yoffset="-2"/>
+			</grid>
+		</field>
+		<field class="hp-player"> <pad width="208" height="30"/>
+			<textbox font_id="5" xoffset="3" yoffset="4">HP</textbox>
+			<number number_id="341" value_id="1" xoffset="90" yoffset="1"/>
+			<icon ref_id="203" tile="13,1,1" xoffset="80" yoffset=""/>
+			<number number_id="341" value_id="2" xoffset="160" yoffset="1"/>
+			<icon ref_id="203" tile="13,1,2" xoffset="156" yoffset=""/>
+			<field _hide_if="4=0"><number number_id="324" value_id="4" xoffset="218" yoffset="-11"/></field>
+			<number number_id="324" value_id="5" xoffset="218" yoffset="0"/>
+			<field _hide_if="32=1" xoffset="180" yoffset="19" description="Accumulated damage,&#10; used for super armor."> <pad width="30" height="12"/>
+				<number number_id="324" value_id="6" xoffset="38" yoffset="-8"/>
 			</field>
-			<field class="move-lock" stack="true">
-				<pad height="20"/>
-				<number number_id="361" value_id="11" max="6" min="0" xoffset="100"/>
+		</field>
+		<field class="cancel-levels"> <pad height="52"/>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="当前招式的取消级(Cancel Level)">Move Lock</textbox>
+			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
+				<number number_id="361" value_id="13" max="6" min="0" xoffset="20"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
+				<number number_id="332" value_id="10" xoffset="86" yoffset="1"/>
+
+				<icon class="lock-border-escape" ref_id="102" tile="13,3,9" xoffset="88" description="BorderEscape locked."/>
 			</field>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="取消当前招式所需的取消级">Action Lock</textbox>
+			<field class="action-lock" xoffset="70" stack="true"> <pad height="24"/>
+				<number number_id="361" value_id="14" max="6" min="0" xoffset="20"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
+				<number number_id="332" value_id="11" xoffset="86" yoffset="1"/>
+
+				<icon class="flag-cancelable" ref_id="100" tile="13,2,9" xoffset="88" description="Attack cancelable."/>
+				<icon class="flag-uncancelable" ref_id="100" tile="13,2,22" xoffset="88" description="Attack not cancelable."/>
+				<icon class="result-uncancelable" ref_id="102" tile="13,3,22" xoffset="88" description="Attack whiff or get parried."/>
+				<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" xoffset="112" description="Movement cancelable."/>
+				<icon class="lock-movement" ref_id="102" tile="13,3,14" xoffset="112" description="Movement locked.&#10;(speed.y>0 &amp;&amp; pos.y &lt;=100.0)"/>
+			</field>
+		</field>
+		<field class="stun-untech"> <pad width="208" height="27"/>
+			<textbox font_id="5" xoffset="3" yoffset="4">
+				<![CDATA[<color C0C0C0>Untech / Stun</color>]]>
+			</textbox>
+			<field class="calc-stun" hide_if="20=0">
+				<textbox font_id="5" xoffset="49" yoffset="4">Stun</textbox>
+				<number number_id="331" value_id="20" xoffset="158" yoffset="1"/>
+			</field>
+			<field class="untech" show_if="20=0">
+				<textbox class="is-in-untech" font_id="5" xoffset="3" yoffset="4">Untech</textbox>
+				<number number_id="331" value_id="21" xoffset="158" yoffset="1"/>
+			</field>
+		</field>
+		<field class="active-buffs">
+			<textbox font_id="5" xoffset="3" yoffset="4">Active buffs</textbox>
+			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
+				<field></field><!--spacing for field name-->
+				<field class="multi-attack"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,32"/>
+					<number number_id="315" value_id="30" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-defend"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,33"/>
+					<number number_id="315" value_id="31" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-power" hide_if="32=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,7"/>
+					<field show_if="32=0"><icon ref_id="102" tile="13,3,8"/></field>
+					<number number_id="315" value_id="32" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-spell" hide_if="33=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,10"/>
+					<number number_id="315" value_id="33" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-special" hide_if="34=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,23"/>
+					<number number_id="315" value_id="34" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-meter" hide_if="35=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,12"/>
+					<number number_id="315" value_id="35" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-discard" hide_if="37=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,34"/>
+					<number number_id="315" value_id="37" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-life-steal" hide_if="36=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,21"/>
+					<number number_id="315" value_id="36" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-dmg-reflect" hide_if="38=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,35"/>
+					<number number_id="315" value_id="38" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-speed" hide_if="40=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,11"/>
+					<number number_id="315" value_id="40" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-xmove" hide_if="41=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,24"/>
+					<number number_id="315" value_id="41" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-ymove" hide_if="42=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,37"/>
+					<number number_id="315" value_id="42" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="multi-limit" hide_if="39=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,36"/>
+					<number number_id="315" value_id="39" xoffset="65" yoffset="-1"/>
+				</field>
+				<field class="bonus-rate" hide_if="43=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,14"/>
+					<number number_id="315" value_id="43" xoffset="65" yoffset="-1"/>
+				</field>
+				
+			</grid>
+			<grid class="integer-list" xgrid="42" ygrid="24" rowmax="5" xoffset="3">
+				<field class="grimoire" hide_if="44=0"> <pad width="40" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,5"/>
+					<number number_id="310" value_id="44" xoffset="43" yoffset="-1"/>
+				</field>
+				<field class="tengu-fans" hide_if="45=0"> <pad width="40" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,3"/>
+					<number number_id="310" value_id="45" xoffset="43" yoffset="-1"/>
+				</field>
+				<field class="dolls" hide_if="46=0"> <pad width="40" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,4"/>
+					<number number_id="310" value_id="46" xoffset="43" yoffset="-1"/>
+				</field>
+				<field class="control-rods" hide_if="47=0"> <pad width="40" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,6"/>
+					<number number_id="310" value_id="47" xoffset="43" yoffset="-1"/>
+				</field>
+				<field class="count-drops" hide_if="48=0"> <pad width="40" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,16"/>
+					<number number_id="310" value_id="48" xoffset="43" yoffset="-1"/>
+				</field>
+				<field class="can-graze-melee" hide_if="61=0"> <pad width="40" height="24"/>
+					<icon ref_id="104" tile="13,3,0"/>
+				</field>
+				<field class="crush-on-wb" hide_if="62=0"> <pad width="40" height="24"/>
+					<icon ref_id="104" tile="13,3,8"/>
+				</field>
+				<field class="skillsmax" hide_if="63=0"> <pad width="40" height="24"/>
+					<icon ref_id="104" tile="13,3,1"/>
+				</field>
+			</grid>
+		</field>
+		<field class="active-timers">
+			<textbox font_id="5" xoffset="3" yoffset="4">Countdowns</textbox>
+			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
+				<field/>
+				<field class="timer-meleeinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,0"/>
+					<number number_id="310" value_id="50" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="timer-projinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,1"/>
+					<number number_id="310" value_id="52" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="timer-grabinvul" hide_if="51=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,2"/>
+					<number number_id="310" value_id="51" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="timer-graze" hide_if="53=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,13"/>
+					<number number_id="310" value_id="53" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="timer-confusiondebuff" hide_if="54=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,19"/>
+					<number number_id="310" value_id="54" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-sordebuff" hide_if="55=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,18"/>
+					<number number_id="310" value_id="55" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-healcharm" hide_if="56=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,20"/>
+					<number number_id="310" value_id="56" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-magicpotion" hide_if="57=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,17"/>
+					<number number_id="310" value_id="57" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-stopwatch" hide_if="58=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,2"/>
+					<number number_id="310" value_id="58" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-dragonstar" hide_if="59=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,7"/>
+					<number number_id="310" value_id="59" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-dropinvul" hide_if="60=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,16"/>
+					<number number_id="310" value_id="60" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="timestop" hide_if="65=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,38"/>
+					<number number_id="310" value_id="65" xoffset="62" yoffset="-1"/>
+				</field>
+				<field class="spellstop" hide_if="68=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,12"/>
+					<number number_id="310" value_id="68" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-poise" hide_if="66=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,7"/>
+					<number number_id="310" value_id="66" xoffset="62" yoffset="-1"/>
+				</field>
+
+				<field class="timer-nogain" hide_if="67=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="102" tile="13,3,25"/>
+					<number number_id="310" value_id="67" xoffset="62" yoffset="-1"/>
+				</field>
+			</grid>
 		</field>
 	</sublayout>
 	<sublayout class="suwako" inherit="Player"><!--lowercase first letter, i.e. keep the character name same as is in .dat path-->

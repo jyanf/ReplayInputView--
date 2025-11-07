@@ -1,5 +1,52 @@
 # Task
 
+- [ ] center
+
+  - [ ] 天气剑生效中
+
+  - [x] 霸体已吸收伤害0x188
+
+  - [x] 灵力书等回复速率？天狗扇子加移速？
+    棒子
+
+  - [x] 强制破防、可擦体术、
+
+  - [x] 时停
+
+  - [x] limit乘子
+
+  - [x] delta位移乘子需要保存
+
+    > ![image-20251107041803222](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251107041803222.png)
+    >
+    > 1. input
+    >
+    > 2. counters
+    >    update players
+    >    charm
+    >
+    > 3. collision
+    >
+    > 4. speed&rivermist??
+    >
+    > 5. movement←hook
+    >
+    >    proceed timers
+    >    	timestop; hitstop; 4c0; 4bc
+    >    	invul timers
+    >    	add card if gauge is full
+    >
+    >    set redhp, weather, skillLevelA
+    >    reset rivermist, speedXY
+    >
+    >    update positions by mul
+    >
+    >    
+    >
+    > 6. camera & onprocess
+
+- [ ] layout针对common 1000+
+
 - [ ] d3d9STENCIL并集绘制框
 
 - [ ] sprite可自定义基点/白框
@@ -205,7 +252,7 @@
 >   > - [ ] 取消等级(依旧icon，N0, Al10, Ah20, B30, C40, Sk50, Sc(60+)100
 >   >   - [x] 移动取消锁（上升且<=100.0）
 >   >   
->   >   - [ ] 挥空取消锁（动作>=300且result为0）
+>   >   - [x] 挥空取消锁（动作>=300且result为0）
 >   >   
 >   >     > bool resultCancellable = this->actionId < 300 || this->collisionType != 0 && this->collisionType != 3
 >   > - [x] 一些天气标志；开关们

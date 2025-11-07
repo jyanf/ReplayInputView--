@@ -415,12 +415,11 @@ namespace gui {
 		};*/
 		std::variant<unsigned, int, float, double> val{ 0 };
 		//float val = 0.0f;
-		enum Type : int {
-			BOOL,
-			CHAR, SHORT, INT,
-			BYTE, USHORT, UINT,
-			FLOAT, DOUBLE,
-			PTR, 
+		enum Type : unsigned char {
+			BOOL = 10, CHAR, BYTE, 
+			SHORT = 20, USHORT, 
+			INT = 40, UINT, FLOAT, PTR, 
+			DOUBLE = 80,
 		} type = INT;
 		std::vector<unsigned int> offsets;
 	public:
@@ -704,7 +703,7 @@ namespace gui {
 			}
 			if (ref_ptr2) {
 				float v = ref_ptr2->getf();
-				if (std::isnormal(showif))
+				if (std::isfinite(showif))
 					visible &= (v == showif);	
 			}
 		}
@@ -979,8 +978,138 @@ namespace gui {
 		}
 		//inline virtual float getf() const override { return NAN; };
 	};
+	class ValueSpec_DeltaHP : public Value {
+		using Value::Value;
+		inline virtual void update(void* ctx) override {
+			val = 0;
+			using data = SokuLib::v2::GameObjectBase;
+			auto& obj = *reinterpret_cast<data*>(ctx);
+			if (!ctx || !obj.gameData.owner) return;
+			val = obj.boxData.prevHP - obj.hp;
+		}
+	};
+	class ValueSpec_RealDamage : public Value {
+		using Value::Value;
+		inline virtual void update(void* ctx) override {
+			val = 0;
+			using data = SokuLib::v2::GameObjectBase;
+			auto& obj = *reinterpret_cast<data*>(ctx);
+			if (!ctx || !obj.gameData.owner) return;
+			val = obj.gameData.owner->redHP - obj.gameData.owner->hp;
+		}
+	};
+	class ValueSpec_PlayerClip : public Value {//"use-clip"
+	public:
+		using Value::Value;
+		using Player = SokuLib::v2::Player;
+		using Clip = std::array<char, sizeof(Player)>;
+		using Clipper = std::unordered_map<Player*, Clip>;
+		static Clipper clipper, buffer;
+		inline static std::mutex fresh;
+		inline static void Insert(Player* p) {
+			if (!p) return;
+			buffer.emplace(p, *reinterpret_cast<Clip*>(p));
+		}
+		inline static void Swap() {
+			if (fresh.try_lock()) {
+				clipper.swap(buffer);
+				fresh.unlock();
+			} else puts("clip swap failed");
+			Clipper temp;
+			buffer.swap(temp);
+#ifdef _DEBUG
+			for (auto& [p,v] : clipper) {
+				auto& c = *reinterpret_cast<Player*>(&v);
+				//printf("clipped player %p, with %f\n", p, c.speedXMultiplier);
+			}
+#endif // _DEBUG
 
-	inline int get_player_id(const SokuLib::v2::GameObjectBase* target) {
+		}
+		inline static void* get_clipped(Player* p) {
+			auto it = clipper.find(p);
+			if (it != clipper.end()) {
+				return (void*)&it->second;
+			}
+			return p;
+		}
+		inline virtual void update(void* ctx) override {
+			val = 0;
+			bool illegal = offsets.size() > 1 //only once ref allowed
+						|| offsets.begin() != offsets.end() && *offsets.begin() + type / 10 > sizeof Player;
+			if (!illegal && fresh.try_lock()) {
+				ctx = get_clipped(reinterpret_cast<Player*>(ctx));
+				Value::update(ctx);
+				fresh.unlock();
+			} else {
+				puts("using clip failed");
+				Value::update(ctx);
+			};
+		}
+	};
+
+	inline static int get_player_stun(void* ctx) {//credit Tstar for statistics
+		using data = SokuLib::v2::Player;
+		if (!ctx) return -1;
+		auto& obj = *reinterpret_cast<data*>(ctx);
+		auto actId = obj.frameState.actionId, seqId = obj.frameState.sequenceId;
+		if (actId < 50 || actId >= 180) return 0;
+		int base = 0;
+		static constexpr int spinRevise[] = { 0, 2, 2 + 12, 2 + 12 + 12 };
+		static constexpr int crushRevise[] = { 0, 3, 44 };
+
+		switch (actId) {
+			// ---- A: ground hit ----
+		case 50: case 56: case 62: 
+			base = 11; break;//small
+		case 51: case 57: case 63: 
+			base = 18; break;//mid
+		case 52: case 58: case 64: 
+		case 54: case 60: case 66:
+		case 55: case 61: case 67:
+			base = 25; break;//big
+
+		case 53: case 59: case 65:
+			if (seqId < 0 || seqId >= _countof(spinRevise)) return 0;
+			base = 35 - spinRevise[seqId];
+			break;//huge spin
+
+			// ---- B: ground block ----
+		case 150: case 154: base = 11; break;
+		case 151: case 155: base = 16; break;
+		case 152: case 156: base = 22; break;
+		case 153: case 157: base = 28; break;
+
+			// ---- S: air guard ----
+		case 158: case 167:
+			base = 20; break;
+
+			// ---- C: ground wrong block ----
+		case 159: case 163: base = 12; break;
+		case 160: case 164: base = 20; break;
+		case 161: case 165: base = 28; break;
+		case 162: case 166: base = 32; break;
+
+			// ---- ground crush ----
+		case 143:
+			if (seqId < 0 || seqId >= _countof(crushRevise)) return 0;
+			base = 50 - crushRevise[seqId];
+			break;
+
+		default:
+			return 0;
+		}
+		return base - obj.frameState.currentFrame;
+	}
+	class ValueSpec_PlayerStun : public Value {
+	public:
+		using Value::Value;
+		inline virtual void update(void* ctx) override {
+			val = get_player_stun(ctx);
+		}
+	};
+
+
+	inline static int get_player_id(const SokuLib::v2::GameObjectBase* target) {
 		using SokuLib::v2::GameObjectBase, SokuLib::v2::GameDataManager;
 		if (GameDataManager::instance) {
 			//auto& player = *reinterpret_cast<std::array<SokuLib::v2::Player*, 4>*>(&SokuLib::v2::GameDataManager::instance->players);

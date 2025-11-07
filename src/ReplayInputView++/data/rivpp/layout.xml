@@ -19,18 +19,24 @@
 	<static class="sprite-back" id="103" xposition="0" yposition="0">
 		<image name="transparent-big.png" xposition="0" yposition="0" width="128" height="128"/>
 	</static>
-	
+	<static class="extra-icon2" id="104" xposition="0" yposition="120" mirror="0">
+		<image name="extra-extra-icons.png" xposition="0" yposition="0" width="312" height="72"/>
+	</static>
 
 	<!--backs-->
 	<static class="debug-box" id="200" xposition="0" yposition="0" mirror="0">
 		<image name="debug-box.png" xposition="0" yposition="0" width="72" height="72"/>
 	</static>
-	<static class="transparent-back" id="201" xposition="72" yposition="0" mirror="0">
+	<static class="transparent-back" id="201" xposition="0" yposition="0" mirror="0">
 		<image name="transparent.png" xposition="0" yposition="0" width="72" height="72"/>
 	</static>
-	<static class="half-gray" id="202" xposition="72" yposition="0" mirror="0">
+	<static class="half-gray" id="202" xposition="0" yposition="0" mirror="0">
 		<image name="half-gray.png" xposition="0" yposition="0" width="72" height="72"/>
 	</static>
+	<static class="symbols" id="203" xposition="0" yposition="0" mirror="0">
+		<image name="symbols.png" xposition="0" yposition="0" width="312" height="24"/>
+	</static>
+	
 	
 	<static class="titlebox-gray" id="210" xposition="0" yposition="72" mirror="0">
 		<image name="titlebox-gray.png" xposition="0" yposition="0" width="72" height="72"/>
@@ -92,6 +98,13 @@
 	<number id="314" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="4" floatsize="0">
 		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
+	<number id="315" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="2">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="316" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="3" floatsize="3">
+		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	
 	<number id="320" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="0" floatsize="2">
 		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
@@ -101,13 +114,20 @@
 	<number id="323" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="3" floatsize="0">
 		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
-	<number id="323" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="3" floatsize="2">
-		<image name="font-small.png" xposition="0" yposition="0" width="312" height="24"/>
+	<number id="324" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-17" size="0" floatsize="0">
+		<image name="font-small-red.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
 	
-	<number id="321" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-8" size="0" floatsize="0">
+	<number id="331" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-10" size="0" floatsize="0">
 		<image name="font-big.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
+	<number id="332" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-10" size="2" floatsize="0">
+		<image name="font-big.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+	<number id="341" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-12" size="0" floatsize="0">
+		<image name="font-medium.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
+
 	<number id="351" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="0" size="0" floatsize="0">
 		<image name="density-levels.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>

@@ -49,6 +49,7 @@ namespace gui {
 	CDesign* RivDesign::_current = nullptr;
 	Console* RivDesign::_console = nullptr;
 	_hover* RivDesign::_hoverbuffer = nullptr;
+	ValueSpec_PlayerClip::Clipper ValueSpec_PlayerClip::clipper, ValueSpec_PlayerClip::buffer;
 	//HWND Console::hwndTT = NULL;
 #define SIMPLE_IS_PLAYER(o) ((o).frameState.actionId< 800)
 #define SIMPLE_IS_OBJECT(o) ((o).frameState.actionId>=800)
@@ -219,6 +220,29 @@ namespace gui {
 				using FD = SokuLib::v2::FrameData;
 				return obj.frameData && obj.frameData->renderGroup==FD::WITHBLEND && obj.frameData->blendOptionsPtr;
 			}},
+			{"result-uncancelable", [](void* ptr){
+				using data = SokuLib::v2::GameObjectBase;
+				auto& obj = *reinterpret_cast<data*>(ptr);
+				return SIMPLE_IS_PLAYER(obj) && obj.frameState.actionId >= 300
+					&& (obj.collisionType == data::COLLISION_TYPE_NONE 
+						|| obj.collisionType == data::COLLISION_TYPE_INVUL);
+			}},
+			{"lock-movement", [](void* ptr){
+				using data = SokuLib::v2::GameObjectBase;
+				auto& obj = *reinterpret_cast<data*>(ptr);
+				return SIMPLE_IS_PLAYER(obj) && obj.speed.y > 0 && obj.position.y <= 100.0f;
+			}},
+			{{"lock-border-escape"}, [](void* ptr){
+				using data = SokuLib::v2::Player;
+				auto& obj = *reinterpret_cast<data*>(ptr);
+				return SIMPLE_IS_PLAYER(obj) && obj.isBELocked;
+			}},
+			{"is-in-untech", [](void* ctx) {
+				using data = SokuLib::v2::GameObjectBase;
+				auto& obj = *reinterpret_cast<data*>(ctx);
+				return 50 <= obj.frameState.actionId && obj.frameState.actionId < 150;
+			}},
+
 		};
 		return Rules;
 	}
@@ -607,6 +631,15 @@ namespace gui {
 					nv = new ValueSpec_SkillLevel(v);
 				else if (cl == "cancel-level")
 					nv = new ValueSpec_CancelLevel(v);
+				else if (cl == "delta-hp")
+					nv = new ValueSpec_DeltaHP(v);
+				else if (cl == "real-damage")
+					nv = new ValueSpec_RealDamage(v);
+				else if (cl == "player-stun")
+					nv = new ValueSpec_PlayerStun(v);
+				else if (v.get_optional<bool>("<xmlattr>.use_clip").value_or(false)) {
+					nv = new ValueSpec_PlayerClip(v);
+				}
 				//else if (cl == "hitstop")
 					//nv = new Value(v);
 				else

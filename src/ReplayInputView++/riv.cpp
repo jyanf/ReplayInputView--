@@ -261,7 +261,9 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 			invulBullet[i] = player->projectileInvulTimer;
 			invulGrab[i] = player->grabInvulTimer;
 			unblockable[i] = player->unknown4AA;//blockDisabled
+			gui::ValueSpec_PlayerClip::Insert(player);
 		}
+		gui::ValueSpec_PlayerClip::Swap();
 		return ogUpdateMovement(This);
 	}
 //static void draw_debug_info(void* This) {
