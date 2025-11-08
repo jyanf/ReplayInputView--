@@ -14,8 +14,7 @@ namespace info {
     const LPDIRECT3D9& pd3d = *(LPDIRECT3D9*)(0x8A0E2C);
     CRITICAL_SECTION& d3dMutex = *reinterpret_cast<CRITICAL_SECTION*>(0x8A0E14);
 	const LPDIRECT3DSWAPCHAIN9& pd3dSwapChain = *(LPDIRECT3DSWAPCHAIN9*)(0x8A0E34);
-	const bool& d3dWindowed = *(bool*)(0x8A0F88);
-
+    using riv::tex::d3dpp;
 
 	
     WNDPROC Vice::ogMainWndProc = NULL;
@@ -41,7 +40,7 @@ struct ViceThreadParams {
 	int width, height;
 };
     bool Vice::createWnd() {
-        if (!d3dWindowed) {
+        if (!d3dpp.Windowed) {
             return false;
         }
         HANDLE duplicatedHandle = NULL;
@@ -85,7 +84,7 @@ struct ViceThreadParams {
 		return true;
 	}
     bool Vice::CreateD3D(HWND hwnd) {
-        if (!d3dWindowed) {
+        if (!d3dpp.Windowed) {
             //MessageBoxW(NULL, L"当前为全屏模式，无法创建Direct3D设备！", L"错误", MB_ICONERROR);
 			//hideWnd(hwnd);
             return false;

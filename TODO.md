@@ -71,7 +71,9 @@
 
 - [ ] layout针对common 1000+
 
-- [ ] d3d9STENCIL并集绘制框
+- [x] d3d9STENCIL并集绘制框
+
+  - [x] 边框也？
 
 - [ ] sprite可自定义基点/白框
 

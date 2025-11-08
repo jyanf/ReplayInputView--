@@ -145,6 +145,8 @@ inline auto iniProxy = Config{
 		,addBool<"JuggleMeter">(true)
 		,addBool<"ArmorMeter">(true)
 		,addBool<"Hitbox.FadeByHitstop">(true)
+		,addBool<"StencilTest.Enabled">(true)
+			,addBool<"StencilTest.OuterMostOnly">(true)
 		,addField<"p%d.Character", MultiField<cfg::_supported_types::Integer>>({
 			true, true,
 			true, true

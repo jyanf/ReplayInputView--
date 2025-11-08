@@ -202,8 +202,7 @@ static SokuLib::DrawUtils::Rect<SokuLib::Vector2f> precised_vertex(const FloatRe
 	return rect;
 }
 template <int d = 0>
-static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor)
-{
+static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor) {
 	if (rotation) {
 		SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect;
 		SokuLib::Vector2f da = rotation->pt1.to<float>(), db = rotation->pt2.to<float>();
@@ -255,18 +254,75 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 		rectangle.setRect(rect);//精度尼玛掉完了
 	}
 
+	/*if constexpr (fill_only) {
+		auto* vtx = rectangle.getVertex();
+		for (int i = 0; i < 4; i++) {
+			auto& v =const_cast<tex::Vertex*>(vtx)[i];
+			v.color = fillColor;
+		}
+		SokuLib::textureMgr.setTexture(0, 0);
+		SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, vtx, sizeof(*vtx));
+	} else {
+	}*/
 	rectangle.setFillColor(fillColor); //if (d) rectangle.fillColors[d - 1] = rectangle.fillColors[d + 1] = Color::Transparent;
 	rectangle.setBorderColor(borderColor); //if (d) rectangle.borderColors[d-1] = rectangle.borderColors[d+1] = Color::Transparent;
 	rectangle.draw();
+}
 
+#define IS_STENCIL_SUPPORTED(d3dpp) ( d3dpp.EnableAutoDepthStencil \
+&& (d3dpp.AutoDepthStencilFormat == D3DFMT_D24S8 \
+	|| d3dpp.AutoDepthStencilFormat == D3DFMT_D24X4S4 \
+	|| d3dpp.AutoDepthStencilFormat == D3DFMT_D24FS8 \
+	|| d3dpp.AutoDepthStencilFormat == D3DFMT_D15S1 \
+	) \
+)
+template<int d = 0>
+static void draw_fill_with_stencil(int n, const Box(&boxes)[], RotationBox* const (&rt)[], Color& fill, Color& outline) {
+	if (n<=0) return;
+	auto scp = tex::RendererGuard();
+	scp.setRenderState(D3DRS_COLORWRITEENABLE, FALSE)
+		.setRenderState(D3DRS_STENCILENABLE, TRUE).setRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS).setRenderState(D3DRS_STENCILREF, 1)
+		.setRenderState(D3DRS_STENCILMASK, 0xFF).setRenderState(D3DRS_STENCILWRITEMASK, 0xFF)
+		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE)
+		.setRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_REPLACE).setRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_REPLACE)
+		//transparent also ok
+		.setRenderState(D3DRS_ALPHATESTENABLE, FALSE)
+		.setRenderState(D3DRS_ZENABLE, FALSE).setRenderState(D3DRS_ZWRITEENABLE, FALSE);
+	;
+	SokuLib::pd3dDev->Clear(0, nullptr, D3DCLEAR_STENCIL, 0, 1, 0);
 
-	/*if (d) {
-		int old;
-		old = SetRenderMode(2);
-		rectangle.setFillColor(Color::Transparent);
-		rectangle.draw();
-		SetRenderMode(old);
-	}*/
+	for (int i = 0; i < n; ++i) {
+		drawBox<d-1>(boxes[i], rt[i], 0, fill);
+	}
+	constexpr LONG d3dColorWriteEnable_ALL = D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA;
+	scp.setRenderState(D3DRS_COLORWRITEENABLE, d3dColorWriteEnable_ALL)
+		.setRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL).setRenderState(D3DRS_STENCILREF, 1)
+		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP)
+		.setRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_KEEP).setRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_KEEP)
+	;
+	//fullscreen render
+	const UINT &w = tex::d3dpp.BackBufferWidth, &h = tex::d3dpp.BackBufferHeight;
+	static std::array<tex::Vertex, 4> vtx{{
+		{0,0,	0, 1.f, 0, 0,0},
+		{0,h,	0, 1.f, 0, 0,1},
+		{w,0,	0, 1.f, 0, 1,0},
+		{w,h,	0, 1.f, 0, 1,1},
+	}};
+	for (auto& v : vtx) { v.color = fill; }
+	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vtx.data(), sizeof(vtx[0]));
+	fill = 0;
+	if (iniProxy["BoxDisplay"_l]["StencilTest.OuterMostOnly"_l]) {
+		scp.setRenderState(D3DRS_COLORWRITEENABLE, d3dColorWriteEnable_ALL)
+			.setRenderState(D3DRS_STENCILENABLE, TRUE)
+			.setRenderState(D3DRS_STENCILFUNC, D3DCMP_NOTEQUAL).setRenderState(D3DRS_STENCILREF, 1)
+			//.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP)
+			//.setRenderState(D3DRS_STENCILMASK, 0xFF).setRenderState(D3DRS_STENCILWRITEMASK, 0x00)
+		;
+		for (int i = 0; i < n; ++i) {
+			drawBox<d>(boxes[i], rt[i], outline, 0);
+		}
+		outline = 0;
+	}
 }
 
 void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color border)
@@ -337,8 +393,7 @@ void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbre
 }
 
 
-bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
-{
+bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul) {
 	if (player.boxData.hurtBoxCount > 5)
 		return false;
 	auto flags = player.gameData.frameData ? &player.gameData.frameData->frameFlags : nullptr;
@@ -375,10 +430,22 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul)
 			addline = colorProfile["Hurtbox.InvulLine.Bullet"_l];
 		}
 	}
+	fill *= BOXES_ALPHA; fill2 *= BOXES_ALPHA;
+	if (player.boxData.hurtBoxCount > 1
+		&& iniProxy["BoxDisplay"_l]["StencilTest.Enabled"_l] && IS_STENCIL_SUPPORTED(tex::d3dpp)
+		) {
+		draw_fill_with_stencil(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill, outline);
+		if (addline) {
+			if (iniProxy["BoxDisplay"_l]["StencilTest.OuterMostOnly"_l])
+				draw_fill_with_stencil<-3>(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill2, addline);
+			else
+				draw_fill_with_stencil<-1>(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill2, addline);
+		}
+	}
 	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
-		drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
-		if(addline)
-			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2 * BOXES_ALPHA);
+		if (outline.color || fill.color) drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill);
+		if(addline.color || fill2.color)
+			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2);
 	}
 	return player.boxData.hurtBoxCount;
 }
@@ -400,38 +467,15 @@ bool drawHitBoxes(const GameObjectBase& object) {
 		else
 			fill = Color::Transparent;
 	}
-	auto scp = tex::RendererGuard();
-	scp.setRenderState(D3DRS_COLORWRITEENABLE, FALSE)
-		.setRenderState(D3DRS_STENCILENABLE, TRUE)
-		.setRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS)
-		.setRenderState(D3DRS_STENCILREF, 1)
-		.setRenderState(D3DRS_STENCILMASK, 0xFF)
-		.setRenderState(D3DRS_STENCILWRITEMASK, 0xFF)
-		.setRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_REPLACE)
-		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE)
-		.setRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_REPLACE);
-	SokuLib::pd3dDev->Clear(0, nullptr, D3DCLEAR_STENCIL, 0, 0, 0);
-	//Box obb{};
+	
 	fill *= BOXES_ALPHA;
-	for (int i = 0; i < object.boxData.hitBoxCount; i++) {
-		//obb.left = min(obb.left, object.boxData.hitBoxes[i].left);
-		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], 0, fill);
+	if (object.boxData.hitBoxCount > 1
+	&& iniProxy["BoxDisplay"_l]["StencilTest.Enabled"_l] && IS_STENCIL_SUPPORTED(tex::d3dpp)
+	) {
+		draw_fill_with_stencil(object.boxData.hitBoxCount, object.boxData.hitBoxes, object.boxData.hitBoxesRotation, fill, outline);
 	}
-	scp.setRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA)
-		.setRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL)
-		.setRenderState(D3DRS_STENCILREF, 1)
-		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
-	const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
-	tex::Vertex v[] = {
-		{0,0,											0, 1.f, fill, 0,0},
-		{0,d3dpp.BackBufferHeight,						0, 1.f, fill, 0,1},
-		{d3dpp.BackBufferWidth, 0,						0, 1.f, fill, 1,0},
-		{d3dpp.BackBufferWidth,d3dpp.BackBufferHeight,	0, 1.f, fill, 1,1},
-	};
-	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(*v));
-	scp.resetRenderState();
-	for (int i = 0; i < object.boxData.hitBoxCount; i++) {
-		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, 0);
+	if (outline.color || fill.color) for (int i = 0; i < object.boxData.hitBoxCount; i++) {
+		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill);
 	}
 	return object.boxData.hitBoxCount;
 }
@@ -462,14 +506,25 @@ bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
 	fill = hurtbox_active ? outline : Color::Transparent;
 	bool drawed = false;
 	if (!hurtbreak && object.boxData.hurtBoxCount <= 5) {
-		for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
+		if (spec.SharedBox) {
+			if (!hurtbox_active && hitbox_active)
+				outline.r *= 0.9, outline.g *= 0.9, outline.b *= 0.9;
+			fill *= (hitbox_active ? 0.6 : 1);
+		}
+		fill *= BOXES_ALPHA;
+		if (object.boxData.hurtBoxCount > 1
+		&& iniProxy["BoxDisplay"_l]["StencilTest.Enabled"_l] && IS_STENCIL_SUPPORTED(tex::d3dpp)
+		) {
 			if (spec.SharedBox)
-				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], 
-					(!hurtbox_active && hitbox_active ? (outline.r *= 0.9, outline.g *= 0.9, outline.b *= 0.9, outline) : outline ), 
-					fill * BOXES_ALPHA * (hitbox_active ? 0.6 : 1)
-				);
+				draw_fill_with_stencil<1>(object.boxData.hurtBoxCount, object.boxData.hurtBoxes, object.boxData.hurtBoxesRotation, fill, outline);
 			else
-				drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill * BOXES_ALPHA);
+				draw_fill_with_stencil(object.boxData.hurtBoxCount, object.boxData.hurtBoxes, object.boxData.hurtBoxesRotation, fill, outline);
+		}
+		if (outline.color || fill.color) for (int i = 0; i < object.boxData.hurtBoxCount; i++) {
+			if (spec.SharedBox)
+				drawBox<1>(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill);
+			else
+				drawBox(object.boxData.hurtBoxes[i], object.boxData.hurtBoxesRotation[i], outline, fill);
 			drawed = true;
 		}
 	}
@@ -485,8 +540,15 @@ bool drawBulletBoxes(const GameObject& object, bool hurtbreak)
 			fill = Color::Transparent;
 	}
 	if (!hurtbreak && object.boxData.hitBoxCount <= 5) {
-		for (int i = 0; i < object.boxData.hitBoxCount; i++) {
-			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
+		fill *= BOXES_ALPHA;
+		if (object.boxData.hitBoxCount > 1
+			&& iniProxy["BoxDisplay"_l]["StencilTest.Enabled"_l] && IS_STENCIL_SUPPORTED(tex::d3dpp)
+			) {
+			draw_fill_with_stencil(object.boxData.hitBoxCount, object.boxData.hitBoxes, object.boxData.hitBoxesRotation, fill, outline);
+			fill = 0;
+		}
+		if (outline.color || fill.color) for (int i = 0; i < object.boxData.hitBoxCount; i++) {
+			drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill);
 			drawed = true;
 		}
 	}

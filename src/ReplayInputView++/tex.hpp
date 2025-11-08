@@ -19,6 +19,7 @@ using SokuLib::Vector2f;
 using SokuLib::DrawUtils::Vertex;
 using SokuLib::DrawUtils::FloatRect;
 using Color = SokuLib::DrawUtils::DxSokuColor;
+inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 
 	int create_texture(int offset);
 	int create_texture(LPCSTR name, int* width = nullptr, int* height = nullptr);
