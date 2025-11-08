@@ -44,7 +44,7 @@ This xml has expanded features out of original soku layout system, implemented b
 		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
 		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1" color_bottom="0xa0a0a0"/>
 		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xffffff" color_bottom="0x7070a0"/>
-		<font id="4"	class="field-names-big"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="true" height="18" spacing="0" color_bottom="0xa0a0a0"/>
+		<font id="4"	class="field-names-big"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="true" height="18" spacing="0" color_bottom="0xcccccc"/>
 		<font id="5"	class="field-names-gray"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0"/>
 		<font id="6"	class="field-names-blue"	name="Smiley Sans Oblique"		stroke="true"	bold="false"	wrap="true" height="16" spacing="0" color_top="0xffffff" color_bottom="0x7070a0"/>
 		<font id="10"	class="field-string-plain"	name="Tahoma"					stroke="true"	bold="false"	wrap="true" height="16" spacing="1"/>
@@ -195,16 +195,16 @@ This xml has expanded features out of original soku layout system, implemented b
 			<field class="result-absorbed" show_if="20=5" xoffset="92">
 				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with absorption level."/>
 			</field>
-			<field class="result-high-density" show_if="20=6" xoffset="92">
+			<field class="result-grazed" show_if="20=6" xoffset="92">
 				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: bullet grazed."/>
 			</field>
 			<field class="result-hit-armor" show_if="20=7" xoffset="92">
 				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit armor."/>
 			</field>
-			<field class="result-high-density" show_if="20=8" xoffset="92">
+			<field class="result-same-density" show_if="20=8" xoffset="92">
 				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with same density."/>
 			</field>
-			<field class="result-high-density" show_if="20=9" xoffset="92">
+			<field class="result-hit-entity" show_if="20=9" xoffset="92">
 				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit entity."/>
 			</field>
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
@@ -415,7 +415,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18" description="Render Color:  %s"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="26">Shader</textbox>
-			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18" description="Shader's type: {0:NONE, 1:GRAYSCALE, 2:OVERLAY, 3:GLOW} &#10; with shader color:  %s"/>
+			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18" description="Shader's type: { 0:NONE, 1:GRAYSCALE, 2:OVERLAY, 3:GLOW } &#10;Shader's color:&#10;  %s"/>
 			<number value_id="3" number_id="310" xoffset="211" yoffset="21"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="46">Scale X-Y</textbox>
@@ -440,7 +440,7 @@ This xml has expanded features out of original soku layout system, implemented b
 				<textbox font_id="11" xoffset="0" yoffset="0">
 				<![CDATA[*          ;]]>
 				</textbox>
-				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode: {  0:NONE,&#10;	1:NORMAL, 2:ADD, 3:SUB, 4:MUL }&#10;Fixed color:&#10;	%s" />
+				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" description="Blend mode: {  0:NONE, 1:NORMAL,&#10;  2:ADD, 3:SUB, 4:MUL }&#10;Fixed color:&#10;  %s" />
 				<number value_id="4" number_id="310" xoffset="133" yoffset="-4"/>
 				<number value_id="6" number_id="320" xoffset="43" yoffset="-7"/>
 				<number value_id="7" number_id="320" xoffset="76" yoffset="-7"/>
@@ -458,8 +458,8 @@ This xml has expanded features out of original soku layout system, implemented b
 		
 	</sublayout>
 	<sublayout class="Object" inherit="Basic"> <pad width="208" height="300"/> <back ref_id="225"/>
-		<title xoffset="0" yoffset="-25"> <pad width="60" height="24"/> <back ref_id="215"/> 
-			<![CDATA[ Object   ]]>
+		<title font_id="2" xoffset="0" yoffset="-29"> <pad width="60" height="24"/> <back ref_id="215"/>
+			<![CDATA[ <color 38e3ff>Object</color>   ]]>
 		</title>
 		<values>
 			<value id="1" class="graze-counter" type="short"><offset hex="0x394"/></value>
@@ -467,6 +467,8 @@ This xml has expanded features out of original soku layout system, implemented b
 			<value id="3" class="entity-hp" type="short"><offset hex="0x184"/></value>
 			<value id="4" class="collision-limit" type="char"><offset hex="0x194"/></value>
 			<value id="5" class="layer" type="char"><offset hex="0x358"/></value>
+			<value id="6" class="no-stop" type="short"><offset hex="0x360"/></value>
+			<value class="parentA" id="9" type="ptr"><offset hex="0x174"/></value>
 			<value id="10" class="parent-player" type="ptr"><offset hex="0x364"/></value>
 			<value id="11" class="parent-object" type="ptr"><offset hex="0x368"/></value>
 			<value id="12" class="parent-playerB" type="ptr"><offset hex="0x398"/></value>
@@ -503,7 +505,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			</value>
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[3] &#10; customData[0~2]"><![CDATA[General<br> counters]]></textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[6]; //+0x36C~0x37A &#10;float gpFloat[3]  //+0x37C~0x384&#10;float[0~2] *customData; //+0x35C">
+				<![CDATA[General<br> counters]]>
+			</textbox>
 			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
 				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
@@ -515,54 +519,95 @@ This xml has expanded features out of original soku layout system, implemented b
 				</field>
 			</grid>
 			<grid class="gpFloat-and-customData" xgrid="70" ygrid="16" rowmax="3" xoffset="0" stack="true"> <pad width="200" height="32"/>
-				<number number_id="316" value_id="110" xoffset="69" yoffset="-2"/>
-				<number number_id="316" value_id="111" xoffset="69" yoffset="-2"/>
-				<number number_id="316" value_id="112" xoffset="69" yoffset="-2"/>
+				<number number_id="316" value_id="110" xoffset="69" yoffset="-5"/>
+				<number number_id="316" value_id="111" xoffset="69" yoffset="-5"/>
+				<number number_id="316" value_id="112" xoffset="69" yoffset="-5"/>
 				<field yoffset="3" description="The first 2 of customData[n], &#10;usually means angle&amp;speed."> <pad width="140" height="16"/>
-					<textbox font_id="10" xoffset="-10" yoffset="-2">*</textbox>
+					<textbox font_id="10" xoffset="-5" yoffset="-4">*</textbox>
 					<number number_id="316" value_id="113" xoffset="69" yoffset="-5"/>
 				</field>
 				<number number_id="316" value_id="114" xoffset="69" yoffset="-2"/>
-				<field description="customData[2], generally used to &#10;specify sequenceId on object creation." yoffset="3"> <pad width="56" height="16"/>
+				<field description="customData[2], generally used to &#10;specify sequenceId on object creation." yoffset="3"> <pad width="62" height="16"/>
 					<number number_id="313" value_id="115" xoffset="54" yoffset="-5"/>
 				</field>
 			</grid>
 		</field>
-		<field class="collide"> <pad width="208" height="30"/>
-			<textbox font_id="4" xoffset="0" yoffset="4">&#32;Hits&#32;</textbox>
-			<number value_id="4" number_id="331" xoffset="80" yoffset="8"/>
-			<textbox font_id="4" xoffset="0" yoffset="4">&#32;Recover&#32;</textbox>
-			<field hide_if="1=0" xoffset="60" yoffset="1">
-				<textbox font_id="5" xoffset="0"><![CDATA[Graze<br> recovered]]> </textbox>
-				<number value_id="1" number_id="341" xoffset="80" yoffset="1"/>
+		<field class="collide"> <pad width="208" height="40"/>
+			<textbox font_id="4" xoffset="3" yoffset="4">
+				<![CDATA[<color ff5356>Hits</color>]]>
+			</textbox>
+			<number value_id="4" number_id="331" xoffset="50" yoffset="20"/>
+			<textbox font_id="4" xoffset="58" yoffset="4" description="被擦/相杀时的判定复活计数，&#10;具体视不同弹幕的实现而变化，故仅供参考">
+				<![CDATA[Recovery {                    ,<br>]]>
+				<![CDATA[                                     }]]>
+			</textbox>
+			<field _hide_if="2=0" xoffset="128" yoffset="4">
+				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x short GameObject::projectileHit"><![CDATA[collided:]]></textbox>
+				<number value_id="2" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
-			<field hide_if="2=0" xoffset="120" yoffset="1">
-				<textbox font_id="5" xoffset="0"><![CDATA[Collide<br> recovered]]></textbox>
-				<number value_id="2" number_id="341" xoffset="80" yoffset="1"/>
+			<field _hide_if="1=0" xoffset="128" yoffset="22">
+				<textbox font_id="5" xoffset="0" yoffset="3"><![CDATA[grazed:]]> </textbox>
+				<number value_id="1" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
+		</field>
+		<field class="flag-entity"> <pad width="" height="24"/>
+			<textbox font_id="4" xoffset="3" yoffset="4">
+				<![CDATA[<color 78dce8>Entity HP</color>]]>
+			</textbox>
+			<number value_id="3" number_id="341" xoffset="130" yoffset="1"/>
 		</field>
 		<field class="density-levels"> <pad width="208" height="24"/>
 			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
-				<textbox font_id="5" xoffset="3" yoffset="4" description="相杀等级">Density level</textbox>
-				<number number_id="351" value_id="23" max="5" min="0" xoffset="25"/>
-				<icon ref_id="203" tile="13,1,0" xoffset="23" yoffset=""/>
-				<number number_id="332" value_id="20" xoffset="86" yoffset="1"/>
+				<textbox font_id="4" xoffset="-67" yoffset="2" 
+				description="Reused move lock.">
+					<![CDATA[<color 7effaf>Density level</color>]]>
+				</textbox>
+				<number number_id="351" value_id="23" max="5" min="0" xoffset="46"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="44" yoffset=""/>
+				<number number_id="332" value_id="20" xoffset="107" yoffset="1"/>
 			</field>
 			<field class="action-lock" xoffset="70" stack="true" hide_if="21=0"> <pad height="24"/>
-				<textbox font_id="5" xoffset="3" yoffset="4" description="用于紫的隙间">Absorb level</textbox>
-				<number number_id="351" value_id="24" max="5" min="0" xoffset="25"/>
-				<icon ref_id="203" tile="13,1,0" xoffset="23" yoffset=""/>
-				<number number_id="332" value_id="21" xoffset="86" yoffset="1"/>
+				<textbox font_id="4" xoffset="-67" yoffset="2" 
+				description="Reused action lock,&#10; , but for P2 gap there's bug that ignores this limit.">
+					<![CDATA[<color e88eff>Absorb level</color>]]>
+				</textbox>
+				<number number_id="351" value_id="24" max="5" min="0" xoffset="46"/>
+				<icon ref_id="203" tile="13,1,0" xoffset="44" yoffset=""/>
+				<number number_id="332" value_id="21" xoffset="107" yoffset="1"/>
 			</field>
 		</field>
-		<field class="flag-entity">
-			<textbox font_id="4"></textbox>
-			<number value_id="3" number_id="341" xoffset="90" yoffset="-3"/>
+		<field class="others"> <pad width="208" height="30"/>
+			<textbox font_id="4" xoffset="3" yoffset="4">Others</textbox>
+			<textbox font_id="5" xoffset="120" yoffset="6" 
+				description="//+0x358 char GameObject::layer&#10;Render order: &#10;  { positive: object over characters, negative: object under characters } ">
+				Layer
+			</textbox>
+			<number number_id="310" value_id="5" xoffset="180" yoffset="2"/>
+			<grid xgrid="25" ygrid="25" xoffset="8" yoffset="28" rowmax="8">
+				<!--link class="parent-player" value_id="10" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
+					<icon ref_id="102" tile="13,3,31"/>
+				</link>
+				<link class="parent-object" value_id="11" description="点击跳转[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
+					<icon ref_id="102" tile="13,3,30"/>
+				</link-->
+				<field hide_if="6=0">
+					<icon ref_id="102" tile="13,3,6" description="//+0x360 short &#10;Won't be affected by owner's timestop."/>
+				</field>
+				<link class="parent-player" value_id="12" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
+					<icon ref_id="102" tile="13,3,31"/>
+				</link>
+				<link class="ptr-parentA" value_id="9" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+					<icon ref_id="102" tile="13,3,29"/>
+				</link>
+				<link class="parent-object" value_id="13" description="点击跳转[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
+					<icon ref_id="102" tile="13,3,30"/>
+				</link>
+			</grid>	
 		</field>
 	</sublayout>
 	<sublayout class="Player" inherit="Basic"> <pad width="208" height="312"/> <back ref_id="225"/>
 		<title font_id="2" xoffset="0" yoffset="-29"> <pad width="60" height="24"/> <back ref_id="215"/>
-			&#32;Player&#32;&#32;&#32;
+			<![CDATA[ <color 38b1ff>Player</color>   ]]>
 		</title>
 		<values>
 			<value id="1" class="hp" type="short"><offset hex="0x184"/></value>

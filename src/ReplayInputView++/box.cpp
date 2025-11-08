@@ -400,8 +400,39 @@ bool drawHitBoxes(const GameObjectBase& object) {
 		else
 			fill = Color::Transparent;
 	}
-	for (int i = 0; i < object.boxData.hitBoxCount; i++)
-		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, fill * BOXES_ALPHA);
+	auto scp = tex::RendererGuard();
+	scp.setRenderState(D3DRS_COLORWRITEENABLE, FALSE)
+		.setRenderState(D3DRS_STENCILENABLE, TRUE)
+		.setRenderState(D3DRS_STENCILFUNC, D3DCMP_ALWAYS)
+		.setRenderState(D3DRS_STENCILREF, 1)
+		.setRenderState(D3DRS_STENCILMASK, 0xFF)
+		.setRenderState(D3DRS_STENCILWRITEMASK, 0xFF)
+		.setRenderState(D3DRS_STENCILFAIL, D3DSTENCILOP_REPLACE)
+		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_REPLACE)
+		.setRenderState(D3DRS_STENCILZFAIL, D3DSTENCILOP_REPLACE);
+	SokuLib::pd3dDev->Clear(0, nullptr, D3DCLEAR_STENCIL, 0, 0, 0);
+	//Box obb{};
+	fill *= BOXES_ALPHA;
+	for (int i = 0; i < object.boxData.hitBoxCount; i++) {
+		//obb.left = min(obb.left, object.boxData.hitBoxes[i].left);
+		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], 0, fill);
+	}
+	scp.setRenderState(D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE | D3DCOLORWRITEENABLE_ALPHA)
+		.setRenderState(D3DRS_STENCILFUNC, D3DCMP_EQUAL)
+		.setRenderState(D3DRS_STENCILREF, 1)
+		.setRenderState(D3DRS_STENCILPASS, D3DSTENCILOP_KEEP);
+	const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
+	tex::Vertex v[] = {
+		{0,0,											0, 1.f, fill, 0,0},
+		{0,d3dpp.BackBufferHeight,						0, 1.f, fill, 0,1},
+		{d3dpp.BackBufferWidth, 0,						0, 1.f, fill, 1,0},
+		{d3dpp.BackBufferWidth,d3dpp.BackBufferHeight,	0, 1.f, fill, 1,1},
+	};
+	SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, v, sizeof(*v));
+	scp.resetRenderState();
+	for (int i = 0; i < object.boxData.hitBoxCount; i++) {
+		drawBox(object.boxData.hitBoxes[i], object.boxData.hitBoxesRotation[i], outline, 0);
+	}
 	return object.boxData.hitBoxCount;
 }
 
