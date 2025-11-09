@@ -209,8 +209,99 @@ namespace gui {
 					&& obj.gameData.frameData->attackFlags.midHit
 					&& obj.gameData.frameData->attackFlags.lowHit;
 			}},
-						
-			
+			{"attack-stagger", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk1;
+			}},
+			{"attack-knockback", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& !obj.gameData.frameData->attackFlags.unk1;
+			}},
+			{"attack-ungrazable", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk800000;
+			}},
+			{"attack-drain", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk1000000;
+			}},		
+			{"attack-counter-hit", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.crashHit;
+			}},
+			{"attack-unreflectable", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk20000;
+			}},
+			{"attack-friendly-fire", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.hitsAll;
+			}},
+			{"attack-unblockable", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unblockable;
+			}},
+			{"attack-air-unblockable", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.boxData.hitBoxCount > 0
+					&& !obj.gameData.frameData->attackFlags.unblockable
+					&& !obj.gameData.frameData->attackFlags.airBlockable;
+			}},
+			{"attack-hitWB", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk40;
+			}},
+			{"attack-crushWB", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.guardCrush;
+			}},
+			{"attack-ignore-armor", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk20;
+			}},
+			{"attack-skill", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk800;
+			}},
+			{"attack-spell", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk1000;
+			}},
+			{"attack-parry-air", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk2000;
+			}},
+			{"attack-parry-high", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk4000;
+			}},
+			{"attack-parry-low", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.knockBack;
+			}},
+			{"attack-parry-obj", [](void* ptr) {
+				auto& obj = *reinterpret_cast<SokuLib::v2::GameObjectBase*>(ptr);
+				return obj.gameData.frameData
+					&& obj.gameData.frameData->attackFlags.unk10000;
+			}},
+
 			{"center", [](void* ptr) {
 				auto& obj = *reinterpret_cast<SokuLib::v2::AnimationObject*>(ptr);
 				return abs(obj.center.x) > FLT_EPSILON || abs(obj.center.y) > FLT_EPSILON;
@@ -946,7 +1037,7 @@ namespace gui {
 	void Sprite::render() const {
 		Element::render();
 		if (!visible || !dxHandle) return;
-		static SokuLib::DrawUtils::RectangleShape temp; temp.setFillColor(0);
+		static SokuLib::DrawUtils::RectangleShape temp;
 		//tex border
 		//temp.setRect({vertices[0].x-1, vertices[0].y-1, vertices[3].x+1, vertices[3].y+1});
 		 //temp.setBorderColor
@@ -964,13 +1055,13 @@ namespace gui {
 			Vector2f{vertices[3].x, vertices[3].y}+d,
 			Vector2f{vertices[2].x, vertices[2].y}+d2,
 			});
-		temp.draw();
+		temp.setFillColor(0); temp.setBorderColor(0xA0FFFFFF); temp.draw();
 		SokuLib::textureMgr.setTexture(dxHandle, 0); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
 		//SokuLib::SpriteEx::rotate
 		//base pt
-		temp.setFillColor(0xFFAAAAAA);
+		auto scp = riv::tex::RendererGuard();
 		temp.setPosition(pos.to<int>() - SokuLib::Vector2i{ 2,2 }); temp.setSize({ 4,4 });
-		temp.draw();
+		temp.setFillColor(0xA0000000); temp.setBorderColor(0xFFFFFFFF); temp.draw();
 	}
 
 	void Layout::update(_box& parea, void* ctx) {

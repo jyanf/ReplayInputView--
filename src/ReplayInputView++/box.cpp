@@ -437,7 +437,7 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul) {
 		draw_fill_with_stencil(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill, outline);
 		if (addline) {
 			if (iniProxy["BoxDisplay"_l]["StencilTest.OuterMostOnly"_l])
-				draw_fill_with_stencil<-3>(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill2, addline);
+				draw_fill_with_stencil<-2>(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill2, addline);
 			else
 				draw_fill_with_stencil<-1>(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill2, addline);
 		}
@@ -445,7 +445,11 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul) {
 	for (int i = 0; i < player.boxData.hurtBoxCount; i++) {
 		if (outline.color || fill.color) drawBox(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], outline, fill);
 		if(addline.color || fill2.color)
-			drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2);
+			if (iniProxy["BoxDisplay"_l]["StencilTest.OuterMostOnly"_l])
+				drawBox<-2>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2);
+			else
+				drawBox<-1>(player.boxData.hurtBoxes[i], player.boxData.hurtBoxesRotation[i], addline, fill2);
+
 	}
 	return player.boxData.hurtBoxCount;
 }
