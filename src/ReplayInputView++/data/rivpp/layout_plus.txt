@@ -131,9 +131,7 @@ This xml has expanded features out of original soku layout system, implemented b
 			<number value_id="1" number_id="300" xoffset="128" yoffset="-2" max="99999.00" min="-99999.00"/>
 			<number value_id="2" number_id="300" xoffset="204" yoffset="-2" max="99999.00" min="-99999.00"/>
 		</field>
-		<field class="speed">
-			<pad width="208" height="20"/>
-			<back ref_id="200"/>
+		<field class="speed"> <pad width="208" height="20"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Speed</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[(         ,         )]]>

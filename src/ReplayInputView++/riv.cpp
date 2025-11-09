@@ -95,7 +95,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		if (ret > 0 && ret < 4) {
 			//vice.destroyWnd();
 			vice.hideWnd(); vice.inter.focus = nullptr; 
-			show_debug = false;//auto on? to do later
+			//show_debug = false;//auto on? to do later
 			return ret;
 		}
 		bool focus_valid = !vice.inter.focus;
@@ -360,7 +360,9 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	int* delay = (int*)0x8A0FF8;
 
 	if (riv.enabled) {
-		
+		if (riv.show_debug != riv.vice.viceDisplay) {//ini turned on at start
+			riv.show_debug = riv.vice.toggleWnd();
+		}
 		static bool old_display_boxes = false;
 		static bool old_display_info = false;
 		static bool old_display_inputs = false;
@@ -473,6 +475,19 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			}
 			old_framestop = true;//fix
 		}
+		else if (riv.vice.viceDisplay) {
+			static bool old_hotkeys[PLAYERS_NUMBER] = { 0 };
+			auto& hotkey_value = iniProxy["Debug"_l]["Hotkey.p%d"_l].value;
+			for (int i = 0; i < PLAYERS_NUMBER; ++i) {
+				if (check_key(hotkey_value[i]) || (old_hotkeys[i] = false)) {
+					auto* player = riv::get_player(This, i);
+					if (player) {
+						riv.vice.inter.focus = player;
+						break;
+					}
+				}
+			}
+		}
 
 		riv.forwardIndex += riv.forwardStep;
 		if (riv.forwardCount>=0 && riv.forwardIndex >= riv.forwardCount) {
@@ -513,7 +528,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 				for (OfsAndCounter& o : mods2) { o.calc(info->state1[1].player && info->state1[1].player->teamId == 1 ? 1 : -1); }
 			}
 		}
-		riv.show_debug = riv.vice.viceDisplay;
+		//riv.show_debug = riv.vice.viceDisplay;
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess[ind])();

@@ -101,8 +101,11 @@ inline auto iniProxy = Config{
 	#endif // DAT_FILENAME
 		)
 	),
-	addSection<"Debug">(
-		addBool<"Enabled">(false)
+	addSection<"Debug">(addBool<"Enabled">(false)
+		,addField<"Hotkey.p%d", MultiField<cfg::_supported_types::Integer>>({
+			0x4F, 0x50,
+			0x51, 0x4B
+		})
 	),
 	addSection<"InputPanel">(
 		addField<"p%d.Enabled", MultiField<cfg::_supported_types::Integer>>({
