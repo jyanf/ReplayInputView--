@@ -687,7 +687,9 @@ This xml has expanded features out of original soku layout system, implemented b
 			<value id="66" class="timer-poise" type="short"><offset hex="0x4BC"/></value>
 			<value id="67" use_clip="true" class="timer-nogain" type="short"><offset hex="0x7f8"/></value>
 			<value id="68" use_clip="true" class="spellstop" type="short"><offset hex="0x4A6"/></value>
-
+			<value id="69" class="has-spotlight" type="bool"><offset hex="0x4CD"/></value>
+			<value id="70" class="spotlight-strength" type="short"><offset hex="0x4CE"/></value>
+			
 			<value id="100" class="gpShort[0]" type="short"><offset hex="0x7d0"/></value>
 			<value id="101" class="gpShort[1]" type="short"><offset hex="0x7d2"/></value>
 			<value id="102" class="gpShort[2]" type="short"><offset hex="0x7d4"/></value>
@@ -836,7 +838,10 @@ This xml has expanded features out of original soku layout system, implemented b
 					<icon ref_id="104" tile="13,3,14"/>
 					<number number_id="315" value_id="43" xoffset="65" yoffset="-1"/>
 				</field>
-				
+				<field class="calm-spotlight" hide_if="69=0"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,9" description="//+0x4CD bool; +0x4CE short; &#10;Obtains calm spotlight,&#10; healing points = (strength+5) every 10f."/>
+					<number number_id="310" value_id="70" xoffset="60" yoffset="-1"/>
+				</field>
 			</grid>
 			<grid class="integer-list" xgrid="42" ygrid="24" rowmax="5" xoffset="3">
 				<field class="grimoire" hide_if="44=0"> <pad width="40" height="24"/> <back ref_id="202"/>

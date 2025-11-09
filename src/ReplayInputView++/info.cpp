@@ -909,7 +909,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             Color(0xFFdfb3ff)
         );
         float ringRaius = (fanRadius + fanWidth / 2) * progress + (toler.x);
-        Draw2DCircle<128>(
+        Draw2DCircle<32>(
             SokuLib::pd3dDev,
             pos,
             ringRaius,
