@@ -55,9 +55,9 @@ This xml has expanded features out of original soku layout system, implemented b
 		<font id="20"	class="big-hint-string"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="true" height="30"/>
 	</fonts>
 	<sublayout class="None"> <pad width="205" height="500"/>
-		<field class="hint">
-			<icon ref_id="1" tile="2,4,0" description="" xoffset="0" yoffset="0" width="" height=""/>
-			<textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox>
+		<field class="hint" xoffset="-16" yoffset="-78">
+			<icon ref_id="1" description="" xoffset="0" yoffset="0" width="" height=""/>
+			<!--textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox-->
 		</field>
 	</sublayout>
 	<sublayout class="Mini" > <pad width="208" height="169"/> <back ref_id="221"/>

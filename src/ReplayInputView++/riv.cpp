@@ -360,9 +360,6 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 	int* delay = (int*)0x8A0FF8;
 
 	if (riv.enabled) {
-		if (riv.show_debug != riv.vice.viceDisplay) {//ini turned on at start
-			riv.show_debug = riv.vice.toggleWnd();
-		}
 		static bool old_display_boxes = false;
 		static bool old_display_info = false;
 		static bool old_display_inputs = false;
@@ -377,7 +374,9 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_display_boxes = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH
-			&& check_key(toggle_keys.display_info) || (old_display_info = false)) {
+		&& (check_key(toggle_keys.display_info) || riv.show_debug && !riv.vice.viceDisplay)
+		|| (old_display_info = false)
+		) {
 			if (!old_display_info) {
 				riv.show_debug = riv.vice.toggleWnd();
 				if (riv.show_debug) {
@@ -476,16 +475,24 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_framestop = true;//fix
 		}
 		else if (riv.vice.viceDisplay) {
-			static bool old_hotkeys[PLAYERS_NUMBER] = { 0 };
+			static bool old_hotkeys[PLAYERS_NUMBER+1] = { 0 };
 			auto& hotkey_value = iniProxy["Debug"_l]["Hotkey.p%d"_l].value;
-			for (int i = 0; i < PLAYERS_NUMBER; ++i) {
-				if (check_key(hotkey_value[i]) || (old_hotkeys[i] = false)) {
-					auto* player = riv::get_player(This, i);
-					if (player) {
-						riv.vice.inter.focus = player;
-						break;
+			for (int i = 1; i <= PLAYERS_NUMBER; ++i) {
+				if (check_key(hotkey_value[i-1]) || (old_hotkeys[i] = false)) {
+					if (!old_hotkeys[i]) {
+						auto* player = riv::get_player(This, i-1);
+						if (player) {
+							riv.vice.inter.focus = player;
+							old_hotkeys[i] = true;
+							break;
+						}
 					}
+					old_hotkeys[i] = true;
 				}
+			}
+			if (check_key(iniProxy["Debug"_l]["Hotkey.reset"_l]) || (old_hotkeys[0] = false)) {
+				if (!old_hotkeys[0]) riv.vice.inter.focus = nullptr;
+				old_hotkeys[0] = true;
 			}
 		}
 

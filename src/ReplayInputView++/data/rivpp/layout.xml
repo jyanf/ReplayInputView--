@@ -137,8 +137,8 @@
 	
 	
 	<!--Cursor hint-->
-	<static id="1" xposition="0" yposition="100" mirror="0">
-		<image name="hint.png" xposition="20" yposition="0" width="240" height="680"/>
+	<static id="1" xposition="0" yposition="0" mirror="0">
+		<image name="hint.png" xposition="0" yposition="0" width="240" height="975"/>
 	</static>
 	<static id="2" xposition="0" yposition="0" mirror="0">
 		<image name="cursor.png" xposition="0" yposition="0" width="32" height="32"/>

@@ -106,6 +106,7 @@ inline auto iniProxy = Config{
 			0x4F, 0x50,
 			0x51, 0x4B
 		})
+		,addInteger<"Hotkey.reset">(0x52)
 	),
 	addSection<"InputPanel">(
 		addField<"p%d.Enabled", MultiField<cfg::_supported_types::Integer>>({
