@@ -54,9 +54,9 @@ This xml has expanded features out of original soku layout system, implemented b
 		<font id="15"	class="console-string"		name="SimSun"					stroke="false"	bold="false"	wrap="true" height="14"/>
 		<font id="20"	class="big-hint-string"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="true" height="30"/>
 	</fonts>
-	<sublayout class="None"> <pad width="205" height="500"/>
+	<sublayout class="None">
 		<field class="hint" xoffset="-16" yoffset="-78">
-			<icon ref_id="1" description="" xoffset="0" yoffset="0" width="" height=""/>
+			<icon ref_id="1" description="Readme." xoffset="0" yoffset="0" width="" height=""/>
 			<!--textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox-->
 		</field>
 	</sublayout>
@@ -243,10 +243,12 @@ This xml has expanded features out of original soku layout system, implemented b
 					<icon class="attack-lowRB" ref_id="101" tile="13,2,4" description="Low rightblock."/>
 					<icon class="attack-bothRB" ref_id="101" tile="13,2,5" description="Always rightblock."/>
 					<icon class="attack-noRB" ref_id="101" tile="13,2,18" description="No rightblock."/>
-					<icon class="attack-knockback" ref_id="101" tile="13,2,16" description="Hit knockback(high)."/>
-					<icon class="attack-stagger" ref_id="101" tile="13,2,17" description="Hit stagger(low)."/>
+					<icon class="attack-knockback" ref_id="101" tile="13,2,16" description="Hit and knockback(high)."/>
+					<icon class="attack-stagger" ref_id="101" tile="13,2,17" description="Hit and stagger(low)."/>
 					<icon class="attack-counter-hit" ref_id="101" tile="13,2,15" description="Can induce counter hit."/>
 					<icon class="attack-unreflectable" ref_id="101" tile="13,2,19" description="Unreflectable."/>
+					<icon class="attack-spell" ref_id="101" tile="13,2,10" description="Spell attack tag."/>
+					<icon class="attack-skill" ref_id="101" tile="13,2,23" description="Skill attack tag."/>
 				</grid>
 				<grid class="grid-attack-types" xgrid="24" ygrid="24" rowmax="4" stack="true">
 					<!--always invisible so Pad is not counted-->

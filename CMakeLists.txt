@@ -47,6 +47,17 @@ set(CMAKE_INSTALL_PREFIX ${GAME_FOLDER_TH123})
 message(Install prefix: ${CMAKE_INSTALL_PREFIX})
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+set(VLD_ROOT "D:/Program Files (x86)/Visual Leak Detector"
+    CACHE PATH "Path to Visual Leak Detector installation directory")
+set(VLD_INCLUDE_DIR "${VLD_ROOT}/include")
+set(VLD_LIB_DIR "${VLD_ROOT}/lib/Win32")
+set(VLD_BIN_DIR "${VLD_ROOT}/bin/Win32")
+if(EXISTS "${VLD_INCLUDE_DIR}/vld.h" AND EXISTS "${VLD_LIB_DIR}/vld.lib")
+    message(STATUS "Found Visual Leak Detector at: ${VLD_ROOT}")
+else()
+    message(WARNING "VLD not found at ${VLD_ROOT}. Please adjust VLD_ROOT.")
+endif()
+
 if(SUIT_4_PLAYERS)
     add_definitions(-DSUIT_4_PLAYERS)
     add_definitions(-DPLAYERS_NUMBER=4)
@@ -100,13 +111,26 @@ target_compile_definitions("${PROJECT_NAME}" PRIVATE DIRECTINPUT_VERSION=0x0800 
 target_include_directories("${PROJECT_NAME}" PRIVATE include SokuLib/directx "src/${PROJECT_NAME}" ${Boost_INCLUDE_DIRS})
 target_link_directories("${PROJECT_NAME}" PRIVATE ${SOKULIB_PATH}/lib)
 target_link_options(${PROJECT_NAME} PRIVATE "/SUBSYSTEM:WINDOWS")
-target_link_libraries(
-        "${PROJECT_NAME}"
+target_link_libraries("${PROJECT_NAME}" PRIVATE
         SokuLib
         shlwapi
         d3d9
         d3dx9
 )
+if(MSVC)
+    message(=== linking VLD...=== ${VLD_LIB_DIR})
+    add_library(vld INTERFACE)
+    target_include_directories(vld INTERFACE "${VLD_INCLUDE_DIR}")
+    target_link_directories(vld INTERFACE "${VLD_LIB_DIR}")
+    target_link_libraries(vld INTERFACE  vld.lib)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND  COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${VLD_BIN_DIR}" "${CMAKE_INSTALL_PREFIX}/modules/${PROJECT_NAME}/" #"$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMENT "Copying Visual Leak Detector runtime DLLs..."
+    )
+endif()
+target_link_libraries("${PROJECT_NAME}" PRIVATE vld)
+
 
 install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION modules/${PROJECT_NAME}/)
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> ${CMAKE_CURRENT_SOURCE_DIR}${PROJECT_NAME}.ini DESTINATION modules/${PROJECT_NAME}/ OPTIONAL)
@@ -122,7 +146,7 @@ add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
 	COMMAND "${SHADY_CLI_PATH}" pack -m data
 		-o "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.dat"
 		"${CMAKE_CURRENT_SOURCE_DIR}/src/${PROJECT_NAME}/data"
-	DEPENDS ${SRC_RIV_Pack}
+	#DEPENDS ${SRC_RIV_Pack}
 	VERBATIM
 )
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND tasklist | findstr th123 && (taskkill /IM th123.exe /F) || (exit /b 0))

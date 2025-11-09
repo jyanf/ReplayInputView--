@@ -739,7 +739,11 @@ namespace gui {
 			}
 		}
 
-		name = xml::XmlHelper::get_array<string>(node, "inherit");
+		auto names = xml::XmlHelper::get_array<string>(node, "inherit");
+		parents.reserve(names.size());
+		for (auto& n : names)
+			parents.emplace_back(std::move(n), nullptr);
+		names.clear();
 		//for (auto& [key, v] : xml::XmlHelper::make_range(node.equal_range("field"))) {
 		for (auto& [key, v] : node) {
 			if (key == "field") {
@@ -756,30 +760,13 @@ namespace gui {
 	}
 
 	
-	void Layout::inheriting(std::map<string, Layout>& layouts, Layout& current) {
-		auto targets = std::move(current.name);
-		current.name.~vector();
-		new (&current.object) std::vector<const Layout*>();
-		auto& obj = current.object;
-		for (auto& name : targets) {
-			auto it = layouts.find(name);
-			if (it != layouts.end())
-				obj.push_back(&it->second);
+	inline void Layout::inheriting(std::map<string, Layout>& layouts, Layout& current) {
+		for (auto& [n, l] : current.parents) {
+			auto it = layouts.find(n);
+			if (it != layouts.end()) {
+				l = &it->second;
+			}
 		}
-
-		//if (!c.inherit || c.inherit->empty()) return;
-		//string parentName = *c.inherit;
-		//if (std::find(visited.begin(), visited.end(), c.name) != visited.end()) {
-		//	std::cerr << "Inheritance cycle detected involving " << c.name << "\n";
-		//	return;
-		//}
-		//visited.push_back(c.name);
-		//auto pit = containers.find(parentName);
-		//if (pit == containers.end()) {
-		//	std::cerr << "Parent container not found: " << parentName << "\n";
-		//	return;
-		//}
-		//return one;
 	}
 	
 	void RivDesign::load(const string& name, const string& name2) {
@@ -848,11 +835,11 @@ namespace gui {
 		if (!visible) return;
 		if (!ref_num) return;
 		using IVal = struct CNumberValue { void* vtable, * value; };
-		auto ival = reinterpret_cast<IVal*>(ref_num->number.value);
-		if (!ival || ival->vtable != (void*)0x85b2ac)
-			ref_num->number.set(&rounded);
-		else//avoid new&delete
-			ival->value = (void*)& rounded;
+		static auto CNSub = IVal{ (void*)0x85b2ac, nullptr };
+		CNSub.value = (void*) &rounded;
+		auto& ival = *reinterpret_cast<IVal**>(&ref_num->number.value);
+		if (ival) SokuLib::DeleteFct(ival);
+		ival = &CNSub;
 		int old = ref_num->number.size;
 		if (old!=0) {
 			int digits = 1 + log10(max(abs(rounded), 1));
@@ -863,6 +850,7 @@ namespace gui {
 		ref_num->renderPos(basept.x, basept.y);
 		ref_num->active = false;
 		std::swap(ref_num->number.size, old);
+		ival = nullptr;
 	}
 	
 	void Icon::render() const {
@@ -1065,7 +1053,7 @@ namespace gui {
 	}
 
 	void Layout::update(_box& parea, void* ctx) {
-		for (auto* l : object) {
+		for (auto& [n,l] : parents) {
 			if (!l) continue;
 			//progress
 			l->update(parea, ctx);
@@ -1086,7 +1074,7 @@ namespace gui {
 		parea.hold(b);
 	}
 	void Layout::render() const {
-		for (auto* l : object) {
+		for (auto& [n,l] : parents) {
 			if (!l) continue;
 			//progress
 			l->render();

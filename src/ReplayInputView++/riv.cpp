@@ -484,6 +484,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 						if (player) {
 							riv.vice.inter.focus = player;
 							old_hotkeys[i] = true;
+							riv.vice.dirty = true;
 							break;
 						}
 					}
@@ -491,7 +492,10 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 				}
 			}
 			if (check_key(iniProxy["Debug"_l]["Hotkey.reset"_l]) || (old_hotkeys[0] = false)) {
-				if (!old_hotkeys[0]) riv.vice.inter.focus = nullptr;
+				if (!old_hotkeys[0]) {
+					riv.vice.inter.focus = nullptr;
+					riv.vice.dirty = true;
+				}
 				old_hotkeys[0] = true;
 			}
 		}

@@ -735,22 +735,19 @@ namespace gui {
 
 	class Layout : public Container, public _stacker {
 		//std::map<string, Canva> canvases;
-		union {
-			std::vector<Layout*> object;
-			std::vector<string> name;
-		};
+		std::vector<std::pair<string, Layout*>> parents;
 		std::map<int, Value*> values;
 		std::vector<TitleBar> titles;
 	public:
 		void load(noderef node);
 		inline Layout(noderef node) : Container(node) {//stack true
-			new (&name) std::vector<string>();
 			load(node);
 		}
 		Layout(Layout&&) noexcept = default;
 		inline ~Layout() {
 			for (auto [i,p] : values)
 				delete p;
+
 		}
 		inline Value* getValue(int id) const { auto it = values.find(id); return it != values.end() ? it->second : nullptr; }
 		//void stack();//align and hold
@@ -763,7 +760,7 @@ namespace gui {
 					return true;
 				}
 			}
-			for (auto l : object | std::views::reverse) {
+			for (auto& [n,l] : parents | std::views::reverse) {
 				if (!l) continue;
 				if (l->debug(cursor))
 					return true;
