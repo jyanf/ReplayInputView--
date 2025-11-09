@@ -881,7 +881,8 @@ namespace gui {
 			_fonts.clear();
 		}
 		void load(const string&, const string& name2);
-		bool render(const string& cl, void* ctx);
+		bool updates(const string& cl, void* ctx, bool& successful);
+		void render() const;
 		
 		inline bool debug_mini(const SokuLib::Vector2i& cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
 			if (cursor.x < 0 || cursor.y < 0) {

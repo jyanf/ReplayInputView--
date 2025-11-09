@@ -959,7 +959,60 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     if(!viceDisplay 
     || !viceSwapChain 
     || !layout || !d && !layout->hint_timer 
-    || !TryEnterCriticalSection(&info::d3dMutex))
+    ) return ret;
+
+
+
+    //if (layout) {
+    auto target = inter.focus ? inter.focus : inter.getHover();
+    //int count = inter.getCount(), index = inter.getIndex();
+	void* ctx = nullptr;
+	gui::string_view name;
+    gui::string temp;
+	std::array<std::string, 5>::const_iterator it, end;
+    static const std::array<gui::string, 5> Ofallbacks = { "%d", "Object", "Basic", "Mini", "None"};
+	static const std::array<gui::string, 5> Pfallbacks = { "%s", "Player", "Basic", "Mini", "None"};
+    if (target.is_object()) {
+		it = Ofallbacks.begin(); end = Ofallbacks.end();
+		ctx = (void*)target.get_object();
+        int common = target->frameState.actionId;
+        if (common >= 1000) {//common obj
+            temp.resize(100, 0);
+            sprintf(temp.data(), (*it).c_str(), common);
+            name = temp;
+        } else {
+            name = *++it;
+        }
+    }
+    else if (target.is_player()) {
+		it = Pfallbacks.begin(); end = Pfallbacks.end();
+        ctx = (void*)target.get_player();
+        name = SokuLib::getCharName(((Player*)ctx)->characterIndex);
+        if (!name.empty()) {
+            temp.resize(100, 0);
+            sprintf(temp.data(), (*it).c_str(), name.data());
+            name = temp;
+        } else {
+            name = *++it;
+        }
+    } else if (ctx = (void*)target.get_base()) {
+		it = Ofallbacks.begin()+2; end = Ofallbacks.end();
+		name = *it;
+    } else {
+        it = Ofallbacks.begin()+4; end = Ofallbacks.end();
+		name = *it;
+    }
+    bool successful = true;
+    //while (it!=end && !layout->render(*it, ctx)) { it++; }
+    while (!layout->updates(std::string(name), ctx, successful)) {
+        if (it != end) {
+            name = *++it;
+        }
+        else break;
+    }//}
+
+    //rendering
+    if (!successful || !TryEnterCriticalSection(&info::d3dMutex))
 		return ret;
     LPDIRECT3DSURFACE9 pBackBuffer = NULL, pOrgBuffer = NULL;
     if (FAILED(viceSwapChain->GetBackBuffer(0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer))
@@ -967,87 +1020,14 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     ) {
         return LeaveCriticalSection(&info::d3dMutex), ret;
 	}
-	SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
+    SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
     if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
-    //rendering
         RendererGuard guard; guard.setRenderMode(1).setTexture(0);
         SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(194, 144, 198), 1.0f, 0);
-        auto target = inter.focus ? inter.focus : inter.getHover();
-      //  Vertex vertices[4] = {
-      //          {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	0.0f,	0.0f},
-      //          {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	1.0f,	0.0f},
-      //          {0, 0,	0.0f, 1.0f, riv::tex::Color::White,	0.0f,	1.0f},
-      //          {0, 0,	0.0f, 1.0f,	riv::tex::Color::White,	1.0f,	1.0f},
-      //  };
-      //  if (target && target->frameData) {
-      //      Design::Object *texpos = nullptr, *texframe = nullptr;
-		    //layout->getById(&texpos, 10); layout->getById(&texframe, 11);
-      //      if (texpos && texframe) {
-      //          float x1 = texpos->x2, y1 = texpos->y2, x2 = texframe->x2, y2 = texframe->y2;
-      //          float w = abs(x2 - x1), h = abs(y2 - y1);
-      //          auto r = target->frameData->texSize;
-      //          float dscale = target->frameData->renderGroup==0 ? 2.0f : 1.0f;
-      //          float scale = 1.0f;//scale = r.x/r.y > w/h ? w/r.x : h/r.y;
-      //          w = r.x*scale; h = r.y*scale;
-      //          r = (target->frameData->offset / dscale * scale).to<short>();
-      //          vertices[0].x = vertices[2].x = (x1 + x2) / 2 - r.x;
-      //          vertices[1].x = vertices[3].x = (x1 + x2) / 2 + w - r.x;
-      //          vertices[0].y = vertices[1].y = (y1 + y2) / 2 - r.y;
-      //          vertices[2].y = vertices[3].y = (y1 + y2) / 2 + h - r.y;
-      //          for (int i = 0; i < 4; ++i) {
-				  //  vertices[i].u = target->sprite.vertices[i].u;
-      //              vertices[i].v = target->sprite.vertices[i].v;
-      //          }
-      //          if (target->frameData->renderGroup==2 && target->frameData->blendOptionsPtr)
-      //              vertices[0].color = vertices[1].color = vertices[2].color = vertices[3].color = target->frameData->blendOptionsPtr->color;
-      //                                                      
-      //          guard.setTexture(0);
-      //          SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
-      //          guard.setTexture(target->sprite.dxHandle);  
-      //          SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
-      //      }
-      //  }
-
-      //  layout->render4();
-        if (layout) {
-			void* ctx = nullptr;
-			gui::string_view name;
-			std::vector<std::string>::const_iterator it, end;
-            static const std::vector<std::string> Ofallbacks = { "Basic", "Mini", "None"};
-			static const std::vector<std::string> Pfallbacks = { "Player", "Basic", "Mini", "None"};
-            if (target.is_object()) {
-				it = Ofallbacks.begin(); end = Ofallbacks.end();
-				ctx = (void*)target.get_object();
-				name = "Object";
-            }
-            else if (target.is_player()) {
-				it = Pfallbacks.begin(); end = Pfallbacks.end();
-                ctx = (void*)target.get_player();
-                name = SokuLib::getCharName(((Player*)ctx)->characterIndex);
-                if (name.empty() && it!=end) {
-                    name = *it++;
-                }
-            } else if (ctx = (void*)target.get_base()) {
-				name = "Basic";
-				it = Ofallbacks.begin()+1; end = Ofallbacks.end();
-            } else {
-				name = "None";
-            }
-            //while (it!=end && !layout->render(*it, ctx)) { it++; }
-            while (!layout->render(std::string(name), ctx)) {
-                if (it != end) {
-                    name = *it++;
-                }
-                else break;
-            }
-            
-        }
-    //SokuLib::renderer.end();
+        layout->render();
+        //SokuLib::renderer.end();
 		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
     }
-    
-    
-
 
     SokuLib::pd3dDev->SetRenderTarget(0, pOrgBuffer); pOrgBuffer->Release();
     //if (*(bool*)0x896b76) {//renderer is on, d3d_ok
@@ -1061,16 +1041,17 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 
 	LeaveCriticalSection(&info::d3dMutex);
 
-    auto target = inter.focus ? inter.focus : inter.getHover();
+    //auto target = inter.focus ? inter.focus : inter.getHover();
     if (!target.has_value()) {
-		wndTitle(L"Defaulting to Players: ");
+		wndTitle(L"[SokuDebugPanel] Idling...");
     }
     else if (target.is_player()) {
         auto player = target.get_player(); if (player) {
         std::string name = SokuLib::getCharName(player->characterIndex); name = name.length() > 0 ? (name[0] = std::toupper(name[0]), name) : "Player";
         int pid = gui::get_player_id(player);
         auto formatted = pid ? std::format("(P{:1d})", pid) : "";
-        formatted = std::format("{:8s}{}: 0x{:08x}", 
+        formatted = std::format("{:8s}{}: 0x{:08x}",
+            //index+1, count,
             name,
             formatted, 
             (DWORD)player
@@ -1084,6 +1065,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
         auto player = object->gameData.owner;
 		int teamid = player ? player->teamId+1 : 0;
         auto formatted = std::format("Object{}: 0x{:08x}", 
+                //index + 1, count,
                 teamid > 0 ? std::format("(P{:1d})", teamid) : std::string(""), 
                 (DWORD)object
         );

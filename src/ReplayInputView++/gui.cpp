@@ -1098,7 +1098,7 @@ namespace gui {
 	}
 
 
-	bool RivDesign::render(const string& cl, void* ctx) {
+	bool RivDesign::updates(const string& cl, void* ctx, bool& successful) {
 		//if (!ctx) return false;
 		auto it = sublayouts.find(cl);
 		if (it == sublayouts.end() && !cl.empty()) {
@@ -1106,19 +1106,17 @@ namespace gui {
 		}
 
 		_box base(basePoint);
-		Sprite *hint = nullptr, *cursor = nullptr, *copied = nullptr;
-		getById(&hint, 1); getById(&cursor, 2); getById(&copied, 3);
+		Sprite *copied = nullptr;
+		getById(&copied, 3);
 		//if (hint)
 			//hint->active = it == sublayouts.end();
 		if (copied && hint_timer > 0) {
 			copied->active = --hint_timer;
 			copied->setColor(SokuLib::DrawUtils::DxSokuColor::White * (min(hint_timer, 40) / 40.f));
 		}
-		
-		CDesign::render4();
 		if (version) {
 			version->update(base, ctx);
-			version->render();
+			successful &= true;
 		}
 		if (it != sublayouts.end()) {
 			auto& layout = it->second;
@@ -1127,20 +1125,42 @@ namespace gui {
 				layout.update(base, ctx);
 				currentLayout = cl;
 				updating.unlock();
-			} else puts("updating try lock failed");
-			layout.render();
+				successful &= true;
+			} else { 
+				puts("updating try lock failed");
+				successful &= false;
+			}
 		} else {
-			
+			//currentLayout = "";
 		}
+		return true;
+	}
+	void RivDesign::render() const {
+		auto& cl = currentLayout;
+		auto it = sublayouts.find(cl);
+		if (it == sublayouts.end() && !cl.empty()) {
+			return;
+		}
+		auto& design = *const_cast<RivDesign*>(this);
+		Sprite* hint = nullptr, * cursor = nullptr;
+		//getById(&hint, 1); 
+		design.getById(&cursor, 2);
+
+		design.CDesign::render4();
+		if (version) {
+			version->render();
+		}
+		if (it != sublayouts.end()) {
+			auto& layout = it->second;
+			layout.render();
+		}
+
 		if (cursor) {
 			cursor->active = console.clientpt.x > 0 && console.clientpt.y > 0;
 			cursor->renderPos(console.clientpt.x - cursor->sprite.size.x / 2, console.clientpt.y - cursor->sprite.size.y / 2);
 			cursor->active = false;
 		}
-		
-		return true;
 	}
-
 
 }
 
