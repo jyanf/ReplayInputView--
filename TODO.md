@@ -1,10 +1,10 @@
 # Task
 
-- [ ] hitstop讨论
+hitstop讨论
 
-  - [ ] 蕾米C弹321321321
-                 210210210
-  - [ ] 两个数？
+- [ ] 蕾米C弹321321321
+               210210210
+- [ ] 两个数？
 
 - [ ] 快捷键快速切换
 
@@ -12,185 +12,185 @@
 
 - [ ] 选择器动画和数字
 
-- [x] 研究下满级龙眼
+研究下满级龙眼
 
-  - [ ] 反射盾凭什么知道发弹？
+- [ ] 反射盾凭什么知道发弹？
 
-- [ ] 布局
+布局
 
-  - [ ] 说明填写
+- [ ] 说明填写
 
-  - [x] 图标们
+- [x] 图标们
 
-  - [ ] 身代无敌
+- [ ] 身代无敌
 
-  - [x] 相杀/hp
+- [x] 相杀/hp
 
-  - [ ] 尾巴
+- [ ] 尾巴
 
-  - [ ] 天气剑生效中
+- [ ] 天气剑生效中
 
-  - [x] 霸体已吸收伤害0x188
+- [x] 霸体已吸收伤害0x188
 
-  - [x] 灵力书等回复速率？天狗扇子加移速？
-    棒子
+- [x] 灵力书等回复速率？天狗扇子加移速？
+  棒子
 
-  - [x] 强制破防、可擦体术、
+- [x] 强制破防、可擦体术、
 
-  - [x] 时停
+- [x] 时停
 
-  - [x] limit乘子
+- [x] limit乘子
 
-  - [x] delta位移乘子需要保存
+- [x] delta位移乘子需要保存
 
-    > ![image-20251107041803222](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251107041803222.png)
-    >
-    > 1. input
-    >
-    > 2. counters
-    >    update players
-    >    charm
-    >
-    > 3. collision
-    >
-    > 4. speed&rivermist??
-    >
-    > 5. movement←hook
-    >
-    >    proceed timers
-    >    	timestop; hitstop; 4c0; 4bc
-    >    	invul timers
-    >    	add card if gauge is full
-    >
-    >    set redhp, weather, skillLevelA
-    >    reset rivermist, speedXY
-    >
-    >    update positions by mul
-    >
-    >    
-    >
-    > 6. camera & onprocess
+  > ![image-20251107041803222](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251107041803222.png)
+  >
+  > 1. input
+  >
+  > 2. counters
+  >    update players
+  >    charm
+  >
+  > 3. collision
+  >
+  > 4. speed&rivermist??
+  >
+  > 5. movement←hook
+  >
+  >    proceed timers
+  >    	timestop; hitstop; 4c0; 4bc
+  >    	invul timers
+  >    	add card if gauge is full
+  >
+  >    set redhp, weather, skillLevelA
+  >    reset rivermist, speedXY
+  >
+  >    update positions by mul
+  >
+  >    
+  >
+  > 6. camera & onprocess
 
-- [ ] layout针对common 1000+
+layout针对common 1000+
 
-- [x] d3d9STENCIL并集绘制框
+d3d9STENCIL并集绘制框
 
-  - [x] 边框也？
+- [x] 边框也？
 
-- [ ] sprite可自定义基点/白框
+sprite可自定义基点/白框
 
-- [x] NC问题
+NC问题
 
-  - [x] 启用厚边后，指针锁定为箭头
+- [x] 启用厚边后，指针锁定为箭头
 
-    > 莫名奇妙，窗口样式问题？
-    > 予以SET_CURSOR代劳
+  > 莫名奇妙，窗口样式问题？
+  > 予以SET_CURSOR代劳
 
 - [x] verify2
 
 - [x] 进行坐标裁剪防止锚点出场地？
 
-  - [x] 0,1280;840,c.bottom
+  > 0,1280;840,c.bottom
 
 - [ ] 同串不更新防闪动?
-  !更新两步走，trylock失败时不清除
+  - [x] 更新两步走，trylock失败时不清除
 
-- [x] MOUSE_MOVE从同级区域切入时，虽然垫在下方但是缓存仍然命中——使用缓存对重叠情况无法兼容
+MOUSE_MOVE从同级区域切入时，虽然垫在下方但是缓存仍然命中——使用缓存对重叠情况无法兼容
 
-  > （保证下方物体无描述，即描述互不重叠时可以接受）
+> （保证下方物体无描述，即描述互不重叠时可以接受）
+>
+> 缓存父区域解决
+
+梅雨伪连显示？无伤显示？
+
+拖尾hover时一并变色？
+
+- [ ] mode为paramsD ?
+
+气泡样式
+
+> TTS_BALLOON
+>
+> 配合TTF_TRACK，就不需要TTF_ABSOLUTE
+>
+> 坑爹的抢焦点；WS_EX_TRANSPARENT
+
+Color也能description
+
+- [x] 换行符……`&#10;`
+
+编码适配
+
+> fileCP→wchar→gameCP
+>
+> - [x] xml根据游戏当前intl转换，或系统ACP
+
+4 p None
+
+- [x] layout应用playerid还没弄好
+
+角色数据存档解决倒计时?
+
+副窗口交互
+
+- [x] 窗口跟随优化（不出屏），记录手动拖放的位置；但全屏时还是在侧（注意点选失焦？）
+- [ ] 允许（等比例）拖动缩放
+- [x] （双击标题栏）重置?
+- [x] tooltip窗口显示说明文字
+
+  > 坑爹：cbSize 48 44 40
   >
-  > 缓存父区域解决
+  > 坑爹2：manifest加载获得新样式——actctx从资源创建时的dwFlags和参数
+- [x] 可点击跳转的pa\pb
 
-- [ ] 梅雨伪连显示？无伤显示？
-
-- [ ] 拖尾hover时一并变色？
-
-  - [ ] mode为paramsD ?
-
-- [x] 气泡样式
-
-  > TTS_BALLOON
+  - [ ] 悬浮时有反馈？
+- [x] 样式切换！
+- [ ] > 抢到主窗口焦点时记得windowsresizer黑边适配、另，resizer全屏模式下应禁用拖动（防止bug）
   >
-  > 配合TTF_TRACK，就不需要TTF_ABSOLUTE
-  >
-  > 坑爹的抢焦点；WS_EX_TRANSPARENT
+  > 考虑失焦时直接退出全屏？但是切换桌面的功能……
 
-- [x] Color也能description
+重置光标选择器样式，显示滚轮进程accu/thre
 
-  - [x] 换行符……`&#10;`
+首次F6，默认给出指导图片
 
-- [x] 编码适配
+- [ ] 右键标题栏，圈圈箭头
+- [ ] 拖动；双击或切换全屏重置大小！
+- [ ] 左键点选，右键释放
+- [ ] 去ini逛逛以关闭此提示！
 
-  > fileCP→wchar→gameCP
-  >
-  > - [x] xml根据游戏当前intl转换，或系统ACP
+_stacker可以抽象到更上层，默认不启用
 
-- [ ] 4 p None
+- [x] 或者用xmlattr控制
 
-  - [x] layout应用playerid还没弄好
+代码规则宏化
 
-- [ ] 角色数据存档解决倒计时?
+右击标题栏复制
 
-- [ ] 副窗口交互
+- [ ] 复制的提示图片
 
-  - [x] 窗口跟随优化（不出屏），记录手动拖放的位置；但全屏时还是在侧（注意点选失焦？）
-  - [ ] 允许（等比例）拖动缩放
-  - [x] （双击标题栏）重置?
-  - [x] tooltip窗口显示说明文字
+图标渲染不完美
 
-    > 坑爹：cbSize 48 44 40
-    >
-    > 坑爹2：manifest加载获得新样式——actctx从资源创建时的dwFlags和参数
-  - [x] 可点击跳转的pa\pb
+- [ ] 对素材差1 pixel?
+- [x] 不管了，使用公用Sprite变量
 
-    - [ ] 悬浮时有反馈？
-  - [x] 样式切换！
-  - [ ] > 抢到主窗口焦点时记得windowsresizer黑边适配、另，resizer全屏模式下应禁用拖动（防止bug）
-    >
-    > 考虑失焦时直接退出全屏？但是切换桌面的功能……
+虚标题重载？layout继承时自身标题放在最上方以覆盖
 
-- [ ] 重置光标选择器样式，显示滚轮进程accu/thre
+可视优化？：
+窗口滚轮缩放+记忆大小/
+/窗口滚轮滚动
+/多窗口
+/自由布局（layout同样stacker？）
+/甚至鼠标拖动交互；超·GUI……
 
-- [ ] 首次F6，默认给出指导图片
+修复NCMOUSEMOVE不精确
 
-  - [ ] 右键标题栏，圈圈箭头
-  - [ ] 拖动；双击或切换全屏重置大小！
-  - [ ] 左键点选，右键释放
-  - [ ] 去ini逛逛以关闭此提示！
+> `static bool tracked;`
+>
+> `if (!tracked) TrackMouseEvent(…);`
 
-- [ ] _stacker可以抽象到更上层，默认不启用
+休眠重进的DPI被改
 
-  - [x] 或者用xmlattr控制
-
-- [ ] 代码规则宏化
-
-- [x] 右击标题栏复制
-
-  - [ ] 复制的提示图片
-
-- [x] 图标渲染不完美
-
-  - [ ] 对素材差1 pixel?
-  - [x] 不管了，使用公用Sprite变量
-
-- [ ] 虚标题重载？layout继承时自身标题放在最上方以覆盖
-
-- [ ] 可视优化？：
-  窗口滚轮缩放+记忆大小/
-  /窗口滚轮滚动
-  /多窗口
-  /自由布局（layout同样stacker？）
-  /甚至鼠标拖动交互；超·GUI……
-
-- [x] 修复NCMOUSEMOVE不精确
-
-  > `static bool tracked;`
-  >
-  > `if (!tracked) TrackMouseEvent(…);`
-
-- [x] 休眠重进的DPI被改
-
-  - [ ] 测试跨屏扩展，移动窗口情况
+- [ ] 测试跨屏扩展，移动窗口情况
 
 
   > ```c++

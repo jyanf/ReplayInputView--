@@ -965,6 +965,12 @@ This xml has expanded features out of original soku layout system, implemented b
 			</field>
 		</field>
 	</sublayout>
+	<sublayout class="1006" inherit="Object"> <back ref_id="220"/> <pad width="208" height="80"/>
+		<title font_id="2">
+			&#32;Umbrella&#32;
+		</title>
+		
+	</sublayout>
 	<!--sublayout class="Console" align="bottom">
 		<title xoffset="" yoffset="">Console</title>
 		<textbox width="" height="">Hello World!</textbox>

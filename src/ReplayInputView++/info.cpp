@@ -967,8 +967,8 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     auto target = inter.focus ? inter.focus : inter.getHover();
     //int count = inter.getCount(), index = inter.getIndex();
 	void* ctx = nullptr;
-	gui::string_view name;
-    gui::string temp;
+	//gui::string_view name;
+    gui::string name;
 	std::array<std::string, 5>::const_iterator it, end;
     static const std::array<gui::string, 5> Ofallbacks = { "%d", "Object", "Basic", "Mini", "None"};
 	static const std::array<gui::string, 5> Pfallbacks = { "%s", "Player", "Basic", "Mini", "None"};
@@ -977,9 +977,10 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 		ctx = (void*)target.get_object();
         int common = target->frameState.actionId;
         if (common >= 1000) {//common obj
-            temp.resize(100, 0);
-            sprintf(temp.data(), (*it).c_str(), common);
-            name = temp;
+            gui::base_char buf[128];
+            std::snprintf(buf, sizeof(buf), (*it).c_str(), common);
+            name = buf;
+            //name = temp;
         } else {
             name = *++it;
         }
@@ -989,9 +990,9 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
         ctx = (void*)target.get_player();
         name = SokuLib::getCharName(((Player*)ctx)->characterIndex);
         if (!name.empty()) {
-            temp.resize(100, 0);
-            sprintf(temp.data(), (*it).c_str(), name.data());
-            name = temp;
+            gui::base_char buf[128];
+            std::snprintf(buf, sizeof(buf), (*it).c_str(), name.c_str());
+            name = buf;
         } else {
             name = *++it;
         }
@@ -1004,7 +1005,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     }
     bool successful = true;
     //while (it!=end && !layout->render(*it, ctx)) { it++; }
-    while (!layout->updates(std::string(name), ctx, successful)) {
+    while (!layout->updates(name, ctx, successful)) {
         if (it != end) {
             name = *++it;
         }
