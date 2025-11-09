@@ -100,7 +100,8 @@ using Design = gui::RivDesign;
 			}
 		};
 		std::vector<Phover> hovers;
-		int zaccu = 0, ztimer = 0; const int zthre = WHEEL_DELTA, zcool = 16;
+		int zaccu = 0, ztimer = 0; 
+		static constexpr int zthre = WHEEL_DELTA, zcool = 16;
 		DWORD oldi = 0;
 		std::mutex inserting;
 	public:
@@ -150,7 +151,7 @@ using Design = gui::RivDesign;
 				return false;
 			}
 			const auto size = getCount();
-			index = (index + size + dir) % size;
+			index = index<0 ? 0 : (index + size + dir) % size;
 			if(dir) printf("Hover switched %d of %d.\n", index+1, size);
 			return true;
 
@@ -186,7 +187,10 @@ using Design = gui::RivDesign;
 			hovers.clear();
 			//index = -1;
 		}
-
+		enum IndicatorState {
+			Idle = 0, Selected, 
+		};
+		void drawIndicator(const riv::tex::Vector2f& pos, int timer, IndicatorState state);
 	};
 	
 	class Vice {

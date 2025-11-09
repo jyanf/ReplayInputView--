@@ -50,10 +50,10 @@ inline void Draw2DCircle(LPDIRECT3DDEVICE9 dev, Vector2f pos, float radius, floa
 		theta = D3DXToRadian(i * dAngle + 90.0f - dir * 1.5f);
 		x = (float)(pos.x + (radius + width / 2) * cos(theta));
 		y = (float)(pos.y - leanby10 / 10.0f * (radius + width / 2) * sin(theta));
-		CurvePts[0][0] = { x, y, 0.0f, 1.0f, color, uvBorder.x1, uvBorder.y1 };
+		CurvePts[0][0] = { x, y, 1.0f, 1.0f, color, uvBorder.x1, uvBorder.y1 };
 		x = (float)(pos.x + (radius - width / 2) * cos(theta));
 		y = (float)(pos.y - leanby10 / 10.0f * (radius - width / 2) * sin(theta));
-		CurvePts[0][1] = { x, y, 0.0f, 1.0f, color, uvBorder.x1, uvBorder.y2 };
+		CurvePts[0][1] = { x, y, 1.0f, 1.0f, color, uvBorder.x1, uvBorder.y2 };
 		int limit = min(step, (a2 - i) * dir);
 		for (int j = 1; j <= limit; ++j)
 		{
@@ -61,10 +61,10 @@ inline void Draw2DCircle(LPDIRECT3DDEVICE9 dev, Vector2f pos, float radius, floa
 			float u = j * 1.0f/step * (uvBorder.x2 - uvBorder.x1) + uvBorder.x1;
 			x = (float)(pos.x + (radius + width / 2) * cos(theta));
 			y = (float)(pos.y - leanby10 / 10.0f * (radius + width / 2) * sin(theta));
-			CurvePts[j][0] = { x, y, 0.0f, 1.0f, color, u, uvBorder.y1 };
+			CurvePts[j][0] = { x, y, 1.0f, 1.0f, color, u, uvBorder.y1 };
 			x = (float)(pos.x + (radius - width / 2) * cos(theta));
 			y = (float)(pos.y - leanby10 / 10.0f * (radius - width / 2) * sin(theta));
-			CurvePts[j][1] = { x, y, 0.0f, 1.0f, color, u, uvBorder.y2 };
+			CurvePts[j][1] = { x, y, 1.0f, 1.0f, color, u, uvBorder.y2 };
 		}
 
 		dev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2*(limit), CurvePts, sizeof(CurvePts[0][0]));

@@ -220,33 +220,15 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 				box::drawPositionBox(*phover, 8, box::Color_Gray, box::Color::White);
 			}
 			if (vice.inter.checkInWnd(vice.inter.cursor)) {
-				guard
-					//
-					//.setRenderState(D3DRS_DESTBLEND, D3DBLEND_INVDESTCOLOR)
-					//.setRenderState(D3DRS_DESTBLEND, D3DBLEND_ONE)
-					//.setRenderState(D3DRS_SRCBLENDALPHA, D3DBLEND_ONE)
-					//.setRenderState(D3DRS_BLENDOP, D3DBLENDOP_SUBTRACT)
-					//.setRenderState(D3DRS_BLENDOPALPHA, D3DBLENDOP_SUBTRACT)         // Alpha£º¼Ó·¨²Ù×÷
-					.setInvert()
-					.setTexture(0);
-				float interp = sinf(time * 0.6f * 2*3.1416f) + 2.f; interp /= 3.01f;
-				/*Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-					vice.inter.toler + 20, 20, Vector2f{ 0, 360 },
-					{ 0 }, 1, Color::White);*/
-				Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-					vice.inter.toler.x + 20, 20, Vector2f{0, 360},
-					{ 0 }, 1, Color(int(0xFF * interp) * 0x01010101)* Color::Yellow);
-				
-				guard.resetRenderState();
-
-				auto index = vice.inter.getIndex();
-				if (index >= 0) {
-					auto count = vice.inter.getCount();
-					float rs = 360.0f / (count ? count : 1);
-					Draw2DCircle<32>(SokuLib::pd3dDev, vice.inter.cursor.to<float>(),
-						vice.inter.toler.x, 1.0f, Vector2f{ index * rs, (index + 1) * rs },
-						{ 0 }, 1, Color::Black);
-				}
+				Vector2f pos;
+				using SokuLib::camera;
+				/*if (phover) {
+					pos = phover->position;
+					pos.y *= -1;
+					pos = (pos + camera.translate) * camera.scale;
+				} else*/
+					pos = vice.inter.cursor.to<float>();
+				vice.inter.drawIndicator(pos, counter, phover ? vice.inter.Selected : vice.inter.Idle);
 			}
 			if (pfocus) box::drawPositionBox(*pfocus, 8, box::Color_Gray, box::Color::Black);
 			

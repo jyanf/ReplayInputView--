@@ -1,5 +1,5 @@
 #include "info.hpp"
-
+#include "DrawCircle.hpp"
 #include <optional>
 #include <string>
 
@@ -867,6 +867,80 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
                 && (zaccu = 0, switchHover(sokuDMouse.lZ < 0 ? 1 : -1));
         }
         return false;
+    }
+
+    void Interface::drawIndicator(const Vector2f& pos, int timer, IndicatorState state) {
+        static IndicatorState lastState = Idle;
+        constexpr float easing = 0.2f;
+        constexpr float baseRadius = 30.f;   // 环的基准半径
+        constexpr float baseWidth = 30.f;   // 环宽度
+        constexpr float minWidth = 8.f;    // 收缩时变窄宽度
+        // 检测状态切换
+        //static int changePoint = 0;
+        if (state != lastState) {
+            //changePoint = timer;
+            //lastState = state;
+        }
+        //constexpr int length = 120;
+        static float progress = 0.f;
+        static Vector2f angle = {0.f,360.f};
+        progress += ((state == Selected ? 1.f : 0.f)-progress) * easing;
+        // --- 扇环角度 ---
+        int count = getCount(), index = getIndex(); index = max(0, index);
+        float angleSpan = (count > 0) ? (360.f / count) : 360.f;
+        float baseAngle =  + angleSpan / 2;
+        Vector2f targetAngle = { index * angleSpan, index * angleSpan + angleSpan};
+        angle -= (angle - targetAngle) * easing;
+        float fanWidth = baseWidth - (baseWidth - minWidth) * progress;
+        float fanRadius = progress * baseRadius + fanWidth / 2;
+        auto scp = riv::tex::RendererGuard();
+        scp.setInvert().setTexture(0);
+        Draw2DCircle<128>(
+            SokuLib::pd3dDev,
+            {
+                std::clamp(pos.x, baseRadius, sokuW-baseRadius),
+                std::clamp(pos.y, baseRadius, sokuH - baseRadius),
+            },
+            fanRadius,
+            fanWidth,
+            angle,
+            { 0 },
+            1,
+            Color(0xFFdfb3ff)
+        );
+        float ringRaius = (fanRadius + fanWidth / 2) * progress + (toler.x);
+        Draw2DCircle<128>(
+            SokuLib::pd3dDev,
+            pos,
+            ringRaius,
+            toler.x,
+            {0,360},
+            { 0 },
+            1,
+            Color(0xFFe4ffaa)
+        );
+        // 滚动 z 控制当前环的扩展
+        float scrollFactor = float((abs(zaccu)+zthre) % zthre) / zthre;
+        static float scrollRadius = 0.f;
+        scrollRadius -= (scrollRadius - baseRadius * 1.5f * scrollFactor) * 0.5f;
+
+        
+        
+        if (state == Selected && count>1 && scrollFactor > 0.1f) {
+            Draw2DCircle<32>(
+                SokuLib::pd3dDev,
+                pos,
+                scrollRadius * progress,
+                3.f,
+                { 0.f, 360.f },
+                { 0 },
+                1,
+                Color(0x02020202 * int(127.f * ztimer / zcool))
+            );
+        }
+
+
+        
     }
 
     //inline void Interface::updateHover() {
