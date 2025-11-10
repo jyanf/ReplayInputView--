@@ -203,7 +203,7 @@ Feel free to unpack `ReplayInputView++.dat` file with [**shady-cli**](https://hi
 ```bash
 ::Unpack Commands For example
 REM Unpacking ReplayInputView++.dat to folder 
-shady-cli -pack -m dir -o "da" "ReplayInputView++.dat"
+shady-cli -pack -m dir -o "data" "ReplayInputView++.dat"
 ```
 
 After finishing replacement, make a `data -> rivpp -> *Files` structured folder and pack it back to `.dat` file using:
@@ -286,7 +286,7 @@ The following are detailed introduction for layout+ nodes.
 #### Customization: 
 以下为自定义部分：
 
-2 types of customization is recommended:
+2 types of customization are recommended:
 
   - `<sublayout class="suwako" inherit="Player"><sublayout/>`
     The system will check if there's compatible name for current character, so it's possible to override default layout of a character.
@@ -305,9 +305,10 @@ Preserved `id` range in layout.xml
 
     1. `0`: unindexable always-display id;
         原版的默认显示id，不可索引；
-    2. `1`: 
+    2. `1`: "copied" hint
         鼠标复制的提示图片；
-    3. `2`: 光标图片.
+    3. `2`: replaced cursor image
+        光标图片.
 
 #### About Fonts
 
