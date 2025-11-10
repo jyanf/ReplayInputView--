@@ -64,7 +64,6 @@ namespace gui {
 					return std::string(s);
 				}
 			}
-			// 辅助函数：从 equal_range 返回的 pair 创建 range
 			inline explicit XmlHelper(const std::string& name) {
 				try {
 					auto iss = read_file(name);
@@ -865,7 +864,7 @@ namespace gui {
 			if (!_hoverbuffer) return false;
 			return _hoverbuffer->onClick(cursor, cb);
 		}
-		RivDesign(const string& name = "rivpp/layout.xml", const string& name2 = "rivpp/layout_plus.txt") : CDesign() {
+		inline RivDesign(const string& name = "rivpp/layout.xml", const string& name2 = "rivpp/layout_plus.txt") : CDesign() {
 			auto temp = std::map<int, Font>{ {-1, Font()}, };
 			_fonts.swap(temp);
 			_current = nullptr;

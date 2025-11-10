@@ -217,11 +217,23 @@ using Design = gui::RivDesign;
 		static bool CreateD3D(HWND);
 		inline static bool DestroyD3D();
 		static bool createWnd();
+		inline static DWORD GetTextCodePage() {//credit th123intl
+			auto handle = GetModuleHandle("th123intl.dll");
+			if (!handle) return 932;
+			FARPROC proc = GetProcAddress(handle, "GetTextCodePage");
+			if (!proc) return 932;
+			return proc();//no FreeMosule cuz it's not LoadLibrary...
+		}
 		inline static void delayedInit() {
 			//static bool inited = false;
-			if (!layout) {
-				layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.cv0");
-			}
+			//static std::mutex fvckskipintro;
+			static std::once_flag skipintro_initialized;
+			std::call_once(skipintro_initialized, []() {
+				if (!layout) {
+					gui::xml::XmlHelper::gameCP = GetTextCodePage();
+					layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.cv0");
+				}
+			});
 		}
 
 		inline static void showCursor(bool show, int id) {

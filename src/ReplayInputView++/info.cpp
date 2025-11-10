@@ -1044,18 +1044,26 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 	//gui::string_view name;
     gui::string name;
 	std::array<std::string, 5>::const_iterator it, end;
-    static const std::array<gui::string, 5> Ofallbacks = { "%d", "Object", "Basic", "Mini", "None"};
+    static const std::array<gui::string, 5> Ofallbacks = { "%s.%d", "Object", "Basic", "Mini", "None"};
 	static const std::array<gui::string, 5> Pfallbacks = { "%s", "Player", "Basic", "Mini", "None"};
     if (target.is_object()) {
 		it = Ofallbacks.begin(); end = Ofallbacks.end();
-		ctx = (void*)target.get_object();
-        int common = target->frameState.actionId;
-        if (common >= 1000) {//common obj
+        auto* obj = target.get_object();
+        ctx = (void*)obj;
+        int actId = target->frameState.actionId;
+        if (actId >= 1000) {//common obj
             gui::base_char buf[128];
-            std::snprintf(buf, sizeof(buf), (*it).c_str(), common);
+            std::snprintf(buf, sizeof(buf), (*it).c_str(), "common", actId);
             name = buf;
             //name = temp;
+        } else if (actId >= 800 && obj->gameData.owner) {//specific character bullet
+            const auto* chr = SokuLib::getCharName(obj->gameData.owner->characterIndex);
+            if (!chr || strlen(chr) <= 0) goto FALLBACK;
+            gui::base_char buf[128];
+            std::snprintf(buf, sizeof(buf), (*it).c_str(), chr, actId);
+            name = buf;
         } else {
+FALLBACK:
             name = *++it;
         }
     }

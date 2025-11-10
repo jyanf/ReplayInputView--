@@ -38,13 +38,6 @@ static auto orgSokuSetup = reinterpret_cast<bool(__fastcall*)(void*, int, void*)
 static inline std::filesystem::path toAbsPath(const std::filesystem::path& path, const std::filesystem::path& base = basePath) {
 	return std::filesystem::weakly_canonical(path.is_absolute() ? path : base / path);
 }
-static DWORD GetTextCodePage() {//credit th123intl
-	auto handle = GetModuleHandle("th123intl.dll");
-	if (!handle) return 932;
-	FARPROC proc = GetProcAddress(handle, "GetTextCodePage");
-	if (!proc) return 932;
-	return proc();//no FreeMosule cuz it's not LoadLibrary...
-}
 static bool __fastcall onSokuSetup(void* self, int unused, void* data) {
 	auto& name = iniProxy["Assets"_l]["File"_l];
 	std::filesystem::path path = name.value.value;
@@ -64,7 +57,6 @@ static bool __fastcall onSokuSetup(void* self, int unused, void* data) {
 	}
 	bool ret = orgSokuSetup(self, unused, data);
 	info::Vice::delayedInit();//reader not ready?
-	gui::xml::XmlHelper::gameCP = GetTextCodePage();
 	return ret; 
 }
 

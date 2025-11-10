@@ -57,7 +57,7 @@ def mod_font_style(font_path, output_path):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Usage: python font-expand.py input.ttf output.ttf")
+        print("Usage: fontforge -script font-expand.py input.ttf output.ttf")
         sys.exit(0)
 
     mod_font_style(sys.argv[1], sys.argv[2])

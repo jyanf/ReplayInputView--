@@ -765,8 +765,10 @@ namespace gui {
 	
 	inline void Layout::inheriting(std::map<string, Layout>& layouts, Layout& current) {
 		for (auto& [n, l] : current.parents) {
+			printf("\tInheriting parent sublayout %s(%d)\n", n.c_str(), n.size());
 			auto it = layouts.find(n);
 			if (it != layouts.end()) {
+				printf("\tInherits successful by %p\n", &it->second);
 				l = &it->second;
 			}
 		}
@@ -783,8 +785,8 @@ namespace gui {
 		}
 #endif
 		_current = this;
-		auto doc0 = std::move(xml::XmlHelper(name2).get());
-		const auto& doc = doc0.get_child("layout");
+		auto doc0 = xml::XmlHelper(name2);
+		const auto& doc = doc0.get().get_child("layout");
 		//version = doc.get_optional<string>("layout.<xmlattr>.riv_version", version).value();
 		auto fontsMgr = doc.get_child_optional("fonts");
 		if (fontsMgr) {
@@ -814,6 +816,7 @@ namespace gui {
 		}
 		//inherit all
 		for (auto& [name, layout] : sublayouts) {
+			printf("%s(%d) Inheriting, %p\n", name.c_str(), name.size(), &layout);
 			Layout::inheriting(sublayouts, layout);
 		}
 		//console

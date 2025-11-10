@@ -1,6 +1,20 @@
 #if defined(_WIN32) && defined(_DEBUG)
 #include <vld.h>
 #endif
+//#ifndef _DEBUG
+//	#undef printf
+//	#define _NO_CRT_STDIO_INLINE
+
+//	extern "C" int printf(const char*, ...);
+//#endif
+#ifdef _DEBUG
+//#define printf(...) printf(__VA_ARGS__)
+#else
+#include <cstdio>
+#undef printf
+inline void _wrap_printf(...) { }
+#define printf(...)  _wrap_printf(__VA_ARGS__)
+#endif
 
 #pragma once
 #include <Tamper.hpp>

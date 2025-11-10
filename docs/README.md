@@ -235,7 +235,7 @@ To keep compatibility for users, we put used fonts in folder and loads them dyna
 If you want to use your own font, make sure that:
 
 1. **Be aware of the real inner name of font file**: font loading uses inner font-family name or full name with styles, use advanced tools to check the real name of a font file.
-2. **Make sure the font supports the codepage of your PC**: even if you only uses ASCII part, codepages not supported will fail font loading and fallback the font to default. 
+2. **Make sure the font supports the charset of your game or PC codepage (usually ANSI, related to th123intl setting)**: even if you only uses ASCII part, codepages not supported still fail font loading and fallback the font to default. 
    We provided a **font-forge** script in python to allow you to quickly expands your font file to full codepage even without available glyphs. The default "CascadiaCode-Mod.ttf" is literally a example.
 
 

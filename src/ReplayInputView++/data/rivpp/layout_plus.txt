@@ -4,6 +4,7 @@
 		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v1.0</title>
 	</window>
 	<fonts>
+		<font id="0"	class="font-test"			name="simhei"/>
 		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
 		<font id="2"	class="layout-titles"		name="Smiley Sans Oblique"		stroke="true"	bold="true"		wrap="false" height="22" spacing="1" color_bottom="0xa0a0a0"/>
 		<font id="3"	class="layout-title-monos"  name="Cascadia Code"			stroke="true"	bold="false"	wrap="false" height="16" color_top="0xffffff" color_bottom="0x7070a0"/>
@@ -933,11 +934,20 @@
 			</field>
 		</field>
 	</sublayout>
-	<sublayout class="1006" inherit="Object"> <back ref_id="220"/> <pad width="208" height="80"/><!--specify common object (actId>1000)-->
+	<sublayout class="common.1006" inherit="Object"> <back ref_id="220"/> <pad width="208" height="80"/><!--specify common object (actId>1000)-->
 		<title font_id="2">
 			&#32;Umbrella&#32;
 		</title>
 		
+	</sublayout>
+	<sublayout class="alice.805" inherit="Object">
+		<title font_id="2">
+			&#32;Alice doll&#32;
+		</title>
+		
+		<field class="doll">
+			
+		</field>
 	</sublayout>
 	<!--sublayout class="Console" align="bottom">
 		<title xoffset="" yoffset="">Console</title>
