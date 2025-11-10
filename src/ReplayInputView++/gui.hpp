@@ -285,10 +285,12 @@ namespace gui {
 		public _hider
 	{
 	protected:
-		inline static SokuLib::Sprite helper;
+		static SokuLib::Sprite helper;
 		//const std::array<int, 9> tile_edges{ 0 };//id of 9-slice box
 		//std::optional<int> back_ref;
 		inline static void setBorder(SokuLib::Sprite& sp, const _box& uv) {
+			sp.vertices[0].z = sp.vertices[1].z = sp.vertices[2].z = sp.vertices[3].z = 0.5f;
+			sp.vertices[0].rhw = sp.vertices[1].rhw = sp.vertices[2].rhw = sp.vertices[3].rhw = 1.f;
 			sp.vertices[0].u = sp.vertices[2].u = uv.x1;
 			sp.vertices[0].v = sp.vertices[1].v = uv.y1;
 			sp.vertices[1].u = sp.vertices[3].u = uv.x2;

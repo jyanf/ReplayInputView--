@@ -4,6 +4,7 @@
 #include <DrawUtils.hpp>
 #include <Renderer.hpp>
 #include <Sprite.hpp>
+#include <Design.hpp>
 #include <TextureManager.hpp>
 #include <assert.h>
 #include <unordered_map>
@@ -56,7 +57,6 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 		}
 
 		static inline FloatRect getBorder(int index, int col, int row, const SokuLib::Sprite& ref) {
-			index %= col * row;
 			int fx = ref.scale.x < 0 ? 1 : 0, fy = ref.scale.y < 0 ? 2 : 0;
 			const auto& vert1 = ref.vertices[0 + fx + fy];
 			const auto& vert2 = ref.vertices[3 - fx - fy];
@@ -64,11 +64,20 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 				vert1.u, vert1.v,
 				vert2.u, vert2.v,
 			};
+			index %= col * row;
+			//SokuLib::CTile temp; temp.createSlices();
 			// º∆À„ UV ≥ﬂ∂»
-			float du = (uv.x2 - uv.x1) / float(col);
-			float dv = (uv.y2 - uv.y1) / float(row);
+			auto du = (uv.x2 - uv.x1) / double(col);
+			auto dv = (uv.y2 - uv.y1) / double(row);
+			auto x1 = uv.x1 + du * (index % col), y1 = uv.y1 + dv * (index / col);
+			auto x2 = x1 + du, y2 = y1 + dv;
+			//float texelW = 1.0f / ref.size.x;
+			//float texelH = 1.0f / ref.size.y;
 			uv.x1 += du * (index % col); uv.x2 = uv.x1 + du;
 			uv.y1 += dv * (index / col); uv.y2 = uv.y1 + dv;
+			//uv.x1 = std::clamp(x1, 0.0, 1.0); uv.y1 = std::clamp(y1, 0.0, 1.0);
+			//uv.x2 = std::clamp(x2, 0.0, 1.0); uv.y2 = std::clamp(y2, 0.0, 1.0);
+			//printf("Getting border %f %f %f %f\n\n", uv.x1, uv.y1, uv.x2, uv.y2);
 			return uv;
 		}
 	};

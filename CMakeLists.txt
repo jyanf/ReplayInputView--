@@ -125,7 +125,7 @@ if(MSVC)
     target_link_libraries(vld INTERFACE  vld.lib)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND  COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${VLD_BIN_DIR}" "${CMAKE_INSTALL_PREFIX}/modules/${PROJECT_NAME}/" #"$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+                "${VLD_BIN_DIR}" "${CMAKE_INSTALL_PREFIX}" #"$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMENT "Copying Visual Leak Detector runtime DLLs..."
     )
 endif()

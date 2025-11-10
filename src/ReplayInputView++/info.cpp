@@ -1098,6 +1098,7 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
     if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
         RendererGuard guard; guard.setRenderMode(1).setTexture(0);
+        guard.setRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
         SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(194, 144, 198), 1.0f, 0);
         layout->render();
         //SokuLib::renderer.end();

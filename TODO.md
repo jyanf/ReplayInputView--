@@ -1,5 +1,15 @@
 # Task
 
+- [x] 全无敌时显示有误
+
+- [ ] 全屏元素覆盖description无法消除？
+
+- [x] vld链接有误，放入th123不识别
+
+  > manifest文件忘了复制过去了
+  >
+  > 调整custom command
+
 - [x] 暂停时F2\F3转发
 
   - [ ] 避免冲突

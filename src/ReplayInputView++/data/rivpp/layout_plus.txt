@@ -1,44 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-This xml has expanded features out of original soku layout system, implemented by ReplayInputView++
-本布局文件含有非想天则原有布局系统之外的扩展特性（由RIV++负责实现）
-## Introductions: 
-介绍如下：
-  - <window width="240" height="600"/>
-	Class window: controls the size of debug window by w/h properties.
-	窗口标签：宽高属性控制窗口大小
-	出于调试考虑添加了版本字符串属性。
-
-  - <fonts></fonts>
-	Class fonts: font collection for later reference.
-  - <font/>
-	Class font: describes a font with multiple attributes.
-	Available attr:
-		1. `id`, a integer with which text element can get a fontdesc by `font_id`.
-		2. `name`, internal name of win font; should have been installed, or as a file existed in mod's font folder.
-			*(the font file must support current system codepage to be successfully loaded)*
-		3. `stroke`, use game's black stroke/shadow
-		4. `bold`, bold font
-		5. `wrap`, would wrap with a given textbox
-		6. `height`, font size
-		7. `color_top`/`color_bottom`, enables vertical gradient color
-		8. `spacing`/`xspacing`, horizontal character spacing
-		9. `yspacing`, spacing between lines
-## Customization: 
-以下为自定义部分：
-
-  -	<suwako inherit="Player"><suwako/>
-
-补充：
-	**保留id范围(0~99)及用途**: 
-	1. `0`: 原版的默认显示id，不可索引；
-	2. `1`: 鼠标点选的提示图片；
-	3. `2`: 光标图片.
-  
--->
 <layout version="4">
 	<window width="240" height="975" xbase="16" ybase="78">
-		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v0.0.1</title>
+		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v1.0</title>
 	</window>
 	<fonts>
 		<font id="1"	class="layout-version"		name="Smiley Sans Oblique"		stroke="false"	bold="true"		wrap="false" height="14" spacing="-1"/>
@@ -56,7 +19,7 @@ This xml has expanded features out of original soku layout system, implemented b
 	</fonts>
 	<sublayout class="None">
 		<field class="hint" xoffset="-16" yoffset="-78">
-			<icon ref_id="1" description="Readme." xoffset="0" yoffset="0" width="" height=""/>
+			<icon ref_id="1" xoffset="0" yoffset="0" width="" height=""/>
 			<!--textbox font_id="20" xoffset="0" yoffset="100" width="150">Waiting for cursor selection.&lt;br&gt;等待鼠标点选</textbox-->
 		</field>
 	</sublayout>

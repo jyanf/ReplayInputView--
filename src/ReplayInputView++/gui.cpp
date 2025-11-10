@@ -45,6 +45,9 @@ namespace gui {
 
 
 	UINT xml::XmlHelper::gameCP = CP_ACP, xml::XmlHelper::fileCP = CP_UTF8;
+
+	SokuLib::Sprite Container::helper;
+
 	std::map<int, Font> RivDesign::_fonts;
 	CDesign* RivDesign::_current = nullptr;
 	Console* RivDesign::_console = nullptr;
