@@ -1080,8 +1080,8 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     bool successful = true;
     //while (it!=end && !layout->render(*it, ctx)) { it++; }
     while (!layout->updates(name, ctx, successful)) {
-        if (it != end) {
-            name = *++it;
+        if (++it != end) {
+            name = *it;
         }
         else break;
     }//}
