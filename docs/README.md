@@ -78,7 +78,7 @@ As shown in the picture, which one is clearer?
 
 Also, you have a choice to only keep the outer most outline, which is considered as "box merging", to make them even more distinguishable between objects and players.
 
-<img src="C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251110183859023.png" alt="image-20251110183859023" style="zoom:50%;" />
+<img src="box2.png" style="zoom:50%;" />
 
 ### 2. Supported all the local play mode
 
@@ -118,11 +118,18 @@ Or we should call it a **window** now. To enable panels to displays more info as
 
 We also designed a gui system to manage expanded layouts functions through xml files, to make it more portable and flexible. Which means, it is even able to be customized if you like.
 
-To also enable object debug, mouse interface is introduced. You can select anchors in game screen using mouse and then view its info through the debug window, just like players.
+To also enable object debug, mouse interface is introduced. You can select/deselect anchors in game screen using L/R buttons of mouse and then view its info through the debug window, just like players.
 
 ![](anchor-gui.png)
 
 Hint: gui object anchors are rendered as a diamond.
+
+The window has been implemented with extra interfaces of:
+
+1. right click on caption, copy a hex string of current selected object address
+2. double click on caption, reset the position and size of window, and follow game's window again
+3. mouse hovering on elements would display doc defined descriptions, some as formatted string to display its value
+4. hotkeys to quickly select/deselect players without using mouse
 
 
 
@@ -224,7 +231,7 @@ The following are detailed introduction for layout+ nodes.
 > This xml has expanded features out of original soku layout system, implemented by ReplayInputView++
 > 本布局文件含有非想天则原有布局系统之外的扩展特性（由RIV++负责实现）
 >
-> 
+> 继承关系如图：
 
 #### Introductions: 
 
@@ -237,44 +244,70 @@ The following are detailed introduction for layout+ nodes.
     One version `<textbox>` is allowed to put inside to display a generic info.
     出于调试考虑添加了版本字符串属性。
     
-  - <fonts></fonts>
+  - `<fonts></fonts>`
     Class fonts: place a font collection for later reference.
     字体组标签：用于放置所有字体标签。
     
-  - <font/>
+  - `<font/>`
     Class font: describes a font with multiple attributes.
     字体标签：用多种属性描述字体实例。
     
     Available attr:
     可用属性：
     
-        1. `id`, a integer with which text element can get a fontdesc by `font_id` and render.
-            ID数字，后续文本元素可以使用`font_id`属性引用对应的字体进行渲染。
-        2. `name`, internal name of a font file; should have been installed, or as a file existed in mod's font folder.
-       *(the font file must support current system codepage to be successfully loaded)*
-       名称字符串，目标字体的内部名称；需要字体已被安装，或者放置在font文件夹中。
-       字体文件必须支持当前的[代码页/字符集](#About Fonts)。
-        3. `stroke`, use game's black stroke/shadow
-        4. `bold`, bold font
-        5. `wrap`, would wrap with a given textbox
-        6. `height`, font size
-        7. `color_top`/`color_bottom`, enables vertical gradient color
-        8. `spacing`/`xspacing`, horizontal character spacing
-        9. `yspacing`, spacing between lines
+    1. `id`, a integer with which text element can get a fontdesc by `font_id` and render.
+      ID数字，后续文本元素可以使用`font_id`属性引用对应的字体进行渲染。
+    2. `name`, internal name of a font file; should have been installed, or as a file existed in mod's font folder.
+      *(the font file must support current system codepage to be successfully loaded)*
+      名称字符串，目标字体的内部名称；需要字体已被安装，或者放置在font文件夹中。
+      字体文件必须支持当前的[代码页/字符集](#about-fonts)。
+    3. `stroke`, use game's black stroke/shadow
+       是否增加黑色描边
+    4. `bold`, bold font
+       加粗与否
+    5. `wrap`, would wrap with a given textbox, need `textbox` to have given `width` attribute.
+       换行；内容达到文本框宽度后将自动换至下一行，因此要求显示指定文本框宽度。
+    6. `height`, font size (in pixel)
+       字形大小(像素)
+    7. `color_top`/`color_bottom`, enables vertical gradient color
+       *(if these are set and not equal to each other, then it's possible to colorize texts later using color tag in strings)*
+       控制纵向渐变颜色；若二者颜色不同，则在文本中使用color标签时，着色模式由相乘改为叠加。
+    8. `spacing`/`xspacing`, horizontal character spacing
+       字间距修正值
+    9. `yspacing`, spacing between lines
+       行间距修正值
+    
+  - `<sublayout></sublayout>`
+
+    Class sublayout: handles inheriting and stacking of grouped elements.
+    子布局标签；
+
+    ………………………………………………wip………………………………………………
 #### Customization: 
 以下为自定义部分：
 
-  - <suwako inherit="Player"><suwako/>
+2 types of customization is recommended:
 
-补充：
-    **保留id范围(0~99)及用途**: 
-    1. `0`: 原版的默认显示id，不可索引；
-        2. `1`: 鼠标点选的提示图片；
-        3. `2`: 光标图片.
+  - `<sublayout class="suwako" inherit="Player"><sublayout/>`
+    The system will check if there's compatible name for current character, so it's possible to override default layout of a character.
+    Normally you should use `inherit` attribute to derive the default Player contents.
+    It's case sensitive and make sure you use the internal english name. (the same ones in `th123a.dat> data/character`).
+  - `<sublayout class="common.1006" inherit="Object"></sublayout>`
+    `<sublayout class="alice.805" inherit="Object"></sublayout>`
+    Also, object can also be derived by `character name + actId` . It's sometimes useful to tag out their remained time.
 
--->
 
 
+#### Others:
+
+Preserved `id` range in layout.xml
+**保留id范围(0~99)及用途**: 
+
+    1. `0`: unindexable always-display id;
+        原版的默认显示id，不可索引；
+    2. `1`: 
+        鼠标复制的提示图片；
+    3. `2`: 光标图片.
 
 #### About Fonts
 
