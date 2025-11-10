@@ -203,7 +203,7 @@ Feel free to unpack `ReplayInputView++.dat` file with [**shady-cli**](https://hi
 ```bash
 ::Unpack Commands For example
 REM Unpacking ReplayInputView++.dat to folder 
-shady-cli -pack -m dir -o "" "ReplayInputView++.dat"
+shady-cli -pack -m dir -o "da" "ReplayInputView++.dat"
 ```
 
 After finishing replacement, make a `data -> rivpp -> *Files` structured folder and pack it back to `.dat` file using:
