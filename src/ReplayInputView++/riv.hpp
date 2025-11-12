@@ -43,13 +43,14 @@ inline static Player* get_player(const BattleManager* This, int index);
 		pnl::SWRCMDINFO cmdp2;
 		bool hitboxes = false;
 		bool untech = false;
-		bool show_debug = false;//unused
+		bool show_debug = false;
 		bool paused = false;
 	};
 
 	class RivControl : public RivControlOld {
 		int counter = 0;//as timer
 	public:
+		bool in_battle = false;
 		std::array<pnl::Panel*, PLAYERS_NUMBER> panels = {nullptr};
 		info::Vice vice;
 		//std::array<SWRCMDINFO, PLAYERS_NUMBER> cmds;

@@ -96,8 +96,10 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 			//vice.destroyWnd();
 			vice.hideWnd(); vice.inter.focus = nullptr; 
 			//show_debug = false;//auto on? to do later
+			counter = 0; in_battle = false;
 			return ret;
 		}
+		in_battle = true;
 		bool focus_valid = !vice.inter.focus;
 		traversing_players(This,
 			[this, &focus_valid](int i, Player* player) {
@@ -374,7 +376,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 			old_display_boxes = true;
 		}
 		else if (SokuLib::mainMode != Mode::BATTLE_MODE_VSWATCH
-		&& (check_key(toggle_keys.display_info) || riv.show_debug && !riv.vice.viceDisplay)
+		&& (check_key(toggle_keys.display_info) || !riv.in_battle && riv.show_debug && !riv.vice.viceDisplay)
 		|| (old_display_info = false)
 		) {
 			if (!old_display_info) {
@@ -499,7 +501,7 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 				old_hotkeys[0] = true;
 			}
 		}
-
+		riv.in_battle = true; riv.show_debug = riv.vice.viceDisplay;//for close button hide
 		riv.forwardIndex += riv.forwardStep;
 		if (riv.forwardCount>=0 && riv.forwardIndex >= riv.forwardCount) {
 			for (int i = riv.forwardIndex / riv.forwardCount; i > 0; --i) {
@@ -539,7 +541,6 @@ int __fastcall CBattleManager_OnProcess(BattleManager* This) {
 				for (OfsAndCounter& o : mods2) { o.calc(info->state1[1].player && info->state1[1].player->teamId == 1 ? 1 : -1); }
 			}
 		}
-		//riv.show_debug = riv.vice.viceDisplay;
 	}
 	else {
 		ret = (This->*ogBattleMgrOnProcess[ind])();

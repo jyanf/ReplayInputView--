@@ -677,6 +677,9 @@ namespace gui {
 			else if (key == "color") {
 				elem = addChildren(new Color(child, l));
 			}
+			else if (key == "tail") {
+				elem = addChildren(new Tail(child, l));
+			}
 
 			else if (key == "field") {
 				elem = addChildren(new Canva(child, l, false));
@@ -940,7 +943,7 @@ namespace gui {
 	void Sprite::update(_box& parea, void* ctx) {
 		Element::update(parea, ctx);
 		if (!visible) return;
-		x2 += frameW; y2 += frameW;
+		x2 += frameW; y2 += frameH;
 		parea.hold(this->area());
 		if (!ctx) return;
 		using data = const SokuLib::v2::GameObjectBase;
@@ -1049,11 +1052,12 @@ namespace gui {
 			Vector2f{vertices[3].x, vertices[3].y}+d,
 			Vector2f{vertices[2].x, vertices[2].y}+d2,
 			});
+		auto scp = riv::tex::RendererGuard();
+		scp.setTexture(NULL);
 		temp.setFillColor(0); temp.setBorderColor(0xA0FFFFFF); temp.draw();
-		SokuLib::textureMgr.setTexture(dxHandle, 0); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
+		scp.setTexture(dxHandle); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
 		//SokuLib::SpriteEx::rotate
 		//base pt
-		auto scp = riv::tex::RendererGuard();
 		temp.setPosition(pos.to<int>() - SokuLib::Vector2i{ 2,2 }); temp.setSize({ 4,4 });
 		temp.setFillColor(0xA0000000); temp.setBorderColor(0xFFFFFFFF); temp.draw();
 	}
@@ -1117,6 +1121,7 @@ namespace gui {
 			layout.area() = base;
 			if (updating.try_lock()){
 				layout.update(base, ctx);
+				if (cl != currentLayout) _hoverbuffer = nullptr;
 				currentLayout = cl;
 				updating.unlock();
 				successful &= true;

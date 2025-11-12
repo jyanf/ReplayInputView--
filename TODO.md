@@ -1,5 +1,7 @@
 # Task
 
+- [x] x关不掉了，auto on的锅
+
 - [x] 心抄斩显示有误
 
   > 子物体需要依赖父物体至少有一红框
@@ -11,6 +13,8 @@
 - [x] 全无敌时显示有误
 
 - [ ] 全屏元素覆盖description无法消除？
+
+  - [ ] 快捷键转空布局tip不消失？
 
 - [x] vld链接有误，放入th123不识别
 
@@ -40,7 +44,7 @@
 
 - [x] 研究下满级龙眼
 
-  - [ ] 反射盾凭什么知道发弹？
+  - [x] 反射盾凭什么知道发弹？
 
   > ```cpp
   > //0x465100
@@ -91,7 +95,7 @@
 
   - [ ] 伊吹瓢
 
-  - [ ] 黄砂56f；梅雨80c
+  - [ ] 黄砂56f（自己必被康）；梅雨80c（自己弹地）
 
   - [ ] 撰写readme
 
@@ -182,6 +186,24 @@
 - [ ] 梅雨伪连显示？无伤显示？
 
 - [ ] 拖尾hover时一并变色？
+
+  - [ ] tail gui
+
+
+  > - `setTail(actId, width, length, subdivision, blendMode)`
+  >
+  > - `inline int vertexBufferSize() const { return length * subdivision * 2 + 2; }`
+  >
+  > - ```cpp
+  >   struct TailObject {
+  >       GameObjectBase* parent; int segments, subdivision, unknown0C;//0C always -1?
+  >       float width; int blendMode; Vector2f texCoord;
+  >       int texId = 0; bool tracking;
+  >       //
+  >   }
+  >   ```
+  >   
+  > - 
 
   - [ ] mode为paramsD ?
 

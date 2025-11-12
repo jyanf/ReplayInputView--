@@ -529,11 +529,13 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             static thread_local WCHAR tipBuf2[bufsz];
             if (layout && Interface::cursor_refresh(inter.cursor2, pt2, hwnd, layout->windowSize.x, layout->windowSize.y) && tipWND) {
                 printf("MOUSEMOVE from viceWindow; <%3d, %3d>\n", pt2.x, pt2.y);
-                if (layout->debug(inter.cursor2, pt2, tipBuf2, bufsz)) {
+                if (int result=0; result = layout->debug(inter.cursor2, pt2, tipBuf2, bufsz)) {
+                    if (result == 1) {
+                        tipINFO.lpszText = tipBuf2;
+                        //SendMessageW(tipWND, TTM_SETTOOLINFO, 0, (LPARAM)&tipINFO);
+                        SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
+                    }
                     //swprintf_s(tipBuf2, _countof(tipBuf2), L"%d, \n%d", pt2.x, pt2.y);
-                    tipINFO.lpszText = tipBuf2;
-                    //SendMessageW(tipWND, TTM_SETTOOLINFO, 0, (LPARAM)&tipINFO);
-                    SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
                     ClientToScreen(hwnd, &pt2);
                     /*RECT rcScreen;
                     SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
@@ -603,9 +605,11 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             InvalidateRect(hwnd, NULL, true);
 			UpdateWindow(hwnd);
             //if (layout && layout->debug(inter.cursor2, pt2, tipBuf2, 256)) {
-            if (layout && layout->debug_mini(inter.cursor2, pt2, tipBuf2, bufsz)) {
-				tipINFO.lpszText = tipBuf2;
-                SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
+            if (int result = 0;  layout && (result = layout->debug_mini(inter.cursor2, pt2, tipBuf2, bufsz))) {
+				//tipINFO.lpszText = tipBuf2;
+                if (result == 1) {
+                    SendMessageW(tipWND, TTM_UPDATETIPTEXTW, 0, (LPARAM)&tipINFO);
+                }
             }
             else
                 SendMessageW(tipWND, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tipINFO);
@@ -974,16 +978,37 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
     //    inserting.unlock();
     //}
 
-    void drawObjectHover(GameObjectBase* object, float time = timeGetTime()/1000.f) {
+    void drawObjectHover(Interface::PhoverPublic& phover, float time = timeGetTime()/1000.f) {
         using riv::tex::RendererGuard, riv::tex::Color;
         using SokuLib::v2::BlendOptions, SokuLib::v2::FrameData;
+        auto* object = const_cast<GameObjectBase*>(phover.get_base());
 		if (!object || !object->frameData) return;
         
         RendererGuard guard;
         guard.setRenderMode(0);//save mode
         auto temp = object->renderInfos; auto& color = *reinterpret_cast<Color*>(&object->renderInfos.color);
         color.a = 0xFF;
-        float interp = tanhf(sinf(time * 2 * 3.1416f)) + 1.f; interp /= 2.f;
+        float interp = tanhf(sinf(time * 2 * 3.1416f));
+        if (phover.is_object()) {
+            auto* object = phover.get_object();
+            //float interp2 = (-interp + 1.f) / 2.f;
+            if (object->tail) {
+                auto& mode = object->tail->paramD;
+                auto old = mode;
+                switch (mode) {
+                case BlendOptions::NORMAL:
+                    break;
+                case BlendOptions::ADDITIVE:
+                    mode = BlendOptions::MULTIPLY; break;
+                case BlendOptions::MULTIPLY:
+                    mode = BlendOptions::ADDITIVE; break;
+                }
+                object->tail->render();
+                mode = old;
+            }
+        }
+        interp = (interp+1.f) / 2.f;
+
         switch (object->frameData->renderGroup) {
         case FrameData::SPRITE:
         case FrameData::TEXTURE:
@@ -1038,9 +1063,10 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
 
 
     //if (layout) {
-    auto target = inter.focus ? inter.focus : inter.getHover();
+    //auto target = inter.focus ? inter.focus : inter.getHover();
+    auto target = inter.getCount() > 0 ? inter.getHover() : inter.focus;
     //int count = inter.getCount(), index = inter.getIndex();
-	void* ctx = nullptr;
+    void* ctx = nullptr;
 	//gui::string_view name;
     gui::string name;
 	std::array<std::string, 5>::const_iterator it, end;

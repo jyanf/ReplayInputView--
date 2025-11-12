@@ -14,6 +14,7 @@
 #undef printf
 inline void _wrap_printf(...) { }
 #define printf(...)  _wrap_printf(__VA_ARGS__)
+#define puts(...) _wrap_printf(__VA_ARGS__)
 #endif
 
 #pragma once

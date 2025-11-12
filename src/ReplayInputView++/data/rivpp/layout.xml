@@ -86,6 +86,9 @@
 	<number id="301" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="0">
 		<image name="font-plain.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>
+	<number id="302" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="1">
+		<image name="font-plain.png" xposition="0" yposition="0" width="312" height="24"/>
+	</number>
 	<number id="310" xposition="0" yposition="0" width="24" height="24" fontspacing="24" textspacing="-16" size="0" floatsize="0">
 		<image name="font-mono.png" xposition="0" yposition="0" width="312" height="24"/>
 	</number>

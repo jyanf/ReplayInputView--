@@ -637,7 +637,8 @@ namespace gui {
 		}
 		virtual bool debug(const SokuLib::Vector2i& cursor) override;//output string
 	};
-	class Sprite : public Element, SokuLib::Sprite {
+	class Sprite : public Element, public SokuLib::Sprite {
+	protected:
 		//SokuLib::Vector2f scale;
 		//SokuLib::v2::BlendOptions* blend = nullptr;//group2 only
 		//SokuLib::Vector2<short> size, ofs;
@@ -805,10 +806,12 @@ namespace gui {
 		//	cursorpt.x = cx; cursorpt.y = cy;
 		//}
 		
-		inline void inspect(POINT& pt, WCHAR* ret, size_t _max = 256) {
+		inline bool inspect(POINT& pt, WCHAR* ret, size_t _max = 256) {
 			auto ws = xml::XmlHelper::convertW(lines.c_str());
-			//if (std::wstring_view(ret) == ws) { return; }
+			if (!wcscmp(ret, ws.c_str()))
+				return false;
 			ws._Copy_s(ret, _max, ws.length());
+			return true;
 			//clientpt = pt;
 		}
 		inline void push(const string& str, const SokuLib::Vector2f& v) {
@@ -882,21 +885,20 @@ namespace gui {
 		bool updates(const string& cl, void* ctx, bool& successful);
 		void render() const;
 		
-		inline bool debug_mini(const SokuLib::Vector2i& cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
+		inline int debug_mini(const SokuLib::Vector2i& cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
 			if (cursor.x < 0 || cursor.y < 0) {
-				return false;
+				return 0;
 			}
 			auto scp = std::lock_guard(updating);
 			console.clear();
 			if (_hoverbuffer && _hoverbuffer->debug(cursor)) {
-				console.inspect(pt, ret, _max);
-				return true;
+				return console.inspect(pt, ret, _max) ? 1 : 2;
 			}
 			else
-				return (_hoverbuffer = nullptr);
+				return (_hoverbuffer = nullptr), 0;
 		}
-		inline bool debug(SokuLib::Vector2i cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
-			bool hit = false;
+		inline int debug(SokuLib::Vector2i cursor, POINT& pt, WCHAR* ret, size_t _max = 256) {
+			int result = 0;
 			if (updating.try_lock()) {
 				console.clear();
 				console.clientpt = { cursor.x, cursor.y };
@@ -904,13 +906,18 @@ namespace gui {
 					return updating.unlock(), false;
 				}
 				auto it = sublayouts.find(currentLayout);
-				if (it != sublayouts.end()) {
-					hit |= _hoverbuffer && _hoverbuffer->debug(cursor) || (_hoverbuffer = nullptr, it->second.debug(cursor));
-					if (hit) console.inspect(pt, ret, _max);
+				if (it != sublayouts.end()
+				&& (_hoverbuffer && _hoverbuffer->debug(cursor) 
+					|| (_hoverbuffer = nullptr, it->second.debug(cursor)))
+				) {
+					result = console.inspect(pt, ret, _max) ? 1 : 2;
 				}
 				updating.unlock();
-			} else puts("debuging try lock failed");
-			return hit;
+			} else { 
+				puts("debuging try lock failed");
+				result = 2;
+			}
+			return result;
 		}
 		virtual void clear() override {
 			CDesign::clear(); CDesign::objectMap.clear();
@@ -1151,6 +1158,60 @@ namespace gui {
 			string temp; temp.resize((description.size() + 12));
 			sprintf(temp.data(), description.c_str(), std::format("0x{:08x}", ref_ptr->geti()).c_str());
 			return RivDesign::pushConsole(temp, { x2,y2 }) && RivDesign::setBuffer(this);//Element::debug(cursor);
+		}
+	};
+
+	class Tail : public Sprite {
+	public:
+		using Sprite::Sprite;
+		//inline Tail(noderef node, const Layout* l = nullptr);
+		inline virtual void update(_box& parea, void* ctx) override {
+			Element::update(parea, ctx);
+			if (!ctx) return;
+			auto& obj = *reinterpret_cast<SokuLib::v2::GameObject*>(ctx);
+			visible &= obj.frameState.actionId >= 800 && obj.tail;
+			if (!visible) return;
+			x2 += frameW; y2 += frameH;
+			parea.hold(this->area());
+			dxHandle = obj.tail->texId;
+			Vector2f& s = size; s = { 0, obj.tail->paramA };
+			int w = 1, h = 1;
+			SokuLib::textureMgr.getSize(obj.tail->texId, &w, &h);
+			s.x = h;
+			float scale = 1;
+			if (s.x > frameW || s.y > frameH)
+				scale = (s.x / s.y < frameW / frameH) ? frameH / s.y : frameW / s.x;
+			s *= scale;
+			Vector2f r{
+				x1 + frameW / 2 - s.x / 2, y1 + frameH / 2 - s.y / 2
+			};
+			vertices[0].x = vertices[2].x = r.x;
+			vertices[0].y = vertices[1].y = r.y;
+			vertices[1].x = vertices[3].x = r.x + s.x;
+			vertices[2].y = vertices[3].y = r.y + s.y;
+			
+			vertices[0].u = vertices[1].u = 0;//clockwise rotate 90 deg
+			vertices[2].u = vertices[3].u = 1;//obj.tail->texCoord.x;
+			vertices[1].v = vertices[3].v = 0;
+			vertices[0].v = vertices[2].v = min(1-0.5f/h, obj.tail->texCoord.y);//texel fix
+		}
+		inline virtual void render() const override {
+			Element::render();
+			if (!visible || !dxHandle) return;
+			static SokuLib::DrawUtils::RectangleShape temp;
+			Vector2f d{ 0.5,0.5 };
+			Vector2f d2 = { -0.5,0.5 };
+
+			temp.rawSetRect({
+				Vector2f{vertices[0].x, vertices[0].y} - d,
+				Vector2f{vertices[1].x, vertices[1].y} - d2,
+				Vector2f{vertices[3].x, vertices[3].y} + d,
+				Vector2f{vertices[2].x, vertices[2].y} + d2,
+				});
+			auto scp = riv::tex::RendererGuard();
+			scp.setTexture(NULL); scp.setRenderMode(1);
+			temp.setFillColor(0); temp.setBorderColor(0xA0FFFFFF); temp.draw();
+			scp.setTexture(dxHandle); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
 		}
 	};
 }

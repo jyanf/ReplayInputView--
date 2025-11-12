@@ -470,6 +470,20 @@
 			<value id="24" class="cancel-level" type="short">
 				<offset hex="0x15C"/><offset hex="0x12"/>
 			</value>
+			<value id="50" class="tail-object" type="ptr"><offset hex="0x354"/></value>
+			<value id="51" class="tail-blend-mode" type="int">
+				<offset hex="0x354"/><offset hex="0x14"/>
+			</value>
+			<value id="52" class="tail-width" type="float">
+				<offset hex="0x354"/><offset hex="0x10"/>
+			</value>
+			<value id="53" class="tail-segment" type="int">
+				<offset hex="0x354"/><offset hex="0x4"/>
+			</value>
+			<value id="54" class="tail-subsect" type="int">
+				<offset hex="0x354"/><offset hex="0x8"/>
+			</value>
+			
 			<value id="100" class="gpShort[0]" type="short"><offset hex="0x36c"/></value>
 			<value id="101" class="gpShort[1]" type="short"><offset hex="0x36e"/></value>
 			<value id="102" class="gpShort[2]" type="short"><offset hex="0x370"/></value>
@@ -601,6 +615,20 @@
 				</link>
 			</grid>
 			
+		</field>
+		<field class="tail-object" hide_if="50=0" yoffset="14"> <back ref_id="225"/>
+			<textbox font_id="7" xoffset="3" yoffset="">Tail</textbox>
+			<icon ref_id="103" tile="1,2,0" width="128" height="64" xoffset="80"/>
+			<tail width="128" height="64" xoffset="80"/>
+			<textbox font_id="11" xoffset="82" yoffset="2"> blend mode: </textbox>
+			<number number_id="310" value_id="51" xoffset="160" yoffset="-4"/>
+			<textbox font_id="5" xoffset="5" yoffset="27"><![CDATA[width: ]]></textbox>
+			<number number_id="302" value_id="52" xoffset="81" yoffset="23"/>
+			<textbox font_id="5" xoffset="5" yoffset="48">
+				<![CDATA[nodes:         x]]>
+			</textbox>
+			<number number_id="301" value_id="53" xoffset="70" yoffset="44"/>
+			<number number_id="321" value_id="54" xoffset="85" yoffset="44"/>
 		</field>
 	</sublayout>
 	<sublayout class="Player" inherit="Basic"> <pad width="208" height="260"/> <back ref_id="225"/>

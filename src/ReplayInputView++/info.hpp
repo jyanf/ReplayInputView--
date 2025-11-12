@@ -105,6 +105,7 @@ using Design = gui::RivDesign;
 		DWORD oldi = 0;
 		std::mutex inserting;
 	public:
+		using PhoverPublic = Phover;
 		constexpr static Anchor toler = { 6, 6 };
 		Anchor cursor = toler * -2, cursor2 = toler * -2;
 		Phover focus = nullptr;
@@ -308,6 +309,7 @@ using Design = gui::RivDesign;
 		}
 		~Vice() {
 			destroyWnd();
+			viceDisplay = false;
 			/*if (layout.has_value()) {//loading problem, test only
 				layout->clear();
 				layout.reset();
@@ -317,7 +319,7 @@ using Design = gui::RivDesign;
 		static void ResetD3D9Dev();
 	};
 
-	void drawObjectHover(GameObjectBase* object, float time);
+	void drawObjectHover(Interface::PhoverPublic& object, float time);
 	
 	class ScopedActCtx {
 		static HANDLE g_hActCtx;
