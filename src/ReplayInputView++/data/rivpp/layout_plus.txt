@@ -229,7 +229,7 @@
 					<icon class="attack-air-unblockable" ref_id="101" tile="13,2,8" description="Air unblockable(AUB)."/>
 					
 					<icon class="attack-hitWB" ref_id="101" tile="13,2,9" description="Hit on wrongblock."/>
-					<icon class="attack-crushWB" ref_id="101" tile="13,2,21" description="Crush on wrongblock."/>
+					<icon class="attack-crushWB" ref_id="101" tile="13,2,21" description="Crush opponent on wrongblock."/>
 					<icon class="attack-ignore-armor" ref_id="101" tile="13,2,22" description="Ignore armor."/>
 					
 					<icon class="attack-ungrazable" ref_id="101" tile="13,2,13" description="Ungrazable."/>
@@ -276,16 +276,16 @@
 		</field>
 		
 		<grid class="extra-icons" xgrid="25" ygrid="25" rowmax="8" xoffset="1" yoffset="10">
-			<link class="ptr-owner" value_id="1" description="Click to jump:[%s]&#10;Owner(/self) pointer.&#10;"> <back ref_id="200"/>
+			<link class="ptr-owner" value_id="1" description="Click &amp; jump to[%s]&#10;Owner(/self) pointer.&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,26"/>
 			</link>
-			<link class="ptr-ally" value_id="2" description="Click to jump:[%s]&#10;Ally pointer for now,&#10; changed by bullet reflection.&#10;"> <back ref_id="200"/>
+			<link class="ptr-ally" value_id="2" description="Click &amp; jump to[%s]&#10;Ally pointer for now,&#10; changed by bullet reflection.&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,27"/>
 			</link>
-			<link class="ptr-opponent" value_id="3" description="Click to jump:[%s]&#10;Opponent pointer for now.&#10;"> <back ref_id="200"/>
+			<link class="ptr-opponent" value_id="3" description="Click &amp; jump to[%s]&#10;Opponent pointer for now.&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,28"/>
 			</link>
-			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+			<link class="ptr-parentA" value_id="5" description="Click &amp; jump to[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,29"/>
 			</link>
 			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="Forced to induce counter hit."/></field>
@@ -393,7 +393,7 @@
 			<number value_id="18" number_id="320" xoffset="187" yoffset="101"/>
 			<number value_id="19" number_id="320" xoffset="187" yoffset="115"/>
 			<field xoffset="150" yoffset="135"> <pad width="50" height="30"/>
-				<textbox font_id="5" xoffset="0" yoffset="0">物体锚点</textbox>
+				<textbox font_id="5" xoffset="0" yoffset="0">Anchor</textbox>
 				<textbox font_id="11" xoffset="-6" yoffset="14">
 					<![CDATA[[       ,         ]]]>
 				</textbox>
@@ -401,11 +401,11 @@
 				<number value_id="23" number_id="321" xoffset="56" yoffset="8"/>
 			</field>
 			<field class="center" xoffset="90" yoffset="135"> <pad width="50" height="30"/>
-				<textbox font_id="5" xoffset="0" yoffset="0">变换中心</textbox>
-				<textbox font_id="11" xoffset="-4" yoffset="14">
-					<![CDATA[[      ,        ]]]>
+				<textbox font_id="5" xoffset="0" yoffset="0">Center</textbox>
+				<textbox font_id="11" xoffset="-7" yoffset="14">
+					<![CDATA[[       ,        ]]]>
 				</textbox>
-				<number value_id="20" number_id="321" xoffset="26" yoffset="8"/>
+				<number value_id="20" number_id="321" xoffset="27" yoffset="8"/>
 				<number value_id="21" number_id="321" xoffset="53" yoffset="8"/>
 			</field>
 			
@@ -452,6 +452,7 @@
 			<value id="4" class="collision-limit" type="char"><offset hex="0x194"/></value>
 			<value id="5" class="layer" type="char"><offset hex="0x358"/></value>
 			<value id="6" class="no-stop" type="short"><offset hex="0x360"/></value>
+			<value id="7" class="reflection-count" type="char"><offset hex="0x1A0"/></value>
 			<value class="parentA" id="9" type="ptr"><offset hex="0x174"/></value>
 			<value id="10" class="parent-player" type="ptr"><offset hex="0x364"/></value>
 			<value id="11" class="parent-object" type="ptr"><offset hex="0x368"/></value>
@@ -516,21 +517,21 @@
 				</field>
 			</grid>
 		</field>
-		<field class="collide"> <pad width="208" height="40"/>
-			<textbox font_id="7" xoffset="3" yoffset="4">
+		<field class="collide"> <pad width="208" height="44"/>
+			<textbox font_id="7" xoffset="3" yoffset="4" description="//+0x194 char;Collision count.">
 				<![CDATA[<color ff5356>Hits</color>]]>
 			</textbox>
 			<number value_id="4" number_id="331" xoffset="50" yoffset="20"/>
-			<textbox font_id="7" xoffset="58" yoffset="4" description="被擦/相杀时的判定复活计数，&#10;具体视不同弹幕的实现而变化，故仅供参考">
+			<textbox font_id="7" xoffset="58" yoffset="4" description="The counters for recovered hits after being grazed or collided.&#10;Only for reference out of varied implementation.&#10;被擦/相杀时的判定复活计数，&#10;具体视不同弹幕的实现而变化，故仅供参考">
 				<![CDATA[Recovery {                    ,<br>]]>
 				<![CDATA[                                     }]]>
 			</textbox>
 			<field _hide_if="2=0" xoffset="128" yoffset="4">
-				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x short GameObject::projectileHit"><![CDATA[collided:]]></textbox>
+				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x396 short;"><![CDATA[collided:]]></textbox>
 				<number value_id="2" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
 			<field _hide_if="1=0" xoffset="128" yoffset="22">
-				<textbox font_id="5" xoffset="0" yoffset="3"><![CDATA[grazed:]]> </textbox>
+				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x394 short;"><![CDATA[grazed:]]> </textbox>
 				<number value_id="1" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
 		</field>
@@ -562,12 +563,24 @@
 		</field>
 		<field class="others"> <pad width="208" height="30"/>
 			<textbox font_id="7" xoffset="3" yoffset="4">Others</textbox>
-			<textbox font_id="5" xoffset="120" yoffset="6" 
-				description="//+0x358 char GameObject::layer&#10;Render order: &#10;  { positive: object over characters, negative: object under characters } ">
-				Layer
-			</textbox>
-			<number number_id="310" value_id="5" xoffset="180" yoffset="2"/>
-			<grid xgrid="25" ygrid="25" xoffset="8" yoffset="28" rowmax="8">
+			<grid xgrid="60" ygrid="25" xoffset="8" yoffset="7" rowmax="3" stack="true">
+				<field/>
+				<field class="layer" xoffset=""> <pad width="60" height="24"/> <back ref_id="202"/>
+					<textbox font_id="5" xoffset="2" yoffset="3" 
+						description="//+0x358 char&#10;Render order: &#10;  { positive: object over characters, negative: object under characters } ">
+						Layer
+					</textbox>
+					<number number_id="310" value_id="5" xoffset="58" yoffset="-1"/>
+				</field>
+				<field class="reflection-count" xoffset="" hide_if="7=0"> <pad width="80" height="24"/> <back ref_id="202"/>
+					<textbox font_id="5" xoffset="2" yoffset="3" 
+						description="//+0x1A0 char&#10; added to both reflector and reflected object.">
+						Reflection
+					</textbox>
+					<number number_id="310" value_id="7" xoffset="82" yoffset="-1"/>
+				</field>
+			</grid>
+			<grid xgrid="25" ygrid="25" xoffset="8" yoffset="4" rowmax="8" stack="true">
 				<!--link class="parent-player" value_id="10" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,31"/>
 				</link>
@@ -577,16 +590,17 @@
 				<field hide_if="6=0">
 					<icon ref_id="102" tile="13,3,6" description="//+0x360 short &#10;Won't be affected by owner's timestop."/>
 				</field>
-				<link class="parent-player" value_id="12" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
+				<link class="parent-player" value_id="12" description="Click &amp; jump to[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,31"/>
 				</link>
-				<link class="ptr-parentA" value_id="9" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+				<link class="ptr-parentA" value_id="9" description="Click &amp; jump to[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,29"/>
 				</link>
-				<link class="parent-object" value_id="13" description="点击跳转[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
+				<link class="parent-object" value_id="13" description="Click &amp; jump to[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,30"/>
 				</link>
-			</grid>	
+			</grid>
+			
 		</field>
 	</sublayout>
 	<sublayout class="Player" inherit="Basic"> <pad width="208" height="260"/> <back ref_id="225"/>
@@ -703,7 +717,7 @@
 			</field>
 		</field>
 		<field class="cancel-levels"> <pad height="52"/>
-			<textbox font_id="5" xoffset="3" yoffset="4" description="当前招式的取消级(Cancel Level)">Move Lock</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="Cancel level of current move.">Move Lock</textbox>
 			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
 				<number number_id="361" value_id="13" max="6" min="0" xoffset="20"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
@@ -711,7 +725,7 @@
 
 				<icon class="lock-border-escape" ref_id="102" tile="13,3,9" xoffset="88" description="BorderEscape locked."/>
 			</field>
-			<textbox font_id="5" xoffset="3" yoffset="4" description="取消当前招式所需的取消级">Action Lock</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="Cancel level required to cancel the current.">Action Lock</textbox>
 			<field class="action-lock" xoffset="70" stack="true"> <pad height="24"/>
 				<number number_id="361" value_id="14" max="6" min="0" xoffset="20"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
@@ -746,176 +760,179 @@
 			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field></field><!--spacing for field name-->
 				<field class="multi-attack"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,32"/>
+					<icon ref_id="102" tile="13,3,32" description="//+0x530 float&#10;Attack power."/>
 					<number number_id="315" value_id="30" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-defend"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,33"/>
+					<icon ref_id="102" tile="13,3,33" description="//+0x534 float&#10;Defend power."/>
 					<number number_id="315" value_id="31" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-power" hide_if="32=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,7"/>
-					<field show_if="32=0"><icon ref_id="102" tile="13,3,8"/></field>
+					<icon ref_id="102" tile="13,3,7" description="//+0x538 float&#10;Armor power; cut down poise damage of recieved attack."/>
+					<field show_if="32=0">
+						<icon ref_id="102" tile="13,3,8" 
+						description="//+0x538 float&#10;Armor power; recieved poise damage cut down to zero, &#10; which means infinite poise health."/>
+					</field>
 					<number number_id="315" value_id="32" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-spell" hide_if="33=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,10"/>
+					<icon ref_id="102" tile="13,3,10" description="//+0x544 float&#10;Spell power."/>
 					<number number_id="315" value_id="33" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-special" hide_if="34=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,23"/>
+					<icon ref_id="102" tile="13,3,23" description="//+0x548 float&#10;Skill power."/>
 					<number number_id="315" value_id="34" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-meter" hide_if="35=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,12"/>
+					<icon ref_id="102" tile="13,3,12" description="//+0x54C float&#10;Card meter-gain power."/>
 					<number number_id="315" value_id="35" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-discard" hide_if="37=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,34"/>
+					<icon ref_id="102" tile="13,3,34" description="//+0x554 float&#10;Discard power."/>
 					<number number_id="315" value_id="37" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-life-steal" hide_if="36=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,21"/>
+					<icon ref_id="102" tile="13,3,21" description="//+0x550 float&#10;Life steal power."/>
 					<number number_id="315" value_id="36" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-dmg-reflect" hide_if="38=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,35"/>
+					<icon ref_id="102" tile="13,3,35" description="//+0x558 float&#10;Damage reflect power, used by suwako's blue curse."/>
 					<number number_id="315" value_id="38" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-speed" hide_if="40=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,11"/>
+					<icon ref_id="102" tile="13,3,11" description="//+0x4D0 float&#10;Horizontal speed power, used by Tempest etc."/>
 					<number number_id="315" value_id="40" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-xmove" hide_if="41=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,24"/>
+					<icon ref_id="102" tile="13,3,24" description="//+0x564 float&#10;Axis-X displacement power, used by Komachi Avīci."/>
 					<number number_id="315" value_id="41" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-ymove" hide_if="42=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,37"/>
+					<icon ref_id="102" tile="13,3,37" description="//+0x568 float&#10;Axis-Y displacement power."/>
 					<number number_id="315" value_id="42" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-limit" hide_if="39=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,36"/>
+					<icon ref_id="102" tile="13,3,36" description="//+0x53C float&#10;Combo limit power, used by Sakuya timestops."/>
 					<number number_id="315" value_id="39" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="bonus-rate" hide_if="43=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,14"/>
+					<icon ref_id="104" tile="13,3,14" description="//+0x540 float&#10;Combo rate fix, used by Sakuya timestops."/>
 					<number number_id="315" value_id="43" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="calm-spotlight" hide_if="69=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,9" description="//+0x4CD bool; +0x4CE short; &#10;Obtains calm spotlight,&#10; healing points = (strength+5) every 10f."/>
+					<icon ref_id="104" tile="13,3,9" description="//+0x4CD bool; +0x4CE short; &#10;Obtains calm spotlight,&#10; healing (strength+5) points per 10f."/>
 					<number number_id="310" value_id="70" xoffset="60" yoffset="-1"/>
 				</field>
 			</grid>
 			<grid class="integer-list" xgrid="42" ygrid="24" rowmax="5" xoffset="3">
 				<field class="grimoire" hide_if="44=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,5"/>
+					<icon ref_id="104" tile="13,3,5" description="//+0x560 short;&#10;Grimoire books count."/>
 					<number number_id="310" value_id="44" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="tengu-fans" hide_if="45=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,3"/>
+					<icon ref_id="104" tile="13,3,3" description="//+0x834 short;&#10;Tengu fans count."/>
 					<number number_id="310" value_id="45" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="dolls" hide_if="46=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,4"/>
+					<icon ref_id="104" tile="13,3,4" description="//+0x840 float;&#10;Sacrificial dolls count."/>
 					<number number_id="310" value_id="46" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="control-rods" hide_if="47=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,6"/>
+					<icon ref_id="104" tile="13,3,6" description="//+0x844 float;&#10;Control rods count."/>
 					<number number_id="310" value_id="47" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="count-drops" hide_if="48=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,16"/>
+					<icon ref_id="102" tile="13,3,16" description="//+0x850 short;&#10;Drops count."/>
 					<number number_id="310" value_id="48" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="can-graze-melee" hide_if="61=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,0"/>
+					<icon ref_id="104" tile="13,3,0" description="//+0x56C bool;&#10;Can graze melee, used by Spring Haze."/>
 				</field>
 				<field class="crush-on-wb" hide_if="62=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,8"/>
+					<icon ref_id="104" tile="13,3,8" description="//+0x56D bool;&#10;Crush opponent on wrongblock, used by Sunshower etc."/>
 				</field>
 				<field class="skillsmax" hide_if="63=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,1"/>
+					<icon ref_id="104" tile="13,3,1" description="//+0x56E bool;&#10;Sets skill levels to max, used by Sprinkle."/>
 				</field>
 			</grid>
 		</field>
 		<field class="active-timers">
 			<textbox font_id="5" xoffset="3" yoffset="4">Countdowns</textbox>
-			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
+			<grid class="timer-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field/>
 				<field class="timer-meleeinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,0"/>
+					<icon ref_id="102" tile="13,3,0" description="//+0x51C short;&#10;Melee invul timer."/>
 					<number number_id="310" value_id="50" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-projinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,1"/>
+					<icon ref_id="102" tile="13,3,1" description="//+0x520 short;&#10;Bullet invul timer."/>
 					<number number_id="310" value_id="52" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-grabinvul" hide_if="51=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,2"/>
+					<icon ref_id="102" tile="13,3,2" description="//+0x51E short;&#10;Grab invul timer."/>
 					<number number_id="310" value_id="51" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-graze" hide_if="53=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,13"/>
+					<icon ref_id="102" tile="13,3,13" description="//+0x522 short;&#10;Grazing timer."/>
 					<number number_id="310" value_id="53" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-confusiondebuff" hide_if="54=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,19"/>
+					<icon ref_id="102" tile="13,3,19" description="//+0x524 short;&#10;Confusion debuff timer, used by Reisen."/>
 					<number number_id="310" value_id="54" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-sordebuff" hide_if="55=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,18"/>
+					<icon ref_id="102" tile="13,3,18" description="//+0x526 short;&#10;Sword of Rapture debuff timer, used by Tenshi."/>
 					<number number_id="310" value_id="55" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-healcharm" hide_if="56=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,20"/>
+					<icon ref_id="102" tile="13,3,20" description="//+0x528 short;&#10;Healcharm timer."/>
 					<number number_id="310" value_id="56" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-magicpotion" hide_if="57=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,17"/>
+					<icon ref_id="102" tile="13,3,17" description="//+0x848 float;&#10;Magic potion timer."/>
 					<number number_id="310" value_id="57" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-stopwatch" hide_if="58=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,2"/>
+					<icon ref_id="104" tile="13,3,2" description="//+0x84C short;&#10;Stopwatch(system card) timer."/>
 					<number number_id="310" value_id="58" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-dragonstar" hide_if="59=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,7"/>
+					<icon ref_id="102" tile="13,3,7" description="//+0x84E short;&#10;Dragonstar timer."/>
 					<number number_id="310" value_id="59" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-dropinvul" hide_if="60=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,16"/>
+					<icon ref_id="102" tile="13,3,16" description="//+0x852 short;&#10;Drops invulnerable timer."/>
 					<number number_id="310" value_id="60" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timestop" hide_if="65=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,38"/>
+					<icon ref_id="102" tile="13,3,38" description="//+0x4A8 short;&#10;Timestop left."/>
 					<number number_id="310" value_id="65" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="spellstop" hide_if="68=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,12"/>
+					<icon ref_id="104" tile="13,3,12" description="//+0x4A6 short;&#10;Spellstop, used to set timestop."/>
 					<number number_id="310" value_id="68" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-poise" hide_if="66=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,7"/>
+					<icon ref_id="104" tile="13,3,7" description="//+0x4BC short;&#10;Poise damage, max to 100."/>
 					<number number_id="310" value_id="66" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-nogain" hide_if="67=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,25"/>
+					<icon ref_id="102" tile="13,3,25" description="//+0x7F8 short;&#10;No meter-gain timer, zeroing meter-gain power&#10; to suppress meter-gain during a spellcard."/>
 					<number number_id="310" value_id="67" xoffset="62" yoffset="-1"/>
 				</field>
 			</grid>
 		</field>
 	</sublayout>
 	<sublayout class="suwako" inherit="Player"><!--lowercase first letter, i.e. keep the character name same as is in .dat path-->
-		<title xoffset="0" yoffset="-25">Suwako
+		<title font_id="" xoffset="0" yoffset="-25">Suwako
 			<back ref_id="214"/>
 		</title>
 		<values>

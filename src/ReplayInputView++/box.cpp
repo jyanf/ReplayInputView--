@@ -126,6 +126,7 @@ template<bool check_sub> inline static void get_collision(const GameObjectBase& 
 	
 }
 inline static bool check_hitbox_active(const GameObjectBase& object) {
+	//if (object.boxData.hitBoxCount <= 0) return false;//mainly for childA
 	int colL = 0, colT = 0;
 	get_collision(object, colT, colL);
 	return colL && !colT;
@@ -162,11 +163,15 @@ inline static bool check_lag(const GameObjectBase& object, BulletSpecial spec) {
 }
 inline static bool check_bullet_hitbox_active(const GameObjectBase& object, BulletSpecial spec) {
 	using CT = GameObjectBase::CollisionType;
-	auto* obj = spec.SubBox ? object.parentA : &object;
-	spec = spec.SubBox ? determine(*obj, BulletSpecial::SHARED_BOX) : spec;
+	auto* obj = &object;
+	bool isSubBox = spec.SubBox;
+	if (isSubBox) {
+		obj = object.parentA;
+		spec = determine(*obj, BulletSpecial::SHARED_BOX);
+	}
 	if (!check_lag(*obj, spec)) { 
 		lag_saver.erase(obj);
-		return check_hitbox_active(*obj);
+		return check_hitbox_active(*obj) && (isSubBox ? obj->gameData.frameData && obj->gameData.frameData->attackBoxes.size() : true);
 	}
 	
 	auto it = lag_saver.find(obj);

@@ -1,5 +1,13 @@
 # Task
 
+- [x] 心抄斩显示有误
+
+  > 子物体需要依赖父物体至少有一红框
+  >
+  > 绿框呢？无需
+  >
+  > 此外sharedbox也对附加框生效
+
 - [x] 全无敌时显示有误
 
 - [ ] 全屏元素覆盖description无法消除？
@@ -34,6 +42,49 @@
 
   - [ ] 反射盾凭什么知道发弹？
 
+  > ```cpp
+  > //0x465100
+  > void __thiscall HandleReflection(GameObjectBase *shield) {
+  >     GameObjectBase *parent;
+  > 
+  >     parent = this;
+  >     while (parent->parentA) {
+  >         parent = parent->parentA;
+  >     }
+  >     parent->direction *= -1;
+  >     parent->ally = shield->ally;
+  >     parent->field_0x1a0 += 1;
+  >     parent->opponent = shield->opponent;
+  >     
+  >     for (auto& childA : parent->childrenA) {
+  >         childA.direction *= -1;
+  >         childA.field_0x1a0 += 1;
+  >         childA.ally = shield->ally;
+  >         childA.opponent = shield->opponent;
+  >     }
+  > }
+  > ```
+  >
+  > 0x47b6f0; maybe BattleManager member
+  > ```cpp
+  > bool __thiscall HandleReflectCollision(GameObjectBase *reflector,GameObjectBase *other) {
+  >     if (other->ally == reflector->ally) {
+  >         return true;
+  >     }
+  >     if (reflector->frameData->frameFlags.reflector) {
+  >         if (FUN_0047a740(reflector,other)) {//check if box collided
+  >             HandleReflection(other,reflector);
+  >             reflector->field_0x1a0 += 1;
+  >             mResetCollisionBuffer(this);
+  >             return true;
+  >         }
+  >     }
+  >     return false;
+  > }
+  > ```
+  >
+  > 0x57db7d jg→nop；移除反射弹生成上限
+
 - [ ] 布局
 
   - [x] 无风4cd, short 4ce
@@ -44,7 +95,7 @@
 
   - [ ] 撰写readme
 
-  - [ ] 说明填写
+  - [x] 说明填写
 
   - [x] 图标们
 
