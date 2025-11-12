@@ -12,9 +12,9 @@
 
 - [x] 全无敌时显示有误
 
-- [ ] 全屏元素覆盖description无法消除？
+- [x] 全屏元素覆盖description无法消除？
 
-  - [ ] 快捷键转空布局tip不消失？
+  - [x] 快捷键转空布局tip不消失？
 
 - [x] vld链接有误，放入th123不识别
 
@@ -107,15 +107,13 @@
 
   - [x] 相杀/hp
 
-  - [ ] 尾巴
-
   - [ ] 天气剑生效中
 
   - [x] 霸体已吸收伤害0x188
 
   - [x] 灵力书等回复速率？天狗扇子加移速？
     棒子
-
+  
   - [x] 强制破防、可擦体术、
 
   - [x] 时停
@@ -151,7 +149,7 @@
     >    
     >
     > 6. camera & onprocess
-
+  
 - [x] layout针对common 1000+
 
 - [x] d3d9STENCIL并集绘制框
@@ -173,7 +171,7 @@
 
   > 0,1280;840,c.bottom
 
-- [ ] 同串不更新防闪动?
+- [x] 同串不更新防闪动?
 
   - [x] 更新两步走，trylock失败时不清除
 
@@ -185,9 +183,9 @@
 
 - [ ] 梅雨伪连显示？无伤显示？
 
-- [ ] 拖尾hover时一并变色？
+- [x] 拖尾hover时一并变色？
 
-  - [ ] tail gui
+  - [x] tail gui
 
 
   > - `setTail(actId, width, length, subdivision, blendMode)`
