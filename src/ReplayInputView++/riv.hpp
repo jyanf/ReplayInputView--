@@ -50,6 +50,28 @@ inline static Player* get_player(const BattleManager* This, int index);
 	class RivControl : public RivControlOld {
 		int counter = 0;//as timer
 	public:
+		struct EnableProxy {
+			enum Mode :unsigned char {
+				FOLLOW = 0, INDIVIDUAL=1
+			} mode;
+			bool enabled;
+			bool* old;
+		public:
+			inline void init(bool& target) {
+				mode = Mode(iniProxy["Others"_l]["Suit4Players"_l].value.value>>1 & 0x1);
+				old = &target;
+			}
+			inline bool operator=(bool b) {
+				enabled = b;
+				if (old && mode == FOLLOW) {
+					*old = enabled;
+				}
+				return enabled;
+			}
+			inline operator bool() {
+				return enabled;
+			}
+		} hitboxes;
 		bool in_battle = false;
 		std::array<pnl::Panel*, PLAYERS_NUMBER> panels = {nullptr};
 		info::Vice vice;

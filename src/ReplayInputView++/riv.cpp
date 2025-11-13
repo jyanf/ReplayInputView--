@@ -25,16 +25,19 @@ static bool check_key(unsigned int key) {
 	return keytable[key] & 0x80;
 }
 inline static Player* get_player(const GameDataManager* This, int index) {
+	auto* players = (iniProxy["Others"_l]["Suit4Players"_l].value.value & 0x1) 
+		? reinterpret_cast<Player* const*>((unsigned char*) & SokuLib::getBattleMgr() + 0xC)
+		: This->players;
 	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
 	//auto& players = *reinterpret_cast<std::array<SokuLib::v2::Player*, PLAYERS_NUMBER>*>((DWORD)This + 0x28);
-	return This && This->enabledPlayers[index] ? This->players[index] : nullptr;
+	return This && This->enabledPlayers[index] ? players[index] : nullptr;
 }
 inline static Player* get_player(const BattleManager* This, int index) {
-	return get_player(GameDataManager::instance, index);
-	//if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
-	//auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
-	//auto manager = GameDataManager::instance;
-	//return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
+	if (0==(iniProxy["Others"_l]["Suit4Players"_l].value.value & 0x1)) return get_player(GameDataManager::instance, index);
+	if (index < 0 || index >= PLAYERS_NUMBER) return nullptr;
+	auto& players = *reinterpret_cast<std::array<Player*, PLAYERS_NUMBER>*>((DWORD)This + 0xC);
+	auto manager = GameDataManager::instance;
+	return manager && manager->enabledPlayers[index] ? players[index] : nullptr;
 }
 inline static void traversing_players(const BattleManager* This, 
 	const std::function<void(int, Player*)>& forP,
@@ -81,6 +84,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		forwardStep = 1;
 		forwardIndex = 0;
 
+		hitboxes.init(RivControlOld::hitboxes);
 		hitboxes = iniProxy["BoxDisplay"_l]["Enabled"_l] != 0;
 		untech = hitboxes;
 

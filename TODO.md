@@ -1,5 +1,9 @@
 # Task
 
+- [ ] 4Psoku未适配
+
+  - [ ] 故事模式用的DataManager?
+
 - [x] x关不掉了，auto on的锅
 
 - [x] 心抄斩显示有误
@@ -113,7 +117,7 @@
 
   - [x] 灵力书等回复速率？天狗扇子加移速？
     棒子
-  
+
   - [x] 强制破防、可擦体术、
 
   - [x] 时停
@@ -149,7 +153,7 @@
     >    
     >
     > 6. camera & onprocess
-  
+
 - [x] layout针对common 1000+
 
 - [x] d3d9STENCIL并集绘制框

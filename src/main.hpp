@@ -209,4 +209,7 @@ inline auto iniProxy = Config{
 			,addInteger<"Hurtbox.Gap">(0xFFff00ff)//Magenta
 		,addInteger<"FloorBox">(0xFFcccccc)//pale
 	),
+	addSection<"Others">(
+		addInteger<"Suit4Players">(0)
+	),
 };
