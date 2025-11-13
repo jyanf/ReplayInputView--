@@ -1,5 +1,59 @@
 # Task
 
+- [ ] 电线杆贴图显示问题
+
+  - [x] 子A又出问题
+
+  > 检查父A时，可边框亦有效？
+  >
+  > 测试可边框父A时未设置child导致的? 
+  >
+  > ```cpp
+  > 
+  > if (
+  >     // ① 0x575 between rounds related
+  >     attacker->gameData.owner->field_0x575 == 0 && victim->field_0x575 != 2
+  >     &&
+  >     // ③ FUN_0046a200
+  >     !checkUntechEnded(victim)
+  >     &&
+  >     // ④ 受击方 realLimit < 100
+  >     victim->realLimit < 100
+  >     &&
+  >     // ⑤ relationships
+  >     ( 
+  >         attacker->gameData.owner != victim
+  >      || !attacker->boxData.frameData->attackFlags.friendlyfire
+  >      || attacker->gameData.owner->gameData.opponent->field_0x575 == 0
+  >     )
+  > )
+  > {
+  >     if (attacker->childrenA.size() == 0) {
+  >         FUN_0047c770(this, attacker, victim);
+  >         return;
+  >     }
+  >     if (FUN_0047c770(this, attacker, victim)) {
+  >         attacker->ShareCollisionStateToChildrenA(attacker);//465020
+  >         return;
+  >     }
+  > 
+  >     // 遍历子对象链表
+  >     for (auto* child: attacker->childrenA) {
+  >         if (FUN_0047c770(this, child, victim)) {
+  >             attacker->ShareCollisionStateToChildrenA(child);
+  >             return;
+  >         }
+  >     }
+  > }
+  > 
+  > ```
+  >
+  > 
+
+- [x] 4Psoku未适配
+
+  - [x] 故事模式用的DataManager?
+
 - [x] x关不掉了，auto on的锅
 
 - [x] 心抄斩显示有误
@@ -113,7 +167,7 @@
 
   - [x] 灵力书等回复速率？天狗扇子加移速？
     棒子
-  
+
   - [x] 强制破防、可擦体术、
 
   - [x] 时停
@@ -149,7 +203,7 @@
     >    
     >
     > 6. camera & onprocess
-  
+
 - [x] layout针对common 1000+
 
 - [x] d3d9STENCIL并集绘制框

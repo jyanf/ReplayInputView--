@@ -171,7 +171,7 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 	}
 	if (!check_lag(*obj, spec)) { 
 		lag_saver.erase(obj);
-		return check_hitbox_active(*obj) && (isSubBox ? obj->gameData.frameData && obj->gameData.frameData->attackBoxes.size() : true);
+		return check_hitbox_active(*obj) && (isSubBox ? obj->boxData.hitBoxCount : true);
 	}
 	
 	auto it = lag_saver.find(obj);
