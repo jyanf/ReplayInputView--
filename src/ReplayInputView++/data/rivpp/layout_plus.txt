@@ -88,7 +88,7 @@
 			
 		</values>
 		<field class="position"> <pad width="208" height="20"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="" >Position</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="" >位置</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[(              ,              )]]>
 			</textbox>
@@ -96,7 +96,7 @@
 			<number value_id="2" number_id="300" xoffset="204" yoffset="-2" max="99999.00" min="-99999.00"/>
 		</field>
 		<field class="speed"> <pad width="208" height="20"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Speed</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">速度</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[(         ,         )]]>
 			</textbox>
@@ -106,11 +106,11 @@
 			<number value_id="5" number_id="300" xoffset="213" yoffset="-2" max="9.99" min="-9.99"/>
 		</field>
 		<field class="frame-state"> <pad width="208" height="70"/> 
-			<textbox font_id="5" xoffset="3" yoffset="25" width="" height="">Pattern</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="25" width="" height="">动作信息</textbox>
 			<textbox font_id="12" width="170" xoffset="46" yoffset="0">
 				<![CDATA[| ACT | SEQ | curF |<br>]]>
 				<![CDATA[|     |     |      |<br>]]>
-				<![CDATA[====================<br>]]>
+				<![CDATA[ ===================<br>]]>
 				<![CDATA[| POSEs |  FRAMEs  |<br>]]>
 				<![CDATA[|   /   |    /     |]]>
 			</textbox>
@@ -121,51 +121,51 @@
 			<number value_id="15" number_id="312" xoffset="111" yoffset="48"/>
 			<number value_id="13" number_id="310" xoffset="159" yoffset="48"/>
 			<number value_id="16" number_id="314" xoffset="199" yoffset="48"/>
-			<field class="facing-right" show_if="6=1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,3" description="Facing right."/></field>
-			<field class="facing-left" show_if="6=-1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,4" description="Facing left."/></field>
-			<field class="looping-sequence" hide_if="17=0" xoffset="16" yoffset="46"><icon ref_id="102" tile="13,3,5" description="Current sequence looping."/></field>
+			<field class="facing-right" show_if="6=1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,3" description="右向"/></field>
+			<field class="facing-left" show_if="6=-1" xoffset="3" yoffset="0"><icon ref_id="102" tile="13,3,4" description="左向"/></field>
+			<field class="looping-sequence" hide_if="17=0" xoffset="16" yoffset="46"><icon ref_id="102" tile="13,3,5" description="循环SEQ"/></field>
 		</field>
 		<field class="collision">
 			<pad width="208" height="20"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Collision</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">判定</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[{ type:   ; count:        }]]>
 			</textbox>
-			<field class="result-none" show_if="20=0" xoffset="92" description="Collision result: none."><!--below as description only-->
+			<field class="result-none" show_if="20=0" xoffset="92" description="判定结果：无"><!--below as description only-->
 				<pad width="20" height="20"/>
 			</field>
 			<field class="result-hit" show_if="20=1" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit player."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：命中"/>
 			</field>
 			<field class="result-blocked" show_if="20=2" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: blocked."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：打防"/>
 			</field>
 			<field class="result-parried" show_if="20=3" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: parried."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：当身/被当身"/>
 			</field>
 			<field class="result-high-density" show_if="20=4" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with higher density."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：与上级弹幕相杀"/>
 			</field>
 			<field class="result-absorbed" show_if="20=5" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with absorption level."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：被隙间吸收"/>
 			</field>
 			<field class="result-grazed" show_if="20=6" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: bullet grazed."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：被擦弹"/>
 			</field>
 			<field class="result-hit-armor" show_if="20=7" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit armor."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：命中霸体"/>
 			</field>
 			<field class="result-same-density" show_if="20=8" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: met bullet with same density."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：与同级弹幕相杀"/>
 			</field>
 			<field class="result-hit-entity" show_if="20=9" xoffset="92">
-				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="Collision result: hit entity."/>
+				<icon ref_id="104" tile="13,3,26" width="20" height="20" description="判定结果：命中身代"/>
 			</field>
 			<number value_id="20" number_id="301" xoffset="114" yoffset="-3"/>
 			<number value_id="21" number_id="301" xoffset="199" yoffset="-3"/>
 		</field>
 		<field class="skill-tag"> <pad width="208" height="20"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">Skill tag</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" width="" height="">必杀等级</textbox>
 			<textbox font_id="10" width="" height="" xoffset="48" yoffset="1">
 				<![CDATA[{ index:    ; level:      }]]>
 			</textbox>
@@ -203,92 +203,92 @@
 			<field class="column1" stack="false" xoffset="1" yoffset="1"> <back ref_id="223"/>
 				<pad width="96" height="48"/>
 				<grid class="grid-attack-highlow" xgrid="24" ygrid="24" rowmax="4" stack="true">
-					<icon class="attack-highRB" ref_id="101" tile="13,2,3" description="High rightblock."/>
-					<icon class="attack-lowRB" ref_id="101" tile="13,2,4" description="Low rightblock."/>
-					<icon class="attack-bothRB" ref_id="101" tile="13,2,5" description="Always rightblock."/>
-					<icon class="attack-noRB" ref_id="101" tile="13,2,18" description="No rightblock."/>
-					<icon class="attack-knockback" ref_id="101" tile="13,2,16" description="Hit and knockback(high)."/>
-					<icon class="attack-stagger" ref_id="101" tile="13,2,17" description="Hit and stagger(low)."/>
-					<icon class="attack-counter-hit" ref_id="101" tile="13,2,15" description="Can induce counter hit."/>
-					<icon class="attack-unreflectable" ref_id="101" tile="13,2,19" description="Unreflectable."/>
-					<icon class="attack-spell" ref_id="101" tile="13,2,10" description="Spell attack tag."/>
-					<icon class="attack-skill" ref_id="101" tile="13,2,23" description="Skill attack tag."/>
+					<icon class="attack-highRB" ref_id="101" tile="13,2,3" description="站防正防"/>
+					<icon class="attack-lowRB" ref_id="101" tile="13,2,4" description="蹲防正防"/>
+					<icon class="attack-bothRB" ref_id="101" tile="13,2,5" description="任意正防"/>
+					<icon class="attack-noRB" ref_id="101" tile="13,2,18" description="不可正防"/>
+					<icon class="attack-knockback" ref_id="101" tile="13,2,16" description="受击动作：后仰"/>
+					<icon class="attack-stagger" ref_id="101" tile="13,2,17" description="受击动作：前倾"/>
+					<icon class="attack-counter-hit" ref_id="101" tile="13,2,15" description="可以打康"/>
+					<icon class="attack-unreflectable" ref_id="101" tile="13,2,19" description="弹幕不可反射"/>
+					<icon class="attack-spell" ref_id="101" tile="13,2,10" description="符卡攻击属性"/>
+					<icon class="attack-skill" ref_id="101" tile="13,2,23" description="必杀攻击属性"/>
 				</grid>
 				<grid class="grid-attack-types" xgrid="24" ygrid="24" rowmax="4" stack="true">
 					<!--always invisible so Pad is not counted-->
-					<icon class="attack-melee" ref_id="101" tile="13,2,0" description="Attack: melee."/>
-					<icon class="attack-bullet" ref_id="101" tile="13,2,1" description="Attack: bullet."/>
-					<icon class="attack-grab" ref_id="101" tile="13,2,2" description="Attack: grab."/>
-					<icon class="attack-parry-air" ref_id="101" tile="13,2,24" description="Parry tag: air."/>
-					<icon class="attack-parry-high" ref_id="101" tile="13,2,11" description="Parry tag: high."/>
-					<icon class="attack-parry-low" ref_id="101" tile="13,2,12" description="Parry tag: low."/>
-					<icon class="attack-parry-obj" ref_id="101" tile="13,2,25" description="Parry tag: obj."/>
+					<icon class="attack-melee" ref_id="101" tile="13,2,0" description="体术"/>
+					<icon class="attack-bullet" ref_id="101" tile="13,2,1" description="弹幕"/>
+					<icon class="attack-grab" ref_id="101" tile="13,2,2" description="投技"/>
+					<icon class="attack-parry-air" ref_id="101" tile="13,2,24" description="可当身：空"/>
+					<icon class="attack-parry-high" ref_id="101" tile="13,2,11" description="可当身：高"/>
+					<icon class="attack-parry-low" ref_id="101" tile="13,2,12" description="可当身：低."/>
+					<icon class="attack-parry-obj" ref_id="101" tile="13,2,25" description="可当身：弹幕"/>
 				<!--/grid>
 				<grid class="grid-attack-special" xgrid="24" ygrid="24" rowmax="4" stack="true"-->
-					<icon class="attack-unblockable" ref_id="101" tile="13,2,7" description="Unblockable."/>
-					<icon class="attack-air-unblockable" ref_id="101" tile="13,2,8" description="Air unblockable(AUB)."/>
+					<icon class="attack-unblockable" ref_id="101" tile="13,2,7" description="不可防御"/>
+					<icon class="attack-air-unblockable" ref_id="101" tile="13,2,8" description="不可空防"/>
 					
-					<icon class="attack-hitWB" ref_id="101" tile="13,2,9" description="Hit on wrongblock."/>
-					<icon class="attack-crushWB" ref_id="101" tile="13,2,21" description="Crush opponent on wrongblock."/>
-					<icon class="attack-ignore-armor" ref_id="101" tile="13,2,22" description="Ignore armor."/>
+					<icon class="attack-hitWB" ref_id="101" tile="13,2,9" description="错防直接命中"/>
+					<icon class="attack-crushWB" ref_id="101" tile="13,2,21" description="错防破防"/>
+					<icon class="attack-ignore-armor" ref_id="101" tile="13,2,22" description="无视霸体"/>
 					
-					<icon class="attack-ungrazable" ref_id="101" tile="13,2,13" description="Ungrazable."/>
-					<icon class="attack-drain" ref_id="101" tile="13,2,14" description="Drain on graze."/>
+					<icon class="attack-ungrazable" ref_id="101" tile="13,2,13" description="不可擦弹"/>
+					<icon class="attack-drain" ref_id="101" tile="13,2,14" description="磨耗擦弹"/>
 					
-					<icon class="attack-friendly-fire" ref_id="101" tile="13,2,6" description="Friendly fire attack."/>
+					<icon class="attack-friendly-fire" ref_id="101" tile="13,2,6" description="自伤属性"/>
 				</grid>
 				
 			</field>
 			<field class="column2" stack="false" xoffset="111" yoffset="1"> <back ref_id="222"/>
 				<pad width="96" height="48"/>
 				<grid class="grid-frame-icons" xgrid="24" ygrid="24" rowmax="4" stack="true">
-					<icon class="flag-stance-none" ref_id="100" tile="13,2,3" description="Stance: none."/>
-					<icon class="flag-stance-standing" ref_id="100" tile="13,2,4" description="Stance: standing."/>
-					<icon class="flag-stance-crouching" ref_id="100" tile="13,2,5" description="Stance: crouching."/>
+					<icon class="flag-stance-none" ref_id="100" tile="13,2,3" description="无姿"/>
+					<icon class="flag-stance-standing" ref_id="100" tile="13,2,4" description="站姿"/>
+					<icon class="flag-stance-crouching" ref_id="100" tile="13,2,5" description="蹲姿"/>
 					<icon class="flag-stance-both" ref_id="100" tile="13,2,16" description="Stance: both?"/>
-					<icon class="flag-stance-down" ref_id="100" tile="13,2,17" description="Stance: down."/>
-					<icon class="flag-stance-airborne" ref_id="100" tile="13,2,6" description="Stance: airborne."/>
-					<icon class="flag-stance-guarding" ref_id="100" tile="13,2,18" description="Stance: guarding."/>
+					<icon class="flag-stance-down" ref_id="100" tile="13,2,17" description="躺姿"/>
+					<icon class="flag-stance-airborne" ref_id="100" tile="13,2,6" description="空姿"/>
+					<icon class="flag-stance-guarding" ref_id="100" tile="13,2,18" description="防御中"/>
 					
-					<icon class="flag-counter-hit" ref_id="100" tile="13,2,15" description="Can be countered."/>
-					<icon class="flag-entity" ref_id="100" tile="13,2,15" description="Entity bullet."/>
-					<icon class="flag-reflector" ref_id="100" tile="13,2,19" description="Reflect sheild."/>
+					<icon class="flag-counter-hit" ref_id="100" tile="13,2,15" description="可以被打康"/>
+					<icon class="flag-entity" ref_id="100" tile="13,2,15" description="身代"/>
+					<icon class="flag-reflector" ref_id="100" tile="13,2,19" description="反射盾"/>
 					<!--icon class="flag-uncancelable" ref_id="100" tile="13,2,22" description="Not cancelable."/>
 					<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" description="Movement cancelable."/-->
 				</grid>
 				<grid class="grid-frame-special" xgrid="24" ygrid="24" rowmax="4" stack="true">
-					<icon class="flag-invul-melee" ref_id="100" tile="13,2,0" description="Melee invulnerable."/>
-					<icon class="flag-invul-bullet" ref_id="100" tile="13,2,1" description="Bullet invulnerable."/>
-					<icon class="flag-invul-grab" ref_id="100" tile="13,2,2" description="Grab invulnerable."/>
-					<icon class="flag-grazing" ref_id="100" tile="13,2,13" description="Grazing."/>
+					<icon class="flag-invul-melee" ref_id="100" tile="13,2,0" description="体术无敌"/>
+					<icon class="flag-invul-bullet" ref_id="100" tile="13,2,1" description="弹幕无敌"/>
+					<icon class="flag-invul-grab" ref_id="100" tile="13,2,2" description="投技无敌"/>
+					<icon class="flag-grazing" ref_id="100" tile="13,2,13" description="擦弹"/>
 					
-					<icon class="flag-guard-available" ref_id="100" tile="13,2,20" description="Guard available."/>
-					<icon class="flag-guardpoint" ref_id="100" tile="13,2,21" description="GuardPoint Skill."/>
-					<icon class="flag-armor-normal" ref_id="100" tile="13,2,7" description="Normal armor."/>
-					<icon class="flag-armor-super" ref_id="100" tile="13,2,8" description="Super armor."/>
+					<icon class="flag-guard-available" ref_id="100" tile="13,2,20" description="可防御"/>
+					<icon class="flag-guardpoint" ref_id="100" tile="13,2,21" description="防御技（招架）"/>
+					<icon class="flag-armor-normal" ref_id="100" tile="13,2,7" description="普通霸体"/>
+					<icon class="flag-armor-super" ref_id="100" tile="13,2,8" description="无限霸体"/>
 
-					<icon class="flag-parry-high" ref_id="100" tile="13,2,11" description="Parry: high flag."/>
-					<icon class="flag-parry-low" ref_id="100" tile="13,2,12" description="Parry: low flag."/>
-					<icon class="flag-parry-air" ref_id="100" tile="13,2,24" description="Parry: air flag."/>
-					<icon class="flag-parry-obj" ref_id="100" tile="13,2,25" description="Parry: obj flag."/>
+					<icon class="flag-parry-high" ref_id="100" tile="13,2,11" description="当身技：高"/>
+					<icon class="flag-parry-low" ref_id="100" tile="13,2,12" description="当身技：低"/>
+					<icon class="flag-parry-air" ref_id="100" tile="13,2,24" description="当身技：空"/>
+					<icon class="flag-parry-obj" ref_id="100" tile="13,2,25" description="当身技：弹幕"/>
 				</grid>
 			</field>
 		</field>
 		
 		<grid class="extra-icons" xgrid="25" ygrid="25" rowmax="8" xoffset="1" yoffset="10">
-			<link class="ptr-owner" value_id="1" description="Click &amp; jump to[%s]&#10;Owner(/self) pointer.&#10;"> <back ref_id="200"/>
+			<link class="ptr-owner" value_id="1" description="点击跳转[%s]&#10;所有者"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,26"/>
 			</link>
-			<link class="ptr-ally" value_id="2" description="Click &amp; jump to[%s]&#10;Ally pointer for now,&#10; changed by bullet reflection.&#10;"> <back ref_id="200"/>
+			<link class="ptr-ally" value_id="2" description="点击跳转[%s]&#10;友方&#10; 弹幕反射相关&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,27"/>
 			</link>
-			<link class="ptr-opponent" value_id="3" description="Click &amp; jump to[%s]&#10;Opponent pointer for now.&#10;"> <back ref_id="200"/>
+			<link class="ptr-opponent" value_id="3" description="点击跳转[%s]&#10;敌人&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,28"/>
 			</link>
-			<link class="ptr-parentA" value_id="5" description="Click &amp; jump to[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;A类父物体&#10; 判定框扩展相关"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,29"/>
 			</link>
-			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="Forced to induce counter hit."/></field>
+			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="强制打康（虎劲）"/></field>
 			<!--icon class="ptr-parentA" ref_id="100" tile="13,2,24" description="ParentA(box bounding)">
 				<link value_id="5" description="ParentA(box bounding) pointer: %s&#10;`click`"/>
 			</icon-->
@@ -372,28 +372,28 @@
 			<icon ref_id="103" width="128" height="128"/>
 			<sprite crop="false" xoffset="0" yoffset="0" width="128" height="128"/>
 			
-			<textbox font_id="5" xoffset="138" yoffset="6">Color</textbox>
-			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18" description="Render Color:  %s">
+			<textbox font_id="5" xoffset="138" yoffset="6">颜色</textbox>
+			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18" description="顶点基色： %s">
 				<back ref_id="201"/>
 			</color>
 			
-			<textbox font_id="5" xoffset="138" yoffset="26">Shader</textbox>
+			<textbox font_id="5" xoffset="138" yoffset="26">着色器</textbox>
 			<color value_id="2" xoffset="188" yoffset="24" width="18" height="18" 
-			description="Shader's type: { 0:NONE, 1:GRAYSCALE, 2:OVERLAY, 3:GLOW } &#10;Shader's color:&#10;  %s">
+			description="着色器类型: { 0:关, 1:去色, 2:覆层, 3:发光 } &#10;着色颜色：&#10;  %s">
 				<back ref_id="201"/>
 			</color>
 			<number value_id="3" number_id="310" xoffset="210" yoffset="20"/>
 			
-			<textbox font_id="5" xoffset="138" yoffset="46">Scale X-Y</textbox>
+			<textbox font_id="5" xoffset="138" yoffset="46">缩放X-Y</textbox>
 			<number value_id="15" number_id="320" xoffset="176" yoffset="55"/>
 			<number value_id="16" number_id="320" xoffset="215" yoffset="55"/>
 			
-			<textbox font_id="5" xoffset="138" yoffset="77">Rot.X-Y-Z</textbox>
+			<textbox font_id="5" xoffset="138" yoffset="77">旋转X-Y-Z</textbox>
 			<number value_id="17" number_id="320" xoffset="187" yoffset="87"/>
 			<number value_id="18" number_id="320" xoffset="187" yoffset="101"/>
 			<number value_id="19" number_id="320" xoffset="187" yoffset="115"/>
 			<field xoffset="150" yoffset="135"> <pad width="50" height="30"/>
-				<textbox font_id="5" xoffset="0" yoffset="0">Anchor</textbox>
+				<textbox font_id="5" xoffset="0" yoffset="0">锚点</textbox>
 				<textbox font_id="11" xoffset="-6" yoffset="14">
 					<![CDATA[[       ,         ]]]>
 				</textbox>
@@ -401,7 +401,7 @@
 				<number value_id="23" number_id="321" xoffset="56" yoffset="8"/>
 			</field>
 			<field class="center" xoffset="90" yoffset="135"> <pad width="50" height="30"/>
-				<textbox font_id="5" xoffset="0" yoffset="0">Center</textbox>
+				<textbox font_id="5" xoffset="0" yoffset="0">变换中心</textbox>
 				<textbox font_id="11" xoffset="-7" yoffset="14">
 					<![CDATA[[       ,        ]]]>
 				</textbox>
@@ -422,7 +422,7 @@
 				<![CDATA[*          ;]]>
 				</textbox>
 				<color value_id="5" xoffset="110" yoffset="0" width="18" height="18" 
-				description="Blend mode: {  0:NONE, 1:NORMAL,&#10;  2:ADD, 3:SUB, 4:MUL }&#10;Fixed color:&#10;  %s" >
+				description="混合模式：{  0:无, 1:正常, 2:相加, 3:减去, 4:相乘 }&#10;固定色：&#10;  %s" >
 					<back ref_id="201"/>
 				</color>
 				<number value_id="4" number_id="310" xoffset="132" yoffset="-4"/>
@@ -505,7 +505,7 @@
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
 			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[6]; //+0x36C~0x37A &#10;float gpFloat[3]  //+0x37C~0x384&#10;float[0~2] *customData; //+0x35C">
-				<![CDATA[General<br> counters]]>
+				<![CDATA[通用<br> 计数器]]>
 			</textbox>
 			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
 				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
@@ -513,7 +513,7 @@
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<field description="[5] Uninitialized, &#10; usually a random value." yoffset="3"> <pad width="40" height="16"/>
+				<field description="[5] 默认不初始化，不使用时为垃圾值." yoffset="3"> <pad width="40" height="16"/>
 					<number number_id="314" value_id="105" xoffset="45" yoffset="-5"/>
 				</field>
 			</grid>
@@ -551,15 +551,15 @@
 		</field>
 		<field class="flag-entity"> <pad width="" height="24"/>
 			<textbox font_id="7" xoffset="3" yoffset="4">
-				<![CDATA[<color 78dce8>Entity HP</color>]]>
+				<![CDATA[<color 78dce8>身代血量</color>]]>
 			</textbox>
 			<number value_id="3" number_id="341" xoffset="130" yoffset="1"/>
 		</field>
 		<field class="density-levels"> <pad width="208" height="24"/>
 			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
 				<textbox font_id="7" xoffset="-67" yoffset="2" 
-				description="Repurpose of move lock.">
-					<![CDATA[<color 7effaf>Density level</color>]]>
+				description="复用MoveLock值；">
+					<![CDATA[<color 7effaf>相杀等级</color>]]>
 				</textbox>
 				<number number_id="351" value_id="23" max="5" min="0" xoffset="46"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="44" yoffset=""/>
@@ -567,8 +567,8 @@
 			</field>
 			<field class="action-lock" xoffset="70" stack="true" hide_if="21=0"> <pad height="24"/>
 				<textbox font_id="7" xoffset="-67" yoffset="2" 
-				description="Repurpose of action lock,&#10; , but for P2 gap there's bug that ignores this limit.">
-					<![CDATA[<color e88eff>Absorb level</color>]]>
+				description="复用ActionLock值；&#10; 具有吸收等级的弹幕拥有隙间效果；&#10;*由于代码BUG，对于2P而言该值大小已无意义">
+					<![CDATA[<color e88eff>吸收等级</color>]]>
 				</textbox>
 				<number number_id="351" value_id="24" max="5" min="0" xoffset="46"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="44" yoffset=""/>
@@ -581,14 +581,14 @@
 				<field/>
 				<field class="layer" xoffset=""> <pad width="60" height="24"/> <back ref_id="202"/>
 					<textbox font_id="5" xoffset="2" yoffset="3" 
-						description="//+0x358 char&#10;Render order: &#10;  { positive: object over characters, negative: object under characters } ">
+					description="//+0x358 char&#10;渲染顺序：&#10;  { 正值: 物体在角色上层, 负值: 物体在角色下层 } ">
 						Layer
 					</textbox>
 					<number number_id="310" value_id="5" xoffset="58" yoffset="-1"/>
 				</field>
 				<field class="reflection-count" xoffset="" hide_if="7=0"> <pad width="80" height="24"/> <back ref_id="202"/>
 					<textbox font_id="5" xoffset="2" yoffset="3" 
-						description="//+0x1A0 char&#10; added to both reflector and reflected object.">
+						description="//+0x1A0 char&#10; 反射/被反射时增加该计数">
 						Reflection
 					</textbox>
 					<number number_id="310" value_id="7" xoffset="82" yoffset="-1"/>
@@ -604,13 +604,13 @@
 				<field hide_if="6=0">
 					<icon ref_id="102" tile="13,3,6" description="//+0x360 short &#10;Won't be affected by owner's timestop."/>
 				</field>
-				<link class="parent-player" value_id="12" description="Click &amp; jump to[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
+				<link class="parent-player" value_id="12" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,31"/>
 				</link>
-				<link class="ptr-parentA" value_id="9" description="Click &amp; jump to[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+				<link class="ptr-parentA" value_id="9" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,29"/>
 				</link>
-				<link class="parent-object" value_id="13" description="Click &amp; jump to[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
+				<link class="parent-object" value_id="13" description="点击跳转[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,30"/>
 				</link>
 			</grid>
@@ -710,7 +710,7 @@
 			<value id="115" class="gpFloat[5]" type="float"><offset hex="0x7f0"/></value>
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[6]"><![CDATA[General<br> counters]]></textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[6]"><![CDATA[通用<br> 计数器]]></textbox>
 			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
 				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
@@ -745,7 +745,7 @@
 			</field>
 		</field>
 		<field class="cancel-levels"> <pad height="52"/>
-			<textbox font_id="5" xoffset="3" yoffset="4" description="Cancel level of current move.">Move Lock</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="当前动作的取消级">取消级</textbox>
 			<field class="move-lock" xoffset="70" stack="true"> <pad height="24"/>
 				<number number_id="361" value_id="13" max="6" min="0" xoffset="20"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
@@ -753,38 +753,38 @@
 
 				<icon class="lock-border-escape" ref_id="102" tile="13,3,9" xoffset="88" description="BorderEscape locked."/>
 			</field>
-			<textbox font_id="5" xoffset="3" yoffset="4" description="Cancel level required to cancel the current.">Action Lock</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4" description="取消当前动作所需的取消级">被取消级</textbox>
 			<field class="action-lock" xoffset="70" stack="true"> <pad height="24"/>
 				<number number_id="361" value_id="14" max="6" min="0" xoffset="20"/>
 				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
 				<number number_id="332" value_id="11" xoffset="86" yoffset="1"/>
 
-				<icon class="flag-cancelable" ref_id="100" tile="13,2,9" xoffset="88" description="Attack cancelable."/>
-				<icon class="flag-uncancelable" ref_id="100" tile="13,2,22" xoffset="88" description="Attack not cancelable."/>
-				<icon class="result-uncancelable" ref_id="102" tile="13,3,22" xoffset="88" description="Attack whiff or get parried."/>
-				<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" xoffset="112" description="Movement cancelable."/>
-				<icon class="lock-movement" ref_id="102" tile="13,3,14" xoffset="112" description="Movement locked.&#10;(speed.y>0 &amp;&amp; pos.y &lt;=100.0)"/>
+				<icon class="flag-cancelable" ref_id="100" tile="13,2,9" xoffset="88" description="允许取消动作"/>
+				<icon class="flag-uncancelable" ref_id="100" tile="13,2,22" xoffset="88" description="禁止取消动作"/>
+				<icon class="result-uncancelable" ref_id="102" tile="13,3,22" xoffset="88" description="挥空或被当身，禁止取消"/>
+				<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" xoffset="112" description="可移动取消"/>
+				<icon class="lock-movement" ref_id="102" tile="13,3,14" xoffset="112" description="移动锁定&#10;锁定条件：speed.y ＞ 0 且 pos.y ≤ 100.0"/>
 			</field>
 		</field>
 		<field class="stun-untech"> <pad width="208" height="27"/>
 			<textbox font_id="8" xoffset="3" yoffset="4">
-				<![CDATA[<color C0C0C0>Untech</color>/<color C0C0C0>Stun</color>]]>
+				<![CDATA[<color C0C0C0>追击</color>/<color C0C0C0>硬直</color>]]>
 			</textbox>
 			<field class="calc-stun" hide_if="20=0">
-				<textbox font_id="7" xoffset="54" yoffset="4">
-					<![CDATA[<color e8e462>Stun</color>]]>
+				<textbox font_id="7" xoffset="36" yoffset="4">
+					<![CDATA[<color e8e462>硬直</color>]]>
 				</textbox>
 				<number number_id="331" value_id="20" xoffset="158" yoffset="1"/>
 			</field>
 			<field class="untech" show_if="20=0">
 				<textbox class="is-in-untech" font_id="7" xoffset="3" yoffset="4">
-					<![CDATA[<color e8c000>Untech</color>]]>
+					<![CDATA[<color e8c000>追击</color>]]>
 				</textbox>
 				<number number_id="331" value_id="21" xoffset="158" yoffset="1"/>
 			</field>
 		</field>
 		<field class="active-buffs">
-			<textbox font_id="5" xoffset="3" yoffset="4">Active buffs</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4">当前BUFF</textbox>
 			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field></field><!--spacing for field name-->
 				<field class="multi-attack"> <pad width="60" height="24"/> <back ref_id="202"/>
@@ -885,7 +885,7 @@
 			</grid>
 		</field>
 		<field class="active-timers">
-			<textbox font_id="5" xoffset="3" yoffset="4">Countdowns</textbox>
+			<textbox font_id="5" xoffset="3" yoffset="4">计时器</textbox>
 			<grid class="timer-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field/>
 				<field class="timer-meleeinvul"> <pad width="60" height="24"/> <back ref_id="202"/>

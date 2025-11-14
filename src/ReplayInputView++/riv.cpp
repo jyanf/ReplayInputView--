@@ -194,6 +194,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 					}
 				}
 				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Character"_l].value[i]) {//boxes
+					if (!iniProxy["BoxDisplay"_l]["TagSoku.CheckPlayerHidden"_l] || player->renderInfos.yRotation != 90.f)
 					layers.pushPlayer(*player, check_hurtbreak(This), invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2);
 				}
 			},

@@ -170,6 +170,7 @@ inline auto iniProxy = Config{
 		,addBool<"Hitbox.FadeByHitstop">(true)
 		,addBool<"StencilTest.Enabled">(true)
 			,addBool<"StencilTest.OuterMostOnly">(true)
+		,addBool<"TagSoku.CheckPlayerHidden">(false)
 		,addField<"p%d.Character", MultiField<cfg::_supported_types::Integer>>({
 			true, true,
 			true, true
