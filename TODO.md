@@ -1,6 +1,73 @@
 # Task
 
-- [ ] 电线杆贴图显示问题
+- [x] 电线杆贴图显示问题
+
+  > 龙须debug
+  >
+  > ![image-20251114114031609](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251114114031609.png)
+  >
+  > 蕾米debug
+  >
+  > ![image-20251114114247308](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20251114114247308.png)
+  >
+  > ---
+  >
+  > ```cpp
+  > void __thiscall mmmSpriteExtension(SpriteEx *this, 
+  >                                 float param_2, float param_3,
+  >                                 float param_4, float param_5,
+  >                                 float _sizex, float _sizey
+  > ){//0x406d
+  >  float fVar1, fVar2, fVar3, fVar4;
+  >  // 如果贴图句柄无效
+  >  if (this->base.dxHandle == 0) {
+  >      this->size2.x = 0.0f;
+  >      this->size2.y = 0.0f;
+  >  }
+  >  else {
+  >      // 计算 UV 尺寸百分比
+  >      fVar2 = param_4 / this->base.size.x;
+  >      this->size2.x = fVar2;
+  > 
+  >      fVar1 = param_5 / this->base.size.y;
+  >      this->size2.y = fVar1;
+  > 
+  >      // 左上角 UV
+  >      fVar4 = param_2 / this->base.size.x;
+  >      this->base.vertices[0].tu = fVar4;
+  > 
+  >      fVar3 = param_3 / this->base.size.y;
+  >      this->base.vertices[0].tv = fVar3;
+  > 
+  >      // 右上角 UV = 左上角 + UV宽度
+  >      float tu2 = fVar4 + fVar2;
+  >      this->base.vertices[1].tu = tu2;
+  >      this->base.vertices[1].tv = fVar3;
+  > 
+  >      // 左下角 UV = 左上角 + UV高度
+  >      float tv2 = fVar3 + fVar1;
+  >      this->base.vertices[2].tu = fVar4;
+  >      this->base.vertices[2].tv = tv2;
+  > 
+  >      // 右下角 UV
+  >      this->base.vertices[3].tu = tu2;
+  >      this->base.vertices[3].tv = tv2;
+  >  }
+  > 
+  >  // 设置顶点坐标（基于中心偏移）
+  >  this->baseCoords[0].x = -_sizex;
+  >  this->baseCoords[0].y = -_sizey;
+  > 
+  >  this->baseCoords[1].x = param_4 - _sizex;
+  >  this->baseCoords[1].y = -_sizey;
+  > 
+  >  this->baseCoords[2].x = -_sizex;
+  >  this->baseCoords[2].y = param_5 - _sizey;
+  > 
+  >  this->baseCoords[3].x = param_4 - _sizex;
+  >  this->baseCoords[3].y = param_5 - _sizey;
+  > }
+  > ```
 
   - [x] 子A又出问题
 

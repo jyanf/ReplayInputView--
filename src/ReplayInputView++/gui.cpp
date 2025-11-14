@@ -1019,11 +1019,21 @@ namespace gui {
 				basept.y += (edges[1] + edges[3]) / 2;
 			break;
 		}
+		Vector2f uvbase = { obj.sprite.vertices[0].u, obj.sprite.vertices[0].v },
+			uvsize = { obj.sprite.vertices[3].u - obj.sprite.vertices[0].u, obj.sprite.vertices[3].v - obj.sprite.vertices[0].v };
+		/*printf("Sprite update------------------\n");
+		printf("\tSprite UV:\tofs(%3f, %3f) size(%3f, %3f)\n", uvbase.x, uvbase.y, uvsize.x, uvsize.y);*/
+		const auto& csize = obj.frameData->texSize;
+		const auto& tsize = obj.sprite.size;
+		uvsize.x *= csize.x / tsize.x / obj.sprite.size2.x; uvsize.y *= csize.y / tsize.y / obj.sprite.size2.y;
+		/*printf("\tSprite Recap:\tsize(%3f, %3f) size2(%3f, %3f)\n", tsize.x, tsize.y, obj.sprite.size2.x, obj.sprite.size2.y);
+		printf("\tFrameData:\t texSize(%3d, %3d) scaled(%3f, %3f)\n", csize.x, csize.y, sp.size.x, sp.size.y);
+		printf("\tupdate finish------------------------\n\n");*/
 		for (int i = 0; i < 4; ++i) {
 			vertices[i].x += basept.x;
 			vertices[i].y += basept.y;
-			vertices[i].u = obj.sprite.vertices[i].u;
-			vertices[i].v = obj.sprite.vertices[i].v;
+			vertices[i].u = uvbase.x + (i % 2 ? uvsize.x : 0);
+			vertices[i].v = uvbase.y + (i / 2 ? uvsize.y : 0);
 		}
 		
 		if (crop) cropping();
