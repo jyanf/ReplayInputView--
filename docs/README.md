@@ -18,7 +18,7 @@ Also displays <span style="color:#f0f080">collision box</span> and an <u>positio
 
 The original debug info panel is deprecated out of memory leak when using along with giuroll.
 
-View its reworked and superior edition in the following "What's New" part.
+View its reworked and superior edition in the following "[What's New](#Ⅱ:-What's-New)" part.
 
 ### 3. Input Display(F7)
 
@@ -116,7 +116,7 @@ The record displayed now has a fade out effect to make later inputs distinguishe
 
 Or we should call it a **window** now. To enable panels to displays more info as possible, we developed it to be a individual window using *D3DAdditionalSwapChain* technique.
 
-We also designed a gui system to manage expanded layouts functions through xml files, to make it more portable and flexible. Which means, it is even able to be customized if you like.
+We also designed a gui system — casually named as **layout+** — to manage expanded layout features through xml files, to make it more portable and flexible. Which means, it is even able to be customized if you like.
 
 To also enable object debug, mouse interface is introduced. You can select/deselect anchors in game screen using L/R buttons of mouse and then view its info through the debug window, just like players.
 
@@ -222,11 +222,13 @@ Then you can change `[Assets] File=` option in `ReplayInputView++.ini` to switch
 
 The layout+ system are consist of 2 layout file: 
 
-1. **layout.xml**; this file is a to make use of vanilla layout system. Multiple assets are loaded through this, and then referenced and managed by object `id` defined inside.
+1. **layout.xml**; this file is to make use of vanilla layout system. Multiple assets are loaded through this, and then referenced and managed by object `id` defined inside.
 2. **layout_plus.txt**; this file is the real one that manages to put everything in place, and then enables all customization features.
    The mod reads xml structure by raw text to support new tags and unlimited style, so its extension name must be `.txt` to avoid being converted in packing process. 
 
 The following are detailed introduction for layout+ nodes.
+
+………………………………………………wip………………………………………………
 
 > This xml has expanded features out of original soku layout system, implemented by ReplayInputView++
 > 本布局文件含有非想天则原有布局系统之外的扩展特性（由RIV++负责实现）
@@ -256,11 +258,11 @@ The following are detailed introduction for layout+ nodes.
     可用属性：
     
     1. `id`, a integer with which text element can get a fontdesc by `font_id` and render.
-      ID数字，后续文本元素可以使用`font_id`属性引用对应的字体进行渲染。
+        ID数字，后续文本元素可以使用`font_id`属性引用对应的字体进行渲染。
     2. `name`, internal name of a font file; should have been installed, or as a file existed in mod's font folder.
-      *(the font file must support current system codepage to be successfully loaded)*
-      名称字符串，目标字体的内部名称；需要字体已被安装，或者放置在font文件夹中。
-      字体文件必须支持当前的[代码页/字符集](#about-fonts)。
+        *(the font file must support current system codepage to be successfully loaded)*
+        名称字符串，目标字体的内部名称；需要字体已被安装，或者放置在font文件夹中。
+        字体文件必须支持当前的[代码页/字符集](#about-fonts)。
     3. `stroke`, use game's black stroke/shadow
        是否增加黑色描边
     4. `bold`, bold font

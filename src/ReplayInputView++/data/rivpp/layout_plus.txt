@@ -276,13 +276,13 @@
 		</field>
 		
 		<grid class="extra-icons" xgrid="25" ygrid="25" rowmax="8" xoffset="1" yoffset="10">
-			<link class="ptr-owner" value_id="1" description="点击跳转[%s]&#10;所有者"> <back ref_id="200"/>
+			<link class="ptr-owner" value_id="1" description="点击跳转[%s]&#10;所有者指针"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,26"/>
 			</link>
-			<link class="ptr-ally" value_id="2" description="点击跳转[%s]&#10;友方&#10; 弹幕反射相关&#10;"> <back ref_id="200"/>
+			<link class="ptr-ally" value_id="2" description="点击跳转[%s]&#10;友方指针&#10; 弹幕反射相关&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,27"/>
 			</link>
-			<link class="ptr-opponent" value_id="3" description="点击跳转[%s]&#10;敌人&#10;"> <back ref_id="200"/>
+			<link class="ptr-opponent" value_id="3" description="点击跳转[%s]&#10;敌人指针&#10;"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,28"/>
 			</link>
 			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;A类父物体&#10; 判定框扩展相关"> <back ref_id="200"/>
@@ -504,7 +504,7 @@
 			</value>
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[6]; //+0x36C~0x37A &#10;float gpFloat[3]  //+0x37C~0x384&#10;float[0~2] *customData; //+0x35C">
+			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[6]; //+0x36C~0x37A &#10;float gpFloat[3]  //+0x37C~0x384&#10; float[0~2] *customData; //+0x35C">
 				<![CDATA[通用<br> 计数器]]>
 			</textbox>
 			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
@@ -513,7 +513,7 @@
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<field description="[5] 默认不初始化，不使用时为垃圾值." yoffset="3"> <pad width="40" height="16"/>
+				<field description="[5] 默认不初始化，不使用时为垃圾值" yoffset="3"> <pad width="40" height="16"/>
 					<number number_id="314" value_id="105" xoffset="45" yoffset="-5"/>
 				</field>
 			</grid>
@@ -521,31 +521,31 @@
 				<number number_id="316" value_id="110" xoffset="69" yoffset="-5"/>
 				<number number_id="316" value_id="111" xoffset="69" yoffset="-5"/>
 				<number number_id="316" value_id="112" xoffset="69" yoffset="-5"/>
-				<field yoffset="3" description="The first 2 of customData[n], &#10;usually means angle&amp;speed."> <pad width="140" height="16"/>
+				<field yoffset="3" description="customData[n]的前两个float，一般代表角度和弹速"> <pad width="140" height="16"/>
 					<textbox font_id="10" xoffset="-5" yoffset="-4">*</textbox>
 					<number number_id="316" value_id="113" xoffset="69" yoffset="-5"/>
 				</field>
 				<number number_id="316" value_id="114" xoffset="69" yoffset="-2"/>
-				<field description="customData[2], generally used to &#10;specify sequenceId on object creation." yoffset="3"> <pad width="62" height="16"/>
+				<field description="customData[2]，按规范用于物体创建时指定SEQ" yoffset="3"> <pad width="62" height="16"/>
 					<number number_id="313" value_id="115" xoffset="54" yoffset="-5"/>
 				</field>
 			</grid>
 		</field>
 		<field class="collide"> <pad width="208" height="44"/>
-			<textbox font_id="7" xoffset="3" yoffset="4" description="//+0x194 char;Collision count.">
+			<textbox font_id="7" xoffset="3" yoffset="4" description="//+0x194 char;&#10;GameObjectBase::collisionLimit">
 				<![CDATA[<color ff5356>Hits</color>]]>
 			</textbox>
 			<number value_id="4" number_id="331" xoffset="50" yoffset="20"/>
-			<textbox font_id="7" xoffset="58" yoffset="4" description="The counters for recovered hits after being grazed or collided.&#10;Only for reference out of varied implementation.&#10;被擦/相杀时的判定复活计数，&#10;具体视不同弹幕的实现而变化，故仅供参考">
-				<![CDATA[Recovery {                    ,<br>]]>
-				<![CDATA[                                     }]]>
+			<textbox font_id="7" xoffset="58" yoffset="4" description="被擦/相杀时的判定复活计数，&#10;具体视不同弹幕的实现而变化，故仅供参考">
+				<![CDATA[Recovery                       <br>]]>
+				<![CDATA[                                      ]]>
 			</textbox>
 			<field _hide_if="2=0" xoffset="128" yoffset="4">
-				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x396 short;"><![CDATA[collided:]]></textbox>
+				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x396 short;"><![CDATA[已相杀：]]></textbox>
 				<number value_id="2" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
 			<field _hide_if="1=0" xoffset="128" yoffset="22">
-				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x394 short;"><![CDATA[grazed:]]> </textbox>
+				<textbox font_id="5" xoffset="0" yoffset="3" description="//+0x394 short;"><![CDATA[已擦：]]> </textbox>
 				<number value_id="1" number_id="341" xoffset="80" yoffset="-2"/>
 			</field>
 		</field>
@@ -567,7 +567,7 @@
 			</field>
 			<field class="action-lock" xoffset="70" stack="true" hide_if="21=0"> <pad height="24"/>
 				<textbox font_id="7" xoffset="-67" yoffset="2" 
-				description="复用ActionLock值；&#10; 具有吸收等级的弹幕拥有隙间效果；&#10;*由于代码BUG，对于2P而言该值大小已无意义">
+				description="复用ActionLock值；&#10; 具有吸收等级的弹幕拥有隙间效果；&#10;*由于代码BUG，2P的隙间可以无视等级吸收">
 					<![CDATA[<color e88eff>吸收等级</color>]]>
 				</textbox>
 				<number number_id="351" value_id="24" max="5" min="0" xoffset="46"/>
@@ -576,22 +576,22 @@
 			</field>
 		</field>
 		<field class="others"> <pad width="208" height="30"/>
-			<textbox font_id="7" xoffset="3" yoffset="4">Others</textbox>
-			<grid xgrid="60" ygrid="25" xoffset="8" yoffset="7" rowmax="3" stack="true">
+			<textbox font_id="7" xoffset="3" yoffset="4">其他</textbox>
+			<grid xgrid="70" ygrid="25" xoffset="8" yoffset="7" rowmax="3" stack="true">
 				<field/>
 				<field class="layer" xoffset=""> <pad width="60" height="24"/> <back ref_id="202"/>
 					<textbox font_id="5" xoffset="2" yoffset="3" 
 					description="//+0x358 char&#10;渲染顺序：&#10;  { 正值: 物体在角色上层, 负值: 物体在角色下层 } ">
-						Layer
+						图层
 					</textbox>
 					<number number_id="310" value_id="5" xoffset="58" yoffset="-1"/>
 				</field>
-				<field class="reflection-count" xoffset="" hide_if="7=0"> <pad width="80" height="24"/> <back ref_id="202"/>
+				<field class="reflection-count" xoffset="" hide_if="7=0"> <pad width="60" height="24"/> <back ref_id="202"/>
 					<textbox font_id="5" xoffset="2" yoffset="3" 
 						description="//+0x1A0 char&#10; 反射/被反射时增加该计数">
-						Reflection
+						反射
 					</textbox>
-					<number number_id="310" value_id="7" xoffset="82" yoffset="-1"/>
+					<number number_id="310" value_id="7" xoffset="60" yoffset="-1"/>
 				</field>
 			</grid>
 			<grid xgrid="25" ygrid="25" xoffset="8" yoffset="4" rowmax="8" stack="true">
@@ -602,30 +602,32 @@
 					<icon ref_id="102" tile="13,3,30"/>
 				</link-->
 				<field hide_if="6=0">
-					<icon ref_id="102" tile="13,3,6" description="//+0x360 short &#10;Won't be affected by owner's timestop."/>
+					<icon ref_id="102" tile="13,3,6" description="//+0x360 short &#10;物体不受主人的时停影响"/>
 				</field>
-				<link class="parent-player" value_id="12" description="点击跳转[%s]&#10;ParentPlayer pointer."> <back ref_id="200"/>
+				<link class="parent-player" value_id="12" description="点击跳转[%s]&#10;所有者指针②"> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,31"/>
 				</link>
-				<link class="ptr-parentA" value_id="9" description="点击跳转[%s]&#10;ParentA pointer, used for box bounding."> <back ref_id="200"/>
+				<link class="ptr-parentA" value_id="9" description="点击跳转[%s]&#10;A类父物体指针&#10; 判定框扩展相关"> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,29"/>
 				</link>
-				<link class="parent-object" value_id="13" description="点击跳转[%s]&#10;ParentObject pointer."> <back ref_id="200"/>
+				<link class="parent-object" value_id="13" description="点击跳转[%s]&#10;B类父物体指针"> <back ref_id="200"/>
 					<icon ref_id="102" tile="13,3,30"/>
 				</link>
 			</grid>
 			
 		</field>
 		<field class="tail-object" hide_if="50=0" yoffset="14"> <back ref_id="225"/>
-			<textbox font_id="7" xoffset="3" yoffset="">Tail</textbox>
+			<textbox font_id="7" xoffset="3" yoffset="">
+				拖尾
+			</textbox>
 			<icon ref_id="103" tile="1,2,0" width="128" height="64" xoffset="80"/>
 			<tail width="128" height="64" xoffset="80"/>
-			<textbox font_id="11" xoffset="82" yoffset="2"> blend mode: </textbox>
-			<number number_id="310" value_id="51" xoffset="160" yoffset="-4"/>
-			<textbox font_id="5" xoffset="5" yoffset="27"><![CDATA[width: ]]></textbox>
+			<textbox font_id="11" xoffset="82" yoffset="0"> blend mode: </textbox>
+			<number number_id="310" value_id="51" xoffset="160" yoffset="-6"/>
+			<textbox font_id="5" xoffset="5" yoffset="27"><![CDATA[宽度]]></textbox>
 			<number number_id="302" value_id="52" xoffset="81" yoffset="23"/>
-			<textbox font_id="5" xoffset="5" yoffset="48">
-				<![CDATA[nodes:         x]]>
+			<textbox font_id="5" xoffset="4" yoffset="48">
+				<![CDATA[节点数         x]]>
 			</textbox>
 			<number number_id="301" value_id="53" xoffset="70" yoffset="44"/>
 			<number number_id="321" value_id="54" xoffset="85" yoffset="44"/>
@@ -717,7 +719,7 @@
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<field description="[5] Uninitialized, &#10; usually a random value."> <pad width="36" height="16"/>
+				<field description="[5] 默认不初始化，不使用时为垃圾值"> <pad width="36" height="16"/>
 					<number number_id="314" value_id="105" xoffset="40" yoffset="-2"/>
 				</field>
 			</grid>
@@ -740,7 +742,7 @@
 			<icon ref_id="203" tile="13,1,2" xoffset="156" yoffset=""/>
 			<field _hide_if="4=0"><number number_id="324" value_id="4" xoffset="218" yoffset="-11"/></field>
 			<number number_id="324" value_id="5" xoffset="218" yoffset="0"/>
-			<field _hide_if="32=1" xoffset="180" yoffset="19" description="Accumulated damage,&#10; used for super armor."> <pad width="27" height="12"/>
+			<field _hide_if="32=1" xoffset="180" yoffset="19" description="累积伤：用于无限霸体的处理"> <pad width="27" height="12"/>
 				<number number_id="324" value_id="6" xoffset="38" yoffset="-8"/>
 			</field>
 		</field>
@@ -751,7 +753,7 @@
 				<icon ref_id="203" tile="13,1,0" xoffset="18" yoffset=""/>
 				<number number_id="332" value_id="10" xoffset="86" yoffset="1"/>
 
-				<icon class="lock-border-escape" ref_id="102" tile="13,3,9" xoffset="88" description="BorderEscape locked."/>
+				<icon class="lock-border-escape" ref_id="102" tile="13,3,9" xoffset="88" description="禁止回避结界（DD）"/>
 			</field>
 			<textbox font_id="5" xoffset="3" yoffset="4" description="取消当前动作所需的取消级">被取消级</textbox>
 			<field class="action-lock" xoffset="70" stack="true"> <pad height="24"/>
@@ -788,99 +790,99 @@
 			<grid class="multiplier-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field></field><!--spacing for field name-->
 				<field class="multi-attack"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,32" description="//+0x530 float&#10;Attack power."/>
+					<icon ref_id="102" tile="13,3,32" description="//+0x530 float&#10;攻击倍率"/>
 					<number number_id="315" value_id="30" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-defend"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,33" description="//+0x534 float&#10;Defend power."/>
+					<icon ref_id="102" tile="13,3,33" description="//+0x534 float&#10;受击倍率"/>
 					<number number_id="315" value_id="31" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-power" hide_if="32=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,7" description="//+0x538 float&#10;Armor power; cut down poise damage of recieved attack."/>
+					<icon ref_id="102" tile="13,3,7" description="//+0x538 float&#10;霸体倍率：减少受击造成的削韧"/>
 					<field show_if="32=0">
 						<icon ref_id="102" tile="13,3,8" 
-						description="//+0x538 float&#10;Armor power; recieved poise damage cut down to zero, &#10; which means infinite poise health."/>
+						description="//+0x538 float&#10;霸体倍率：受击削韧降为0，即无限韧性（霸体）"/>
 					</field>
 					<number number_id="315" value_id="32" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-spell" hide_if="33=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,10" description="//+0x544 float&#10;Spell power."/>
+					<icon ref_id="102" tile="13,3,10" description="//+0x544 float&#10;符卡攻击倍率"/>
 					<number number_id="315" value_id="33" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-special" hide_if="34=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,23" description="//+0x548 float&#10;Skill power."/>
+					<icon ref_id="102" tile="13,3,23" description="//+0x548 float&#10;必杀攻击倍率"/>
 					<number number_id="315" value_id="34" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-meter" hide_if="35=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,12" description="//+0x54C float&#10;Card meter-gain power."/>
+					<icon ref_id="102" tile="13,3,12" description="//+0x54C float&#10;攒卡倍率"/>
 					<number number_id="315" value_id="35" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-discard" hide_if="37=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,34" description="//+0x554 float&#10;Discard power."/>
+					<icon ref_id="102" tile="13,3,34" description="//+0x554 float&#10;（对敌）碎卡倍率：用于雪天"/>
 					<number number_id="315" value_id="37" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-life-steal" hide_if="36=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,21" description="//+0x550 float&#10;Life steal power."/>
+					<icon ref_id="102" tile="13,3,21" description="//+0x550 float&#10;吸血倍率：用于浓雾天"/>
 					<number number_id="315" value_id="36" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-dmg-reflect" hide_if="38=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,35" description="//+0x558 float&#10;Damage reflect power, used by suwako's blue curse."/>
+					<icon ref_id="102" tile="13,3,35" description="//+0x558 float&#10;反伤倍率：用于诹访子诅咒（蓝）"/>
 					<number number_id="315" value_id="38" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-speed" hide_if="40=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,11" description="//+0x4D0 float&#10;Horizontal speed power, used by Tempest etc."/>
+					<icon ref_id="102" tile="13,3,11" description="//+0x4D0 float&#10;移速倍率：用于风雨天等"/>
 					<number number_id="315" value_id="40" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-xmove" hide_if="41=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,24" description="//+0x564 float&#10;Axis-X displacement power, used by Komachi Avīci."/>
+					<icon ref_id="102" tile="13,3,24" description="//+0x564 float&#10;X轴位移倍率：用于大无间"/>
 					<number number_id="315" value_id="41" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-ymove" hide_if="42=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,37" description="//+0x568 float&#10;Axis-Y displacement power."/>
+					<icon ref_id="102" tile="13,3,37" description="//+0x568 float&#10;Y轴位移倍率"/>
 					<number number_id="315" value_id="42" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="multi-limit" hide_if="39=1"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,36" description="//+0x53C float&#10;Combo limit power, used by Sakuya timestops."/>
+					<icon ref_id="102" tile="13,3,36" description="//+0x53C float&#10;连段Limit倍率：用于咲夜时停"/>
 					<number number_id="315" value_id="39" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="bonus-rate" hide_if="43=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,14" description="//+0x540 float&#10;Combo rate fix, used by Sakuya timestops."/>
+					<icon ref_id="104" tile="13,3,14" description="//+0x540 float&#10;连段Rate补偿：用于咲夜时停"/>
 					<number number_id="315" value_id="43" xoffset="65" yoffset="-1"/>
 				</field>
 				<field class="calm-spotlight" hide_if="69=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,9" description="//+0x4CD bool; +0x4CE short; &#10;Obtains calm spotlight,&#10; healing (strength+5) points per 10f."/>
+					<icon ref_id="104" tile="13,3,9" description="//+0x4CD bool; +0x4CE short; &#10;拥有无风回血，&#10; 每10帧回复(strength+5)点血量"/>
 					<number number_id="310" value_id="70" xoffset="60" yoffset="-1"/>
 				</field>
 			</grid>
 			<grid class="integer-list" xgrid="42" ygrid="24" rowmax="5" xoffset="3">
 				<field class="grimoire" hide_if="44=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,5" description="//+0x560 short;&#10;Grimoire books count."/>
+					<icon ref_id="104" tile="13,3,5" description="//+0x560 short;&#10;灵力书数量"/>
 					<number number_id="310" value_id="44" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="tengu-fans" hide_if="45=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,3" description="//+0x834 short;&#10;Tengu fans count."/>
+					<icon ref_id="104" tile="13,3,3" description="//+0x834 short;&#10;天狗扇数量"/>
 					<number number_id="310" value_id="45" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="dolls" hide_if="46=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,4" description="//+0x840 float;&#10;Sacrificial dolls count."/>
+					<icon ref_id="104" tile="13,3,4" description="//+0x840 float;&#10;替身人偶数量"/>
 					<number number_id="310" value_id="46" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="control-rods" hide_if="47=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,6" description="//+0x844 float;&#10;Control rods count."/>
+					<icon ref_id="104" tile="13,3,6" description="//+0x844 float;&#10;制御棒数量"/>
 					<number number_id="310" value_id="47" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="count-drops" hide_if="48=0"> <pad width="40" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,16" description="//+0x850 short;&#10;Drops count."/>
+					<icon ref_id="102" tile="13,3,16" description="//+0x850 short;&#10;天滴数量"/>
 					<number number_id="310" value_id="48" xoffset="43" yoffset="-1"/>
 				</field>
 				<field class="can-graze-melee" hide_if="61=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,0" description="//+0x56C bool;&#10;Can graze melee, used by Spring Haze."/>
+					<icon ref_id="104" tile="13,3,0" description="//+0x56C bool;&#10;可以擦体术：用于花云天"/>
 				</field>
 				<field class="crush-on-wb" hide_if="62=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,8" description="//+0x56D bool;&#10;Crush opponent on wrongblock, used by Sunshower etc."/>
+					<icon ref_id="104" tile="13,3,8" description="//+0x56D bool;&#10;（敌方）错防立即破防：用于天气雨等"/>
 				</field>
 				<field class="skillsmax" hide_if="63=0"> <pad width="40" height="24"/>
-					<icon ref_id="104" tile="13,3,1" description="//+0x56E bool;&#10;Sets skill levels to max, used by Sprinkle."/>
+					<icon ref_id="104" tile="13,3,1" description="//+0x56E bool;&#10;设置必杀等级Max：用于疏雨天"/>
 				</field>
 			</grid>
 		</field>
@@ -889,71 +891,71 @@
 			<grid class="timer-list" xgrid="70" ygrid="24" xoffset="3" yoffset="1" rowmax="3">
 				<field/>
 				<field class="timer-meleeinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,0" description="//+0x51C short;&#10;Melee invul timer."/>
+					<icon ref_id="102" tile="13,3,0" description="//+0x51C short;&#10;体术无敌倒计时"/>
 					<number number_id="310" value_id="50" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-projinvul"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,1" description="//+0x520 short;&#10;Bullet invul timer."/>
+					<icon ref_id="102" tile="13,3,1" description="//+0x520 short;&#10;弹幕无敌倒计时"/>
 					<number number_id="310" value_id="52" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-grabinvul" hide_if="51=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,2" description="//+0x51E short;&#10;Grab invul timer."/>
+					<icon ref_id="102" tile="13,3,2" description="//+0x51E short;&#10;投技无敌倒计时"/>
 					<number number_id="310" value_id="51" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-graze" hide_if="53=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,13" description="//+0x522 short;&#10;Grazing timer."/>
+					<icon ref_id="102" tile="13,3,13" description="//+0x522 short;&#10;擦弹状态倒计时"/>
 					<number number_id="310" value_id="53" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timer-confusiondebuff" hide_if="54=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,19" description="//+0x524 short;&#10;Confusion debuff timer, used by Reisen."/>
+					<icon ref_id="102" tile="13,3,19" description="//+0x524 short;&#10;混乱状态倒计时：用于铃仙丧心"/>
 					<number number_id="310" value_id="54" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-sordebuff" hide_if="55=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,18" description="//+0x526 short;&#10;Sword of Rapture debuff timer, used by Tenshi."/>
+					<icon ref_id="102" tile="13,3,18" description="//+0x526 short;&#10;气质封印状态倒计时：用于天子二卡封印"/>
 					<number number_id="310" value_id="55" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-healcharm" hide_if="56=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,20" description="//+0x528 short;&#10;Healcharm timer."/>
+					<icon ref_id="102" tile="13,3,20" description="//+0x528 short;&#10;回血符剩余时长"/>
 					<number number_id="310" value_id="56" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-magicpotion" hide_if="57=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,17" description="//+0x848 float;&#10;Magic potion timer."/>
+					<icon ref_id="102" tile="13,3,17" description="//+0x848 float;&#10;蓝瓶剩余时长"/>
 					<number number_id="310" value_id="57" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-stopwatch" hide_if="58=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,2" description="//+0x84C short;&#10;Stopwatch(system card) timer."/>
+					<icon ref_id="104" tile="13,3,2" description="//+0x84C short;&#10;静止时计剩余时长"/>
 					<number number_id="310" value_id="58" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-dragonstar" hide_if="59=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,7" description="//+0x84E short;&#10;Dragonstar timer."/>
+					<icon ref_id="102" tile="13,3,7" description="//+0x84E short;&#10;龙星剩余时长"/>
 					<number number_id="310" value_id="59" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-dropinvul" hide_if="60=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,16" description="//+0x852 short;&#10;Drops invulnerable timer."/>
+					<icon ref_id="102" tile="13,3,16" description="//+0x852 short;&#10;天滴无敌倒计时"/>
 					<number number_id="310" value_id="60" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="timestop" hide_if="65=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,38" description="//+0x4A8 short;&#10;Timestop left."/>
+					<icon ref_id="102" tile="13,3,38" description="//+0x4A8 short;&#10;时停倒计时"/>
 					<number number_id="310" value_id="65" xoffset="62" yoffset="-1"/>
 				</field>
 				<field class="spellstop" hide_if="68=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,12" description="//+0x4A6 short;&#10;Spellstop, used to set timestop."/>
+					<icon ref_id="104" tile="13,3,12" description="//+0x4A6 short;&#10;暗转停止值：设置后传递给时停倒计时"/>
 					<number number_id="310" value_id="68" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-poise" hide_if="66=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="104" tile="13,3,7" description="//+0x4BC short;&#10;Poise damage, max to 100."/>
+					<icon ref_id="104" tile="13,3,7" description="//+0x4BC short;&#10;被削韧值：上限100，每帧掉1"/>
 					<number number_id="310" value_id="66" xoffset="62" yoffset="-1"/>
 				</field>
 
 				<field class="timer-nogain" hide_if="67=0"> <pad width="60" height="24"/> <back ref_id="202"/>
-					<icon ref_id="102" tile="13,3,25" description="//+0x7F8 short;&#10;No meter-gain timer, zeroing meter-gain power&#10; to suppress meter-gain during a spellcard."/>
+					<icon ref_id="102" tile="13,3,25" description="//+0x7F8 short;&#10;抑制攒卡倒计时：设置攒卡倍率为0，抑制符卡发动后的攒卡"/>
 					<number number_id="310" value_id="67" xoffset="62" yoffset="-1"/>
 				</field>
 			</grid>

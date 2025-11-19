@@ -1080,7 +1080,7 @@ namespace gui {
 			break;//huge spin
 
 			// ---- B: ground block ----
-		case 150: case 154: base = 11; break;
+		case 150: case 154: base = 10; break;
 		case 151: case 155: base = 16; break;
 		case 152: case 156: base = 22; break;
 		case 153: case 157: base = 28; break;
