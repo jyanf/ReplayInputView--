@@ -431,8 +431,7 @@ namespace gui {
 			delete reader; reader = nullptr;
 			decrypt(buf);
 			fileCP = get_doc_codepage(buf);
-			return std::istringstream(buf); // 将字符串内容绑定进流
-			return buf; // 将字符串内容绑定进流
+			return buf;
 		}
 
 		void XmlHelper::decrypt(std::string& buf) {//credit shady-packer
