@@ -492,12 +492,6 @@ namespace gui {
 				uv = riv::tex::Tex::getBorder(index, cols, rows, ref_icons->sprite);
 			}
 		}
-		inline static void setBorder(SokuLib::Sprite& sp, const _box& uv) {
-			sp.vertices[0].u = sp.vertices[2].u = uv.x1;
-			sp.vertices[0].v = sp.vertices[1].v = uv.y1;
-			sp.vertices[1].u = sp.vertices[3].u = uv.x2;
-			sp.vertices[2].v = sp.vertices[3].v = uv.y2;
-		}
 		//Icon(int id) : tileId(id) {}
 		//template <int sx, int sy, int gx, int gy, int ox = 0, int oy = 0> void render(riv::tex::Tex);
 		inline virtual void update(_box& parea, void* ctx) override {
