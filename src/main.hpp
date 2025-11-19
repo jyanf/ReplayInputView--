@@ -1,5 +1,5 @@
 #if defined(_WIN32) && defined(_DEBUG)
-#include <vld.h>
+//#include <vld.h>
 #endif
 //#ifndef _DEBUG
 //	#undef printf

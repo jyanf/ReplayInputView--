@@ -415,23 +415,24 @@ namespace gui {
 			}
 			return CP_UTF8;
 		}
-		std::istringstream XmlHelper::read_file(const std::string& name) {
+		std::string XmlHelper::read_file(const std::string& name) {
 			IFileReader* reader = nullptr;
 			printf("Reading file: %s\n", name.c_str());
 			if (!_init_reader(&reader, 0, name.c_str())) {
-				delete reader;
+				delete reader; reader = nullptr;
 				throw std::runtime_error("failed to init reader");
 			}
 			auto length = reader->GetLength();
 			std::string buf(length, '\0');
 			if (!reader->Read(buf.data(), length)) {
-				delete reader;
+				delete reader; reader = nullptr;
 				throw std::runtime_error("failed to read file");
 			}
-			delete reader;
+			delete reader; reader = nullptr;
 			decrypt(buf);
 			fileCP = get_doc_codepage(buf);
 			return std::istringstream(buf); // 将字符串内容绑定进流
+			return buf; // 将字符串内容绑定进流
 		}
 
 		void XmlHelper::decrypt(std::string& buf) {//credit shady-packer
@@ -714,7 +715,7 @@ namespace gui {
 	}
 	void Layout::load(noderef node) {
 		for (auto& [k, v] : xml::XmlHelper::make_range(node.equal_range("title")))
-			titles.push_back(TitleBar(v));//titles.emplace_back(v);//wtf
+			titles.emplace_back(v);//wtf
 		auto valueMgr = node.get_child_optional("values");
 		if (valueMgr) {
 			for (const auto& [k, v] : xml::XmlHelper::make_range(valueMgr->equal_range("value"))) {

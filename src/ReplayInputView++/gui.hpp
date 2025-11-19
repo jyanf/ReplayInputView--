@@ -66,18 +66,22 @@ namespace gui {
 			}
 			inline explicit XmlHelper(const std::string& name) {
 				try {
-					auto iss = read_file(name);
+					auto iss = std::istringstream(read_file(name));
 					read_xml(iss, doc, no_comments | trim_whitespace);
 				} catch(std::exception detail) {
 					const auto msg = std::format("ReplayInputView++: failed to parse layout file ({}).\nPlease check file contents and xml syntax!\nDetails:{}", name, detail.what());
 					MessageBoxA(nullptr, msg.c_str(), "RIV Error", MB_ICONERROR | MB_OK);
+					throw std::runtime_error(msg);
+				} catch (...) {
+					const auto msg = "Unknown crash...";
+					MessageBoxA(nullptr, msg, "RIV Error", MB_ICONERROR | MB_OK);
 					throw std::runtime_error(msg);
 				}
 			}
 			inline ptree& get() { return doc; }
 
 			
-			static std::istringstream read_file(const std::string& name);
+			static std::string read_file(const std::string& name);
 			static void decrypt(std::string& buf);
 			template <typename It> inline static iterator_range<It> make_range(std::pair<It, It> p) noexcept { return { p.first, p.second }; }
 			template<typename T> static std::vector<T> get_array(const ptree& node, const std::string& key, char sep = ',');
@@ -160,7 +164,7 @@ namespace gui {
 			weight = 400; height = 15;
 			italic = shadow = useOffset = false;
 			offsetX = offsetY = charSpaceX = charSpaceY = 0;
-			bufferSize = 2048;
+			bufferSize = 100000;
 			r1 = g1 = b1 = b2 = r2 = g2 = 0xff;
 			strcpy_s(faceName, SokuLib::defaultFontName);
 		}
@@ -179,13 +183,15 @@ namespace gui {
 			if (handle) {
 				if (boxw <= 0) boxw = str.length() * (height + (int)charSpaceX);
 				if (useOffset)
-					boxh = 10000;
+					boxh = min(1000, this->bufferSize/boxw);
 				else if (boxh < height)
 					boxh = height + (int)charSpaceY + 10;
 				int rw, rh;
+				printf("\tcreating texture by boxw%d, bowh%d, size%d...", boxw, boxh, this->bufferSize);
 				SokuLib::textureMgr.createTextTexture(&ret, str.c_str(), *handle, boxw, boxh, &rw, &rh);
 				if (rw <= boxw) boxw = rw;
 				if (rh <= boxh) boxh = rh;
+				printf(" done, rw%d rh%d\n", rw, rh);
 			}
 			return ret;
 		}
