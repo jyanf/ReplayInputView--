@@ -56,7 +56,7 @@ static bool __fastcall onSokuSetup(void* self, int unused, void* data) {
 		throw std::runtime_error(msg);
 	}
 	bool ret = orgSokuSetup(self, unused, data);
-	//info::Vice::delayedInit();//reader not ready?
+	info::Vice::delayedInit();//reader not ready?
 	auto& cap_check = *reinterpret_cast<D3DCAPS9*>(0x8a0e74);
 	printf("D3D9 Square texture only: %d\n", (cap_check.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0);
 	return ret; 

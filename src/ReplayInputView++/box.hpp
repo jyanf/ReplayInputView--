@@ -69,7 +69,7 @@ using SokuLib::CNumber;
 	void flushWatcher(); void cleanWatcher();
 	void closeWatcher(); void startWatcher();
 	extern TrampTamper<7> update_collision_shim;
-	void __fastcall lag_watcher_updator(const GameObjectBase* object);
+	void lag_watcher_updator();
 
 	
 

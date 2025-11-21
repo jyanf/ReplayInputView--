@@ -30,9 +30,9 @@ extern const int &battleCounter, &globalTimer, &gameFPS;
 template <int oprSize>
 class TrampTamper {//credit enebe shady/memory.cpp
 	static_assert(oprSize >= 5);
-	static const int size = oprSize + 14;
-	std::array<byte, size> shim;
-	byte &jmpa = shim[size - 5], &calla = shim[3], &opra = shim[9];
+	static constexpr int size = oprSize + 12;
+	//std::array<byte, size> shim;
+	byte* shim = nullptr;
 	DWORD addr = NULL;
 
 	TrampTamper(const TrampTamper&) = delete;
@@ -40,32 +40,45 @@ class TrampTamper {//credit enebe shady/memory.cpp
 public:
 	inline void hook(void* target){
 		if (!addr) return;
-		
-		DWORD old;
-		VirtualProtect((PVOID)addr, oprSize, PAGE_EXECUTE_READWRITE, &old);
-		memcpy((void*)&opra, (const void*)addr, oprSize);
-		memset((void*)addr, 0x90, oprSize);
-		SokuLib::TamperNearJmp(addr, shim.data());
-		VirtualProtect((PVOID)addr, oprSize, old, &old);
+		shim = reinterpret_cast<decltype(shim)>(VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+		if (!shim) return;
+		int i = -1;
+		shim[++i] = 0x60;// 0;pushad
+		//shim[++i] = 0x8B; shim[++i] = 0xC8;// 1;mov ecx, eax
+		auto& calla = shim[++i]; calla = 0xE8; //	1;call hook
+		i += 4;//	2~5;to target
+		shim[++i] = 0x61;// 6;popad
+		auto& opra = shim[++i];// 7~size-6;org opr
+		auto& jmpa = shim[i+=oprSize]; jmpa = 0xE9; // size-5;jmp org
+		i += 4;// size-4~size-1; 
+#ifdef _DEBUG
+		assert(i == size-1);
+#endif // _DEBUG
 
-		SokuLib::TamperNearCall((DWORD)&calla, target);
-		SokuLib::TamperNearJmp((DWORD)&jmpa, addr + oprSize);
+		DWORD old;
+		if (VirtualProtect((PVOID)addr, oprSize, PAGE_EXECUTE_READWRITE, &old)) {
+			memcpy((void*)&opra, (const void*)addr, oprSize);
+			memset((void*)addr, 0x90, oprSize);
+			SokuLib::TamperNearJmp(addr, shim);
+			VirtualProtect((PVOID)addr, oprSize, old, &old);
+
+			SokuLib::TamperNearCall((DWORD)&calla, target);
+			SokuLib::TamperNearJmp((DWORD)&jmpa, addr + oprSize);
+		} else {
+			VirtualFree(shim, 0, MEM_RELEASE); shim = nullptr;
+		}
 	}
 	inline void restore() {
-		if (!addr) return;
+		if (!addr || !shim) return;
+		auto& opra = shim[7];
 		DWORD old;
 		VirtualProtect((PVOID)addr, oprSize, PAGE_EXECUTE_READWRITE, &old);
 		memcpy((void*)addr, &opra, oprSize);
 		VirtualProtect((PVOID)addr, oprSize, old, &old);
+
+		VirtualFree(shim, 0, MEM_RELEASE); shim = nullptr;
 	}
-	TrampTamper(DWORD source) : addr(source) {
-		shim.fill(0x90);
-		shim[0] = 0x60;// 0;pushad
-		shim[1] = 0x8B; shim[2] = 0xC8;// 1;mov eax, ecx
-		calla = 0xE8;// 3;call hook
-		shim[8] = 0x61;// 8;popad
-		jmpa = 0xE9;//size-5;jmp org
-	}
+	TrampTamper(DWORD source) : addr(source) {}
 	~TrampTamper() {
 		restore();
 	}

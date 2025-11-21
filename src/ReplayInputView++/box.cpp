@@ -48,7 +48,7 @@ void cleanWatcher() {
 void closeWatcher() { enabled = false; }
 void startWatcher() { cleanWatcher(); enabled = true; }
 TrampTamper<7> update_collision_shim(0x47d2c4);
-void __fastcall lag_watcher_updator(const GameObjectBase* object) {
+static void __fastcall real_lag_watcher_updator(const GameObjectBase* object) {
 	if (!enabled || !object) return;
 	auto spec = determine(*object, BulletSpecial::SHARED_BOX | BulletSpecial::SUBBOX | BulletSpecial::EFFECT);
 	if (spec.SubBox) {
@@ -60,6 +60,12 @@ void __fastcall lag_watcher_updator(const GameObjectBase* object) {
 		//lag_buffer.erase(object);
 		lag_buffer[object] = true;
 	unflushed = true;
+}
+ __declspec(naked) void lag_watcher_updator() {
+	__asm {
+		mov ecx, eax;
+		jmp real_lag_watcher_updator;
+	}
 }
 
 
