@@ -38,9 +38,14 @@ class TrampTamper {//credit enebe shady/memory.cpp
 	TrampTamper(const TrampTamper&) = delete;
 	TrampTamper& operator=(const TrampTamper&) = delete;
 public:
-	inline void hook(void* target){
+	inline auto alloc(int sz = size) {//TODO: pool allocator in a single page
+		return reinterpret_cast<decltype(shim)>(
+			VirtualAlloc(nullptr, sz, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE)
+		);
+	}
+	inline void hook(void* target) {
 		if (!addr) return;
-		shim = reinterpret_cast<decltype(shim)>(VirtualAlloc(nullptr, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+		shim = alloc(size);
 		if (!shim) return;
 		int i = -1;
 		shim[++i] = 0x60;// 0;pushad
