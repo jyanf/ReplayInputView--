@@ -634,7 +634,9 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             hideWnd(hwnd);
             return 0;
         case WM_DESTROY:
+            EnterCriticalSection(&d3dMutex);
             DestroyD3D();
+            LeaveCriticalSection(&d3dMutex);
             UninstallHooks(GetParent(hwnd));
             viceWND = NULL;
             if (tipWND && IsWindow(tipWND)) {
@@ -1061,7 +1063,6 @@ bool __fastcall info::Vice::CBattle_Render(SokuLib::Battle* This)
     ) return ret;
 
 
-
     //if (layout) {
     //auto target = inter.focus ? inter.focus : inter.getHover();
     auto target = inter.getCount() > 0 ? inter.getHover() : inter.focus;
@@ -1193,10 +1194,16 @@ FALLBACK:
 	return ret;
 }
 
-TrampTamper<5> reset_swapchian_shim(0x4151dd);
-void info::Vice::ResetD3D9Dev() {
-	//EnterCriticalSection(&d3dMutex);
+TrampTamper<5> reset_swapchain_shim(0x415186);
+void info::Vice::BeforeD3D9DevReset() {
+    puts("Hooked before reset: swapchain release.");
     DestroyD3D();
+}
+
+TrampTamper<5> reset_swapchain_shim2(0x4151dd);
+void info::Vice::AfterD3D9DevReset() {
+	//EnterCriticalSection(&d3dMutex);
+    puts("Hooked after reset: create additional swapchain.");
     CreateD3D(viceWND);
     //LeaveCriticalSection(&d3dMutex);
 }

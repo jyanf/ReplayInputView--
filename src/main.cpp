@@ -150,7 +150,8 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 		ogSceneBattleRender = SokuLib::TamperDword(SokuLib::union_cast<VBattleRender*>(&SokuLib::VTable_Battle.onRender), info::Vice::CBattle_Render);
 	} VirtualProtect((PVOID)RDATA_SECTION_OFFSET, RDATA_SECTION_SIZE, old, &old);
 
-	reset_swapchian_shim.hook(info::Vice::ResetD3D9Dev);//in case no WindowResizer
+	reset_swapchain_shim.hook(info::Vice::BeforeD3D9DevReset);//in case no WindowResizer
+	reset_swapchain_shim2.hook(info::Vice::AfterD3D9DevReset);
 
 	FlushInstructionCache(GetCurrentProcess(), NULL, 0);
 	return true;

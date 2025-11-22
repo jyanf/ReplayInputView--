@@ -1,5 +1,6 @@
 #if defined(_WIN32) && defined(_DEBUG)
 //#include <vld.h>
+#define D3D_DEBUG_INFO
 #endif
 //#ifndef _DEBUG
 //	#undef printf

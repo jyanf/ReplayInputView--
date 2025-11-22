@@ -316,7 +316,8 @@ using Design = gui::RivDesign;
 			}*/
 		}
 		static bool __fastcall CBattle_Render(SokuLib::Battle* This);
-		static void ResetD3D9Dev();
+		static void BeforeD3D9DevReset();
+		static void AfterD3D9DevReset();
 	};
 
 	void drawObjectHover(Interface::PhoverPublic& object, float time);
@@ -385,6 +386,6 @@ using Design = gui::RivDesign;
 
 typedef bool (SokuLib::Battle::* VBattleRender)();
 extern VBattleRender ogSceneBattleRender;
-typedef bool (*ResetD3D9Dev)();
-extern TrampTamper<5> reset_swapchian_shim;
+typedef bool (*AfterD3D9DevReset)();
+extern TrampTamper<5> reset_swapchain_shim, reset_swapchain_shim2;
 
