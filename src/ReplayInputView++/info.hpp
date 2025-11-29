@@ -232,7 +232,7 @@ using Design = gui::RivDesign;
 			std::call_once(skipintro_initialized, []() {
 				if (!layout) {
 					gui::xml::XmlHelper::gameCP = GetTextCodePage();
-					layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.cv0");
+					layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.txt");
 				}
 			});
 		}

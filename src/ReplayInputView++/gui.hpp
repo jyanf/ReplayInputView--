@@ -30,7 +30,8 @@ namespace gui {
 		using boost::property_tree::read_xml;
 		using boost::property_tree::xml_parser::no_comments, boost::property_tree::xml_parser::trim_whitespace;
 		using SokuLib::IFileReader;
-		static const auto _init_reader = reinterpret_cast<bool(__fastcall*)(IFileReader** ret, int _, LPCSTR filename)>(0x40d1e0);
+		//static const auto _init_reader = reinterpret_cast<bool(__fastcall*)(IFileReader** ret, int _, LPCSTR filename)>(0x40d1e0);
+		extern bool(__fastcall* volatile _textReader)(void* result, const char* path);
 		class XmlHelper {
 			ptree doc;
 			template <typename It>

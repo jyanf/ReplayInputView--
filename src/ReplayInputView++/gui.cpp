@@ -415,8 +415,10 @@ namespace gui {
 			}
 			return CP_UTF8;
 		}
+		//shady hooked text Reader
+		volatile auto _textReader = reinterpret_cast<bool(__fastcall*)(void* result, const char* path)>(0x408a20);
 		std::string XmlHelper::read_file(const std::string& name) {
-			IFileReader* reader = nullptr;
+			/*IFileReader* reader = nullptr;
 			printf("Reading file: %s\n", name.c_str());
 			if (!_init_reader(&reader, 0, name.c_str())) {
 				delete reader; reader = nullptr;
@@ -429,8 +431,22 @@ namespace gui {
 				throw std::runtime_error("failed to read file");
 			}
 			delete reader; reader = nullptr;
-			decrypt(buf);
+			decrypt(buf);*/
+			struct {
+				char* str = nullptr;
+				DWORD size = 0;
+			} buf0;
+			//credit shady-loader
+			if (!_textReader((void*)&buf0, name.c_str())) {
+				if (buf0.str) {
+					SokuLib::DeleteFct(buf0.str);
+					buf0.str = nullptr;
+				}
+				throw std::runtime_error("failed to read file");
+			}
+			std::string buf(buf0.str, buf0.size);
 			fileCP = get_doc_codepage(buf);
+			SokuLib::DeleteFct(buf0.str); buf0.str = nullptr;
 			return buf;
 		}
 

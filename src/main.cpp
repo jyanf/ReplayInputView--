@@ -56,6 +56,7 @@ static bool __fastcall onSokuSetup(void* self, int unused, void* data) {
 		throw std::runtime_error(msg);
 	}
 	bool ret = orgSokuSetup(self, unused, data);
+	gui::xml::_textReader = reinterpret_cast<decltype(gui::xml::_textReader)>(*reinterpret_cast<DWORD*>(0x405853 + 1) + 0x405853 + 5);//use hooked txt reader
 	info::Vice::delayedInit();//reader not ready?
 	auto& cap_check = *reinterpret_cast<D3DCAPS9*>(0x8a0e74);
 	printf("D3D9 Square texture only: %d\n", (cap_check.TextureCaps & D3DPTEXTURECAPS_SQUAREONLY) != 0);
