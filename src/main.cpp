@@ -136,7 +136,7 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 		ogBattleMgrSize[2] = SokuLib::TamperDwordAdd(0x43c5a3, sizeof(riv::RivControl));
 		ogBattleMgrConstruct[2] = SokuLib::TamperNearCall(0x43c5c3, CBattleManager_OnConstruct<2>);//base init
 		//Result
-		//ogBattleMgrSize[3] = SokuLib::TamperDwordAdd(0x438803, sizeof(riv::RivControl));
+		ogBattleMgrSize[3] = SokuLib::TamperDwordAdd(0x438803, sizeof(riv::RivControl));
 		ogBattleMgrConstruct[3] = SokuLib::TamperNearCall(0x438823, CBattleManager_OnConstruct<3>);//base init
 
 		//Hook Setup to load custom .dat
