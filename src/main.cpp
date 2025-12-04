@@ -91,14 +91,23 @@ extern "C" __declspec(dllexport) bool Initialize(HMODULE hMyModule, HMODULE hPar
 	cout << "Absolute Ini Path[" << iniProxy.getPath() << "]\n";
 
 	using riv::box::update_collision_shim, riv::box::lag_watcher_updator, riv::SaveTimers;
+	using riv::combo_thre_shim, riv::reconsider_counter_show;
 
 	DWORD old;
 	/******************************** Hooks ***********************************/
 	VirtualProtect((PVOID)TEXT_SECTION_OFFSET, TEXT_SECTION_SIZE, PAGE_EXECUTE_WRITECOPY, &old); {
 		// combo counter show on hit 1
-		auto& op = *reinterpret_cast<byte(*)[3]>(0x4792FB);
-		if (op[0] == 0x83 && op[1] == 0xf8 && op[2] == 2) op[2] = 1;
-		// fix wrong fullscreen window pos, by setting pos to 0,0
+			//0x4792fb 83f8	02			CMP        EAX, 0x2	
+			// --> CMP EAX, 0x1
+			//0x4792fe 8945	10			MOV        dword ptr[EBP + 0x10], EAX
+			//0x479301 7c	07			JL         LAB_0047930a
+			//0x479303 c745 18 b4000000 MOV        dword ptr[EBP + 0x18], 0xb4
+			//0x47930a 8a81 ad040000	MOV        AL, byte ptr[this->comboDesign + 0x4ad]
+		//auto& op = *reinterpret_cast<byte(*)[3]>(0x4792FB);
+		//if (op[0] == 0x83 && op[1] == 0xf8 && op[2] == 2) op[2] = 1;
+		combo_thre_shim.hook(reconsider_counter_show);
+
+		// to avoid cursor offset, fix wrong fullscreen window pos, by setting pos to 0,0
 			//0x415324 03 c3			ADD     EAX, EBX-->  PUSH 0x0
 			//0x415326 6a 00			PUSH    0x0
 			//0x415328 f7 d8			NEG     EAX		-->  PUSH 0x0

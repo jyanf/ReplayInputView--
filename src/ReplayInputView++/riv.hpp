@@ -22,6 +22,9 @@ inline static Player* get_player(const GameDataManager* This, int index);
 inline static Player* get_player(const BattleManager* This, int index);
 
 	void __fastcall SaveTimers(GameDataManager* This);
+	void __fastcall reconsider_counter_show();
+	extern TrampTamper<6> combo_thre_shim;
+
 	struct HotKeys {
 		UINT display_boxes;
 		UINT display_info;

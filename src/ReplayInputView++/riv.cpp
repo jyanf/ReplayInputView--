@@ -251,6 +251,33 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		gui::ValueSpec_PlayerClip::Swap();
 		return ogUpdateMovement(This);
 	}
+	static void __fastcall real_reconsider_counter_show(void* _counter, int hits) {
+		struct { char pad1[0x10]; int hits; char pad2[4]; int fade; } *counter = reinterpret_cast<decltype(counter)>(_counter);
+		//auto* mgr = *reinterpret_cast<BattleManager**>(SokuLib::ADDR_BATTLE_MANAGER);
+		if (hits != 1) return;//keep
+		switch (iniProxy["Others"_l]["ComboMeter.ShowOneHit"_l]) {
+		case 0://disabled
+			return;
+		case 1: {//auto, check netplay
+			auto mode = SokuLib::mainMode;
+			if (mode == Mode::BATTLE_MODE_VSCLIENT || mode == Mode::BATTLE_MODE_VSSERVER) return;
+			break;}
+		case 2://always
+			break;
+		}
+		auto& movopr = *reinterpret_cast<byte(*)[7]>(0x479303);
+		static constexpr int def_fade_time = 180;
+		int fade_time = (movopr[0]==0xc7 && movopr[1]==0x45 && movopr[2]==0x18) ? *reinterpret_cast<int*>(&movopr[3]) : def_fade_time;
+		counter && (counter->fade = fade_time);
+	}
+	__declspec(naked) void __fastcall reconsider_counter_show() {
+		__asm {
+			mov ecx, ebp//counter this
+			mov edx, eax//hits
+			jmp real_reconsider_counter_show
+		}
+	}
+	TrampTamper<6> combo_thre_shim(0x47930a);
 //static void draw_debug_info(void* This) {
 //	static D3DCOLOR gray[] = { 0x4f909090, 0x4f909090, 0x4f909090, 0x4f909090 };
 //	CustomQuad quad = {};
