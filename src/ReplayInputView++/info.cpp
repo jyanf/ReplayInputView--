@@ -27,6 +27,7 @@ namespace info {
     //LPDIRECT3D9 Vice::vicePD3 = NULL;
     //LPDIRECT3DDEVICE9 Vice::vicePD3D = NULL;
 	LPDIRECT3DSWAPCHAIN9 Vice::viceSwapChain = NULL;
+    LPDIRECT3DSURFACE9 Vice::viceDepthStencil = NULL;
 	std::optional<Design> Vice::layout;//delay Design construct to avoid soku runtime dependency, which is not considered by archaic swrstoys loader
     //Design& Vice::layout = *_layout;
     std::atomic_bool Vice::viceDisplay = false, Vice::dirty = false;
@@ -114,7 +115,20 @@ struct ViceThreadParams {
                 MessageBoxW(NULL, L"`CreateAdditionalSwapChain`Ê§°Ü£¡", L"´íÎó", MB_ICONERROR);
                 return false;
             }
-
+            if (viceDepthStencil) {
+                viceDepthStencil->Release();
+                viceDepthStencil = NULL;
+			}
+            SokuLib::pd3dDev->CreateDepthStencilSurface(
+                d3dpp.BackBufferWidth,
+                d3dpp.BackBufferHeight,
+                d3dpp.AutoDepthStencilFormat,
+                D3DMULTISAMPLE_NONE,
+                0,
+                TRUE,
+                &viceDepthStencil,
+                nullptr
+            );
             
             /*
             if (!vicePD3) {
@@ -146,6 +160,10 @@ struct ViceThreadParams {
             viceSwapChain->Release();
 			viceSwapChain = NULL;
         } else t = false;
+        if (viceDepthStencil) {
+            viceDepthStencil->Release();
+            viceDepthStencil = NULL;
+        }
         /*
         if (vicePD3D) {
             vicePD3D->Release();
@@ -1130,26 +1148,66 @@ FALLBACK:
     ) {
         return LeaveCriticalSection(&info::d3dMutex), ret;
 	}
+    D3DVIEWPORT9 old_vp, new_vp{
+        .X=0, .Y=0, 
+        .Width = (DWORD)layout->windowSize.x, .Height = (DWORD)layout->windowSize.y, 
+        .MinZ = 0.0f, .MaxZ = 1.0f
+    }, def_vp{0};
+    RECT old_scr, new_scr{
+            .left = 0,
+            .top = 0,
+            .right = (LONG)layout->windowSize.x,
+            .bottom = (LONG)layout->windowSize.y
+    };
+    LPDIRECT3DSURFACE9 old_depth = nullptr;
+    SokuLib::pd3dDev->GetDepthStencilSurface(&old_depth);
+    SokuLib::pd3dDev->GetViewport(&old_vp);
+    SokuLib::pd3dDev->GetScissorRect(&old_scr);
     SokuLib::pd3dDev->SetRenderTarget(0, pBackBuffer); pBackBuffer->Release();
+    //D3DSURFACE_DESC dsd;
+    //static int callonce0 = (old_depth->GetDesc(&dsd), printf("Modified DepthStencil = %dx%d\n", dsd.Width, dsd.Height));//480p
+	SokuLib::pd3dDev->SetDepthStencilSurface(viceDepthStencil);
+    //SokuLib::pd3dDev->GetViewport(&def_vp);
+	SokuLib::pd3dDev->SetViewport(&new_vp);
+    //static int callonce = printf("Viewport: %d %d %d %d | Window: (%d %d)\n", def_vp.X, def_vp.Y, def_vp.Width, def_vp.Height, layout->windowSize.x, layout->windowSize.y);
+    SokuLib::pd3dDev->SetScissorRect(&new_scr);
     if (SUCCEEDED(SokuLib::pd3dDev->BeginScene())) {
         RendererGuard guard; guard.setRenderMode(1).setTexture(0);
         guard.setRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
         SokuLib::pd3dDev->Clear(0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(194, 144, 198), 1.0f, 0);
+        /*DWORD scissorEnable = 0; SokuLib::pd3dDev->GetRenderState(D3DRS_SCISSORTESTENABLE, &scissorEnable);
+        static auto callonce = scissorEnable ? printf("Scissor test was ENABLED\n") : printf("Scissor test was disabled\n");
+        static auto callonce2 = printf("ScissorRect {left=%d top=%d right=%d bottom=%d}\n", old_scr.left, old_scr.top, old_scr.right, old_scr.bottom);*/
+        
+        /*DWORD ClipPlaneEnable = 0; SokuLib::pd3dDev->GetRenderState(D3DRS_CLIPPLANEENABLE, &ClipPlaneEnable);
+        static auto callonceA = ClipPlaneEnable ? printf("ClipPlane was ENABLED\n") : printf("ClipPlane was disabled\n");
+		float plane[4];
+        SokuLib::pd3dDev->GetClipPlane(0, plane);
+        static auto callonceB = printf("ClipPlane {A=%d B=%d C=%d D=%d}\n", plane[0], plane[1], plane[2], plane[3]);*/
+        
+        //guard.setRenderState(D3DRS_SCISSORTESTENABLE, FALSE);
+        //guard.setRenderState(D3DRS_CLIPPLANEENABLE, FALSE);
         layout->render();
-        //SokuLib::renderer.end();
-		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);
+        //SokuLib::pd3dDev->GetScissorRect(&new_scr);
+        //static auto callonce3 = printf("Modified ScissorRect {left=%d top=%d right=%d bottom=%d}\n", new_scr.left, new_scr.top, new_scr.right, new_scr.bottom);
+        //SokuLib::pd3dDev->GetViewport(&def_vp);
+        //static auto callonce4 = printf("Modified Viewport: %d %d %d %d | Window: (%d %d)\n", def_vp.X, def_vp.Y, def_vp.Width, def_vp.Height, layout->windowSize.x, layout->windowSize.y);
+        
+		fvck(SokuLib::pd3dDev); SokuLib::pd3dDev->EndScene(); fvck(SokuLib::pd3dDev);//SokuLib::renderer.end();
     }
 
-    SokuLib::pd3dDev->SetRenderTarget(0, pOrgBuffer); pOrgBuffer->Release();
     //if (*(bool*)0x896b76) {//renderer is on, d3d_ok
     //if (SokuLib::pd3dDev->TestCooperativeLevel() == D3D_OK) {
-        auto hr = viceSwapChain->Present(NULL, NULL, NULL, NULL,
+        auto hr = viceSwapChain->Present(NULL, NULL, viceWND, NULL,
             //D3DPRESENT_FORCEIMMEDIATE
             D3DPRESENT_INTERVAL_IMMEDIATE
-            //D3DPRESENT_DONOTWAIT
+            | D3DPRESENT_DONOTWAIT
         );
     //}
-
+    SokuLib::pd3dDev->SetRenderTarget(0, pOrgBuffer); pOrgBuffer->Release();
+	SokuLib::pd3dDev->SetDepthStencilSurface(old_depth); old_depth && old_depth->Release();
+	SokuLib::pd3dDev->SetViewport(&old_vp);
+    SokuLib::pd3dDev->SetScissorRect(&old_scr);
 	LeaveCriticalSection(&info::d3dMutex);
 
     //auto target = inter.focus ? inter.focus : inter.getHover();

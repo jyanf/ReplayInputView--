@@ -13,7 +13,7 @@
 #else
 #include <cstdio>
 #undef printf
-inline void _wrap_printf(...) { }
+inline int _wrap_printf(...) { return 0; }
 #define printf(...)  _wrap_printf(__VA_ARGS__)
 #define puts(...) _wrap_printf(__VA_ARGS__)
 #endif

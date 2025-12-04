@@ -202,6 +202,7 @@ using Design = gui::RivDesign;
 		//static LPDIRECT3D9 vicePD3;
 		//static LPDIRECT3DDEVICE9 vicePD3D;
 		static LPDIRECT3DSWAPCHAIN9 viceSwapChain;
+		static LPDIRECT3DSURFACE9 viceDepthStencil;
 		static std::optional<Design> layout;
 		inline static bool followMainWnd = false;
 		//static Design& layout;
