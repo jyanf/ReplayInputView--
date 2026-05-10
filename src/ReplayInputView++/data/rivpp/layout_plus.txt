@@ -762,8 +762,8 @@
 				<number number_id="332" value_id="11" xoffset="86" yoffset="1"/>
 
 				<icon class="flag-cancelable" ref_id="100" tile="13,2,9" xoffset="88" description="允许取消动作"/>
+				<icon class="result-uncancelable" ref_id="102" tile="13,3,22" xoffset="88" description="挥空或被当身，暂不可取消"/>
 				<icon class="flag-uncancelable" ref_id="100" tile="13,2,22" xoffset="88" description="禁止取消动作"/>
-				<icon class="result-uncancelable" ref_id="102" tile="13,3,22" xoffset="88" description="挥空或被当身，禁止取消"/>
 				<icon class="flag-move-cancelable" ref_id="100" tile="13,2,14" xoffset="112" description="可移动取消"/>
 				<icon class="lock-movement" ref_id="102" tile="13,3,14" xoffset="112" description="移动锁定&#10;锁定条件：speed.y ＞ 0 且 pos.y ≤ 100.0"/>
 			</field>
