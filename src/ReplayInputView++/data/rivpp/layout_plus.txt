@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout version="4">
 	<window width="240" height="975" xbase="16" ybase="78">
-		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v1.0</title>
+		<title class="layout-version" font_id="1" xoffset="175" yoffset="-55">v1.1</title>
 	</window>
 	<fonts>
 		<font id="0"	class="font-test"			name="simhei"/>
@@ -370,7 +370,7 @@
 		</values>
 		<field class="sprite">
 			<icon ref_id="103" width="128" height="128"/>
-			<sprite crop="false" xoffset="0" yoffset="0" width="128" height="128"/>
+			<sprite box="true" crop="false" xoffset="0" yoffset="0" width="128" height="128"/>
 			
 			<textbox font_id="5" xoffset="138" yoffset="6">颜色</textbox>
 			<color value_id="1" xoffset="188" yoffset="4" width="18" height="18" description="顶点基色： %s">
@@ -429,11 +429,11 @@
 				<number value_id="6" number_id="320" xoffset="43" yoffset="-7"/>
 				<number value_id="7" number_id="320" xoffset="76" yoffset="-7"/>
 				
-				<textbox font_id="11" xoffset="179" yoffset="93">+</textbox>
+				<textbox font_id="11" xoffset="178" yoffset="93">|</textbox>
 				<number value_id="8" number_id="323" xoffset="215" yoffset="87"/>
-				<textbox font_id="11" xoffset="179" yoffset="107">+</textbox>
+				<textbox font_id="11" xoffset="178" yoffset="107">|</textbox>
 				<number value_id="9" number_id="323" xoffset="215" yoffset="101"/>
-				<textbox font_id="11" xoffset="179" yoffset="121">+</textbox>
+				<textbox font_id="11" xoffset="178" yoffset="121">|</textbox>
 				<number value_id="10" number_id="323" xoffset="215" yoffset="115"/>
 			</field>
 		</field>
@@ -489,10 +489,13 @@
 			<value id="102" class="gpShort[2]" type="short"><offset hex="0x370"/></value>
 			<value id="103" class="gpShort[3]" type="short"><offset hex="0x372"/></value>
 			<value id="104" class="gpShort[4]" type="short"><offset hex="0x374"/></value>
-			<value id="105" class="gpShort[5]" type="short"><offset hex="0x376"/></value>
+			<!--value id="105" class="gpShort[5]" type="short"><offset hex="0x376"/></value-->
 			<value id="110" class="gpFloat[0]" type="float"><offset hex="0x378"/></value>
 			<value id="111" class="gpFloat[1]" type="float"><offset hex="0x37C"/></value>
 			<value id="112" class="gpFloat[2]" type="float"><offset hex="0x380"/></value>
+			<value id="113" class="gpFloat[3]" type="float"><offset hex="0x384"/></value>
+			<value id="114" class="gpFloat[4]" type="float"><offset hex="0x388"/></value>
+			<!--value id="112" class="gpFloat[5]" type="float"><offset hex="0x38C"/></value-->
 			<value id="113" class="!!customData[0]" type="float">
 				<offset hex="0x35C"/><offset hex="0x0"/>
 			</value>
@@ -504,23 +507,26 @@
 			</value>
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[6]; //+0x36C~0x37A &#10;float gpFloat[3]  //+0x37C~0x384&#10; float[0~2] *customData; //+0x35C">
+			<textbox font_id="5" xoffset="3" yoffset="2" description="short gpShort[5]; //+0x36C~0x375 &#10;float gpFloat[5]  //+0x37C~0x38B&#10; float[0~2] *customData; //+0x35C">
 				<![CDATA[通用<br> 计数器]]>
 			</textbox>
-			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
+			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="35"/>
 				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<field description="[5] 默认不初始化，不使用时为垃圾值" yoffset="3"> <pad width="40" height="16"/>
+				<!--field description="[5] 默认不初始化，不使用时为垃圾值" yoffset="3"> <pad width="40" height="16"/>
 					<number number_id="314" value_id="105" xoffset="45" yoffset="-5"/>
-				</field>
+				</field-->
 			</grid>
 			<grid class="gpFloat-and-customData" xgrid="70" ygrid="16" rowmax="3" xoffset="0" stack="true"> <pad width="200" height="32"/>
 				<number number_id="316" value_id="110" xoffset="69" yoffset="-5"/>
 				<number number_id="316" value_id="111" xoffset="69" yoffset="-5"/>
 				<number number_id="316" value_id="112" xoffset="69" yoffset="-5"/>
+				<number number_id="316" value_id="113" xoffset="69" yoffset="-5"/>
+				<number number_id="316" value_id="114" xoffset="69" yoffset="-5"/>
+				<field/>
 				<field yoffset="3" description="customData[n]的前两个float，一般代表角度和弹速"> <pad width="140" height="16"/>
 					<textbox font_id="10" xoffset="-5" yoffset="-4">*</textbox>
 					<number number_id="316" value_id="113" xoffset="69" yoffset="-5"/>
@@ -703,7 +709,7 @@
 			<value id="102" class="gpShort[2]" type="short"><offset hex="0x7d4"/></value>
 			<value id="103" class="gpShort[3]" type="short"><offset hex="0x7d6"/></value>
 			<value id="104" class="gpShort[4]" type="short"><offset hex="0x7d8"/></value>
-			<value id="105" class="gpShort[5]" type="short"><offset hex="0x7da"/></value>
+			<!--value id="105" class="gpShort[5]" type="short"><offset hex="0x7da"/></value-->
 			<value id="110" class="gpFloat[0]" type="float"><offset hex="0x7dc"/></value>
 			<value id="111" class="gpFloat[1]" type="float"><offset hex="0x7e0"/></value>
 			<value id="112" class="gpFloat[2]" type="float"><offset hex="0x7e4"/></value>
@@ -712,16 +718,16 @@
 			<value id="115" class="gpFloat[5]" type="float"><offset hex="0x7f0"/></value>
 		</values>
 		<field class="general-counters"> <pad width="208" height="72"/>
-			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[6]; &#10;gpFloat[6]"><![CDATA[通用<br> 计数器]]></textbox>
+			<textbox font_id="5" xoffset="3" yoffset="2" description="gpShort[5]; &#10;gpFloat[5]+DecidedShotAngle"><![CDATA[通用<br> 计数器]]></textbox>
 			<grid class="gpShort" xgrid="48" ygrid="16" rowmax="3" xoffset="72" stack="true"> <pad width="100" height="32"/>
 				<number number_id="313" value_id="100" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="101" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="102" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="103" xoffset="40" yoffset="-2"/>
 				<number number_id="313" value_id="104" xoffset="40" yoffset="-2"/>
-				<field description="[5] 默认不初始化，不使用时为垃圾值"> <pad width="36" height="16"/>
+				<!--field description="[5] 默认不初始化，不使用时为垃圾值"> <pad width="36" height="16"/>
 					<number number_id="314" value_id="105" xoffset="40" yoffset="-2"/>
-				</field>
+				</field-->
 			</grid>
 			<grid class="gpFloat" xgrid="70" ygrid="16" rowmax="3" xoffset="0" stack="true"> <pad width="200" height="32"/>
 				<number number_id="316" value_id="110" xoffset="69" yoffset="-2"/>
@@ -729,7 +735,10 @@
 				<number number_id="316" value_id="112" xoffset="69" yoffset="-2"/>
 				<number number_id="316" value_id="113" xoffset="69" yoffset="-2"/>
 				<number number_id="316" value_id="114" xoffset="69" yoffset="-2"/>
-				<number number_id="316" value_id="115" xoffset="69" yoffset="-2"/>
+				<!--number number_id="316" value_id="115" xoffset="69" yoffset="-2"/-->
+				<field description="DecideShotAngle（发射瞄准）计算结果"> <pad width="36" height="16"/>
+					<number number_id="316" value_id="115" xoffset="69" yoffset="-2"/>
+				</field>
 			</grid>
 		</field>
 		<field class="hp-player"> <pad width="208" height="30"/>

@@ -645,11 +645,13 @@ namespace gui {
 		//SokuLib::Vector2<short> size, ofs;
 		int frameW = 128, frameH = 128;
 		bool crop = false;
+		bool withbox = true;
 	public:
 		inline void load(noderef node) {
 			frameW = node.get_optional<int>("<xmlattr>.width").value_or(frameW);
 			frameH = node.get_optional<int>("<xmlattr>.height").value_or(frameH);
 			crop = node.get_optional<bool>("<xmlattr>.crop").value_or(crop);
+			withbox = node.get_optional<bool>("<xmlattr>.box").value_or(withbox);
 		}
 		inline Sprite(noderef node, const Layout* l = nullptr) : Element(node, l) {
 			load(node);

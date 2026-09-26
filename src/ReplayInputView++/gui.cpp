@@ -935,25 +935,32 @@ namespace gui {
 	static void apply_rotation(SokuLib::DxVertex(&vertices)[4], const SokuLib::v2::BlendOptions* blend, const SokuLib::Vector2f& basept = SokuLib::Vector2f{0, 0}) {
 		if (!blend) return;
 
-		float rz = blend->rotateZ * DEG2RAD;
-		// XYÐý×ª ¡ú Ëõ·Å
-		float sy = std::cos(blend->rotateX * DEG2RAD);
-		float sx = std::cos(blend->rotateY * DEG2RAD);
-		// ZÐý×ª¾ØÕó
-		float cz = std::cos(rz);
-		float sz = std::sin(rz);
+		const float rx = blend->rotateX * DEG2RAD;
+		const float ry = blend->rotateY * DEG2RAD;
+		const float rz = blend->rotateZ * DEG2RAD;
+		const float cx = std::cos(rx), sx = std::sin(rx);
+		const float cy = std::cos(ry), sy = std::sin(ry);
+		const float cz = std::cos(rz), sz = std::sin(rz);
 
 		for (int i = 0; i < 4; ++i) {
-			float dx = vertices[i].x - basept.x;
-			float dy = vertices[i].y - basept.y;
-			// ÈÆZÐý×ª
-			float nx = dx * cz - dy * sz, ny = dx * sz + dy * cz;
-			dx = nx; dy = ny;
-			// XYËõ·Å
-			dx *= sx; dy *= sy;
-
-			vertices[i].x = basept.x + dx;
-			vertices[i].y = basept.y + dy;
+			float x = vertices[i].x - basept.x;
+			float y = vertices[i].y - basept.y;
+			float z = 0.0f;
+			//rot z
+			float x1 = x * cz - y * sz;
+			float y1 = x * sz + y * cz;
+			float z1 = z;
+			//rot y
+			float x2 = x1 * cy;
+			float y2 = y1;
+			float z2 = -x1 * sy;
+			//rot x
+			float x3 = x2;
+			float y3 = z2 * sx + y2 * cx;
+			float z3 = z2 * cx - y2 * sx;
+			// ignore z
+			vertices[i].x = basept.x + x3;
+			vertices[i].y = basept.y + y3;
 		}
 	}
 	void Sprite::update(_box& parea, void* ctx) {
@@ -1072,20 +1079,24 @@ namespace gui {
 		constexpr float piby2 = 90 * DEG2RAD;
 		Vector2f d2 = d.rotate(piby2, {0,0});
 		
+		auto scp = riv::tex::RendererGuard();
 		temp.rawSetRect({
 			Vector2f{vertices[0].x, vertices[0].y}-d, 
 			Vector2f{vertices[1].x, vertices[1].y}-d2,
 			Vector2f{vertices[3].x, vertices[3].y}+d,
 			Vector2f{vertices[2].x, vertices[2].y}+d2,
 			});
-		auto scp = riv::tex::RendererGuard();
-		scp.setTexture(NULL);
-		temp.setFillColor(0); temp.setBorderColor(0xA0FFFFFF); temp.draw();
+		if (withbox) {
+			scp.setTexture(NULL);
+			temp.setFillColor(0); temp.setBorderColor(0xA0FFFFFF); temp.draw();
+		}
 		scp.setTexture(dxHandle); SokuLib::pd3dDev->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, vertices, sizeof(*vertices));
 		//SokuLib::SpriteEx::rotate
 		//base pt
-		temp.setPosition(pos.to<int>() - SokuLib::Vector2i{ 2,2 }); temp.setSize({ 4,4 });
-		temp.setFillColor(0xA0000000); temp.setBorderColor(0xFFFFFFFF); temp.draw();
+		if (withbox) {
+			temp.setPosition(pos.to<int>() - SokuLib::Vector2i{ 2,2 }); temp.setSize({ 4,4 });
+			temp.setFillColor(0xA0000000); temp.setBorderColor(0xFFFFFFFF); temp.draw();
+		}
 	}
 
 	void Layout::update(_box& parea, void* ctx) {
