@@ -200,7 +200,18 @@ inline static bool check_bullet_hitbox_active(const GameObjectBase& object, Bull
 	//return check_hitbox_active(object);
 	
 }
-static SokuLib::DrawUtils::Rect<SokuLib::Vector2f> precised_vertex(const FloatRect& b, const SokuLib::Vector2f& d) {
+template <typename T>
+inline static T halfPixelAlign(T&& target) {
+	using TT = std::remove_cvref_t<T>;
+	static_assert(std::is_same_v<TT, SokuLib::DrawUtils::Rect<SokuLib::Vector2f>>);
+	SokuLib::Vector2<float>(&array)[4] = *reinterpret_cast<SokuLib::Vector2<float>(*)[4]>(&target);
+	for (int i = 0; i < 4; i++) {
+		array[i].x -= 0.5f;
+		array[i].y -= 0.5f;
+	}
+	return std::forward<T>(target);
+}
+static SokuLib::DrawUtils::Rect<SokuLib::Vector2f> precise_expand_vertex(const FloatRect& b, const SokuLib::Vector2f& d) {
 	float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
 	float	left=	(b.x1 + tx) * scale - d.x,
 			top=	(b.y1 + ty) * scale - d.y,
@@ -215,7 +226,6 @@ static SokuLib::DrawUtils::Rect<SokuLib::Vector2f> precised_vertex(const FloatRe
 template <int d = 0>
 static void drawBox(const Box& box, const RotationBox* rotation, Color borderColor, Color fillColor) {
 	if (rotation) {
-		SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect;
 		SokuLib::Vector2f da = rotation->pt1.to<float>(), db = rotation->pt2.to<float>();
 		float length = sqrtf(da.x * da.x + da.y * da.y);
 		da *= d/length;
@@ -225,26 +235,17 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 
 		float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
 		Vector2f base{ tx + box.left, ty + box.top };
-
+		SokuLib::DrawUtils::Rect<SokuLib::Vector2f> rect;
+		//pt0
 		rect.x1 = base * scale; rect.x1 -= da;
-		//rect.x1.x = scale * (tx + box.left);
-		//rect.x1.y = scale * (ty + box.top);
-		//rect.x1.x += -da.x; rect.x1.y += -da.y;
+		//pt1
 		rect.y1 = (base + rotation->pt1) * scale; rect.y1 -= db;
-		//rect.y1.x = scale * (tx + box.left + rotation->pt1.x);
-		//rect.y1.y = scale * (ty + box.top + rotation->pt1.y);
-		//rect.y1.x += -db.x; rect.y1.y += -db.y;
+		//pt2
 		rect.x2 = (base + rotation->pt1 + rotation->pt2) * scale; rect.x2 += da;
-		//rect.x2.x = scale * (tx + box.left + rotation->pt1.x + rotation->pt2.x);
-		//rect.x2.y = scale * (ty + box.top + rotation->pt1.y + rotation->pt2.y);
-		//rect.x2.x += da.x; rect.x2.y += da.y;
+		//pt3
 		rect.y2 = (base + rotation->pt2) * scale; rect.y2 += db;
-		//rect.y2.x = scale * (tx + box.left + rotation->pt2.x);
-		//rect.y2.y = scale * (ty + box.top + rotation->pt2.y);
-		//rect.y2.x += db.x; rect.y2.y += db.y;
-
-		rectangle.rawSetRect(rect);
-	} else if constexpr (d) {
+		rectangle.rawSetRect(halfPixelAlign(rect));
+	} else {
 		/*float scale = SokuLib::camera.scale, tx = SokuLib::camera.translate.x, ty = SokuLib::camera.translate.y;
 		float	left=	(box.left	+ tx) * scale - d,
 				top=	(box.top	+ ty) * scale - d,
@@ -254,15 +255,9 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 			{left, top},		{right, top},
 			{right, bottom},	{left, bottom},
 		};*/
-		rectangle.rawSetRect(
-			precised_vertex( FloatRect(box.left , box.top, box.right, box.bottom), { d,d })
-		);
-	} else {
-		FloatRect rect{
-			box.left,		box.top,
-			box.right,		box.bottom,
-		};//-0.5 align?
-		rectangle.setRect(rect);//精度尼玛掉完了
+		rectangle.rawSetRect(halfPixelAlign(
+			precise_expand_vertex(FloatRect(box.left , box.top, box.right, box.bottom), { d,d })
+		));
 	}
 
 	/*if constexpr (fill_only) {
@@ -362,13 +357,13 @@ void drawPositionBox(const GameObjectBase& object, int s, Color fill, Color bord
 #ifdef ANCHOR_BORDER_CLAMP
 		pos.x = std::clamp(pos.x, 0.f, 1280.f); pos.y = std::clamp(pos.y, SokuLib::camera.bottomEdge, 840.f);
 #endif
-		pos.x = ceilf(pos.x); pos.y = ceilf(pos.y);
+		//pos.x = ceilf(pos.x); pos.y = ceilf(pos.y);
 		pos.y *= -1;
 		//rectangle.setPosition(pos.to<int>());
 		//rectangle.setSize(size.to<unsigned>());
-		rectangle.rawSetRect(
-			precised_vertex( { pos.x, pos.y, pos.x, pos.y }, size/2 )
-		);
+		rectangle.rawSetRect(halfPixelAlign(
+			precise_expand_vertex( { pos.x, pos.y, pos.x, pos.y }, size/2 )
+		));
 		rectangle.draw();
 	}
 	
@@ -387,8 +382,8 @@ void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbre
 	if (hurtbreak)//unbuffered state
 	{
 		const auto& box2 = *(object.gameData.frameData->collisionBox);
-		rect = FloatRect(std::ceil(object.position.x) + object.direction * box2.left, box2.top - std::ceil(object.position.y),
-			std::ceil(object.position.x) + object.direction * box2.right, box2.bottom - std::ceil(object.position.y));
+		rect = FloatRect(object.position.x + object.direction * box2.left, box2.top - object.position.y,
+			object.position.x + object.direction * box2.right, box2.bottom - object.position.y);
 		//rectangle.setFillColor(Color::Transparent);
 		
 	}
@@ -396,7 +391,9 @@ void drawCollisionBox(const GameObjectBase& object, bool grabInvul, bool hurtbre
 		const auto& box = object.boxData.collisionBoxBuffer;
 		rect = FloatRect( box.left, box.top, box.right, box.bottom );
 	}
-	rectangle.setRect(rect);
+	rectangle.rawSetRect(halfPixelAlign(
+		precise_expand_vertex(rect, {0,0})
+	));
 	Color color(colorProfile["CollisionBox"_l]);
 	rectangle.setFillColor(grabInvul ? Color::Transparent : color * BOXES_ALPHA);
 	rectangle.setBorderColor(color);
@@ -444,7 +441,7 @@ bool drawHurtBoxes(const Player& player, bool meleeInvul, bool projnvul) {
 	fill *= BOXES_ALPHA; fill2 *= BOXES_ALPHA;
 	if (player.boxData.hurtBoxCount > 1
 		&& iniProxy["BoxDisplay"_l]["StencilTest.Enabled"_l] && IS_STENCIL_SUPPORTED(tex::d3dpp)
-		) {
+	) {
 		draw_fill_with_stencil(player.boxData.hurtBoxCount, player.boxData.hurtBoxes, player.boxData.hurtBoxesRotation, fill, outline);
 		if (addline.color) {
 			if (iniProxy["BoxDisplay"_l]["StencilTest.OuterMostOnly"_l])
@@ -662,7 +659,7 @@ void drawUntechBar(Player& player) {
 	}
 	float w_max = 300.0f;
 	float w = float(untech) / MAX_UNTECHBAR_SPAN * w_max;
-	float h = 5.0f;
+	float h = 6.0f;
 
 	Color color = Color::Yellow;
 
@@ -683,7 +680,7 @@ void drawUntechBar(Player& player) {
 	rectangle.setBorderColor(Color::Transparent);
 	rectangle.setRect(rect); rectangle.setFillColor(Color::Black);
 	rectangle.draw();
-	rect.y2 -= 1.0f;
+	rect.y2 -= 1.5f;
 	rectangle.setRect(rect); rectangle.setFillColor(color);
 	rectangle.draw();
 }
