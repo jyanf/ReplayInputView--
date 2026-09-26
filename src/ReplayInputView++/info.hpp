@@ -170,15 +170,21 @@ using Design = gui::RivDesign;
 			}
 			return nullptr;
 		}
+		// Where the 640x480 game image is inside the game window's client area (client pixels). Windowed that's
+		// the whole client, but in fullscreen with DisplayManager (exclusive or borderless) the client covers the
+		// whole monitor and the image is a centered, scaled rect inside it.
+		static RECT game_image_rect(HWND hwnd);
 		inline static bool cursor_refresh(Anchor& cur, POINT raw, HWND hwnd = SokuLib::window, int ww = sokuW, int wh = sokuH) {
 			if (!hwnd || !wh || !ww) return false;
-			float scaleX, scaleY;
 			RECT rt;
-			GetClientRect(hwnd, &rt);
-			scaleX = (float)rt.right / ww;
-			scaleY = (float)rt.bottom / wh;
-			raw.x /= scaleX;
-			raw.y /= scaleY;
+			if (hwnd == SokuLib::window)
+				rt = game_image_rect(hwnd);
+			else
+				GetClientRect(hwnd, &rt);
+			const LONG rw = rt.right - rt.left, rh = rt.bottom - rt.top;
+			if (rw <= 0 || rh <= 0) return false;
+			raw.x = (LONG)floorf((float)(raw.x - rt.left) * ww / rw);
+			raw.y = (LONG)floorf((float)(raw.y - rt.top) * wh / rh);
 			bool moved = cur.x != raw.x || cur.y != raw.y;
 			cur.x = raw.x; cur.y = raw.y;
 			return moved;

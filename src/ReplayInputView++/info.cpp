@@ -40,8 +40,22 @@ struct ViceThreadParams {
     HINSTANCE hInstance;
 	int width, height;
 };
+    // Is the game's device really windowed? Ask the device, not the game's D3DPRESENT_PARAMETERS global
+    // (0x8a0f68): display mods can run a windowed device while that struct still says fullscreen - e.g.
+    // DisplayManager's Borderless=1 keeps the game's struct at Windowed=0 (so the game's own Alt+Enter toggle
+    // keeps working) but resets the device windowed. Called on the game thread (F6 handler, Reset hooks).
+    static bool deviceWindowed() {
+        IDirect3DSwapChain9* sc = nullptr;
+        if (SokuLib::pd3dDev && SUCCEEDED(SokuLib::pd3dDev->GetSwapChain(0, &sc)) && sc) {
+            D3DPRESENT_PARAMETERS pp{};
+            HRESULT hr = sc->GetPresentParameters(&pp);
+            sc->Release();
+            if (SUCCEEDED(hr)) return pp.Windowed;
+        }
+        return d3dpp.Windowed;
+    }
     bool Vice::createWnd() {
-        if (!d3dpp.Windowed) {
+        if (!deviceWindowed()) {
             return false;
         }
         HANDLE duplicatedHandle = NULL;
@@ -85,7 +99,7 @@ struct ViceThreadParams {
 		return true;
 	}
     bool Vice::CreateD3D(HWND hwnd) {
-        if (!d3dpp.Windowed) {
+        if (!deviceWindowed()) {
             //MessageBoxW(NULL, L"当前为全屏模式，无法创建Direct3D设备！", L"错误", MB_ICONERROR);
 			//hideWnd(hwnd);
             return false;
@@ -848,6 +862,31 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             }
         }*/
 	}
+
+    RECT Interface::game_image_rect(HWND hwnd) {
+        RECT rt{};
+        GetClientRect(hwnd, &rt);
+        // DisplayManager knows exactly where it draws the image (FitToScreen / IntegerScaling / CustomResolution).
+        using GetGameRect_t = BOOL(__cdecl*)(RECT*);
+        static const GetGameRect_t dmGetGameRect = [] {
+            HMODULE dm = GetModuleHandleW(L"DisplayManager.dll");
+            return dm ? (GetGameRect_t)GetProcAddress(dm, "DisplayManager_GetGameRect") : nullptr;
+        }();
+        RECT g{};
+        if (dmGetGameRect && dmGetGameRect(&g) && g.right > g.left && g.bottom > g.top)
+            return g;
+        // Otherwise assume the 4:3 image fit and centered in the client: the whole client when it's 4:3
+        // (windowed, vanilla fullscreen), pillar/letterboxed when it isn't (a fullscreen display mod).
+        const LONG cw = rt.right, ch = rt.bottom;
+        if (cw * sokuH > ch * sokuW) {
+            const LONG w = ch * sokuW / sokuH;
+            rt.left = (cw - w) / 2; rt.right = rt.left + w;
+        } else if (cw * sokuH < ch * sokuW) {
+            const LONG h = cw * sokuH / sokuW;
+            rt.top = (ch - h) / 2; rt.bottom = rt.top + h;
+        }
+        return rt;
+    }
 
     bool Interface::checkDMouse() {
         if ((ztimer -= ztimer > 0 ? 1 : 0) == 0) {
