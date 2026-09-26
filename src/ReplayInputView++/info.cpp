@@ -1052,7 +1052,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
             auto* object = phover.get_object();
             //float interp2 = (-interp + 1.f) / 2.f;
             if (object->tail) {
-                auto& mode = object->tail->paramD;
+                auto& mode = object->tail->mode;
                 auto old = mode;
                 switch (mode) {
                 case BlendOptions::NORMAL:

@@ -173,7 +173,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		traversing_players(This,//draw
 			[this, This, pfocus, phover, time](int i, Player* player) {
 				if (hitboxes && iniProxy["BoxDisplay"_l]["ArmorMeter"_l])
-					layers.pushArmor(*player, !(player->unknown4AA || unblockable[i]) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
+					layers.pushArmor(*player, !(player->blockDisabled || unblockable[i]) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
 				if (untech && iniProxy["BoxDisplay"_l]["JuggleMeter"_l]) {
 					//box::drawUntechBar(*player);
 					layers.pushUntech(*player);
@@ -245,7 +245,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 			invulMelee[i] = player->meleeInvulTimer;
 			invulBullet[i] = player->projectileInvulTimer;
 			invulGrab[i] = player->grabInvulTimer;
-			unblockable[i] = player->unknown4AA;//blockDisabled
+			unblockable[i] = player->blockDisabled;
 			gui::ValueSpec_PlayerClip::Insert(player);
 		}
 		gui::ValueSpec_PlayerClip::Swap();

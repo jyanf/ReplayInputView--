@@ -1177,7 +1177,7 @@ namespace gui {
 			x2 += frameW; y2 += frameH;
 			parea.hold(this->area());
 			dxHandle = obj.tail->texId;
-			Vector2f& s = size; s = { 0, obj.tail->paramA };
+			Vector2f& s = size; s = { 0, obj.tail->width };
 			int w = 1, h = 1;
 			SokuLib::textureMgr.getSize(obj.tail->texId, &w, &h);
 			s.x = h;

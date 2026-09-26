@@ -142,7 +142,7 @@ inline static bool check_bullet_hurtbox_active(const GameObjectBase& object, Bul
 	if (spec.Reflector) {
 		return true;
 	} else if (spec.Entity) {
-		return (bool)object.unknown1AC;
+		return object.allowEntity;
 	}
 	int colL = 0, colT = 0;
 	get_collision<false>(object, colT, colL);
@@ -261,7 +261,7 @@ static void drawBox(const Box& box, const RotationBox* rotation, Color borderCol
 		FloatRect rect{
 			box.left,		box.top,
 			box.right,		box.bottom,
-		};//0.5 align?
+		};//-0.5 align?
 		rectangle.setRect(rect);//精度尼玛掉完了
 	}
 
@@ -690,7 +690,7 @@ void drawUntechBar(Player& player) {
 void drawArmor(const Player& player, bool blockable) {
 	constexpr int threshold = 100;
 	if (!player.boxData.frameData) return;
-	auto powerMultiplier = player.unknown538;
+	auto powerMultiplier = player.poiseDmgMultiplier;
 	if (player.boxData.frameData->frameFlags.superArmor)
 		powerMultiplier *= 0.0f;
 	else if (player.boxData.frameData->frameFlags.extendedArmor)
@@ -698,7 +698,7 @@ void drawArmor(const Player& player, bool blockable) {
 	bool superArmored = powerMultiplier == 0.0f;
 	bool normalArmored = 0.0f < powerMultiplier && powerMultiplier < 1.0f;
 	if (!superArmored && !normalArmored) return;
-	const auto& armorTimer = player.unknown4BC;
+	const auto& armorTimer = player.poiseTimer;
 	auto pos = SokuLib::Vector2f{
 				(player.position.x + SokuLib::camera.translate.x) * SokuLib::camera.scale,
 				(-player.position.y - 100 + SokuLib::camera.translate.y) * SokuLib::camera.scale };
