@@ -977,20 +977,21 @@ namespace gui {
 		sp.dxHandle = obj.sprite.dxHandle;
 		sp.size = obj.frameData->texSize.to<float>();
 		SokuLib::Vector2f basept, s, r = obj.frameData->offset.to<float>();
-		float scale = 1.0f;
+		float post_scale = 1.0f;
+		float refscale = min(frameW / 128, frameH / 128);
 		switch (obj.frameData->renderGroup) { using FD = SokuLib::v2::FrameData;
 		case FD::SPRITE:
 			sp.size *= 2;
-			scale *= 0.5f;
+			post_scale *= 0.5f;
 		ForcedCharacter:
-			s = sp.size * scale;
-			r *= scale;
+			s = sp.size * post_scale;
+			r *= post_scale;
 			vertices[0].x = vertices[2].x =  - r.x;
 			vertices[0].y = vertices[1].y =  - r.y;
 			vertices[1].x = vertices[3].x =  - r.x + s.x;
 			vertices[2].y = vertices[3].y =  - r.y + s.y;
 			apply_rotation(vertices, obj.frameData->blendOptionsPtr);
-			basept = { (x1 + x2) / 2, y2 - 10};
+			basept = { (x1 + x2) / 2, (y1 + y2)/2 + 54*refscale };
 			break;
 		case FD::WITHBLEND:
 			if (obj.frameData->blendOptionsPtr) {
@@ -998,17 +999,17 @@ namespace gui {
 				sp.size.x *= dscale.x; sp.size.y *= dscale.y;
 				sp.rotation = obj.frameData->blendOptionsPtr->rotateZ * DEG2RAD;
 				r.x *= dscale.x; r.y *= dscale.y;
-				if (obj.frameState.actionId < 800) { 
-					float fixed = max(dscale.x, dscale.y);
-					scale = min(0.5f, 1.5f/fixed);
+				if (obj.frameState.actionId < 800) {
+					float maxscale = 1.5f*refscale;
+					post_scale = min(0.5f, maxscale/max(dscale.x, dscale.y));
 					goto ForcedCharacter;
 				}
 			}
 		default:
 			if (sp.size.x > frameW || sp.size.y > frameH)
-				scale = (sp.size.x / sp.size.y < frameW / frameH) ? frameH / sp.size.y : frameW / sp.size.x;
-			s = sp.size * scale;
-			r *= scale;
+				post_scale = (sp.size.x / sp.size.y < frameW / frameH) ? frameH / sp.size.y : frameW / sp.size.x;
+			s = sp.size * post_scale;
+			r *= post_scale;
 			vertices[0].x = vertices[2].x = -r.x;
 			vertices[0].y = vertices[1].y = -r.y;
 			vertices[1].x = vertices[3].x = -r.x + s.x;
