@@ -95,7 +95,7 @@ bool drawHitBoxes(const GameObjectBase& object);
 
 bool drawBulletBoxes(const GameObject& object, bool hurtbreak = false);
 //void drawPlayerBoxes(const Player& player, bool hurtbreak, unsigned char delayTimers);
-void drawUntechBar(Player& player);
+void drawUntechBar(Player& player, bool force=false);
 void drawArmor(const Player& player, bool blockable = true);
 void drawFloor();
 
@@ -219,12 +219,13 @@ public:
 	}
 	struct UntechData {
 		Player& player;
+		bool force;
 		static void __fastcall draw(UntechData* This) {
-			drawUntechBar(This->player);
+			drawUntechBar(This->player, This->force);
 		}
 	};
-	inline void pushUntech(Player& player) {
-		push(Untech, UntechData{ player });
+	inline void pushUntech(Player& player, bool force) {
+		push(Untech, UntechData{ player, force });
 	}
 	struct BulletData {
 		const GameObject& object;

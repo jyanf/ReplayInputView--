@@ -52,7 +52,7 @@ namespace gui {
 	CDesign* RivDesign::_current = nullptr;
 	Console* RivDesign::_console = nullptr;
 	_hover* RivDesign::_hoverbuffer = nullptr;
-	ValueSpec_PlayerClip::Clipper ValueSpec_PlayerClip::clipper, ValueSpec_PlayerClip::buffer;
+	
 	//HWND Console::hwndTT = NULL;
 #define SIMPLE_IS_PLAYER(o) ((o).frameState.actionId< 800)
 #define SIMPLE_IS_OBJECT(o) ((o).frameState.actionId>=800)

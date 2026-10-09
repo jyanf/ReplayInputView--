@@ -1,4 +1,5 @@
 #include "riv.hpp"
+#include "clipper.hpp"
 #include "DrawCircle.hpp"
 #include "InfoManager.hpp"
 #include <functional>
@@ -13,7 +14,6 @@ void(__fastcall* ogUpdateMovement)(GameDataManager*);
 
 
 namespace riv {
-static bool invulMelee[PLAYERS_NUMBER], invulBullet[PLAYERS_NUMBER], invulGrab[PLAYERS_NUMBER], unblockable[PLAYERS_NUMBER];
 static int slowdown_method = 1;
 static HotKeys toggle_keys;
 
@@ -172,11 +172,19 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		float time = ++counter / 60.f;
 		traversing_players(This,//draw
 			[this, This, pfocus, phover, time](int i, Player* player) {
+				auto& old = *(Player*)Clipper::get_clipped(player);
+				bool unblockable = old.blockDisabled, 
+					invulMelee = old.meleeInvulTimer, 
+					invulBullet = old.projectileInvulTimer, 
+					invulGrab = old.grabInvulTimer;
+				//const auto _CheckUntechEnd = reinterpret_cast<bool(__fastcall*)(Player*)>(0x46a200);
+				bool forcedUntech = old.position.y <= 0.0f;//!_CheckUntechEnd(&old);
+
 				if (hitboxes && iniProxy["BoxDisplay"_l]["ArmorMeter"_l])
-					layers.pushArmor(*player, !(player->blockDisabled || unblockable[i]) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
+					layers.pushArmor(*player, !(player->blockDisabled || unblockable) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
 				if (untech && iniProxy["BoxDisplay"_l]["JuggleMeter"_l]) {
 					//box::drawUntechBar(*player);
-					layers.pushUntech(*player);
+					layers.pushUntech(*player, forcedUntech);
 				}
 				if (panels[i]) {
 					//panels[i]->render();
@@ -195,7 +203,7 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 				}
 				if (hitboxes && This->matchState > 0 && iniProxy["BoxDisplay"_l]["p%d.Character"_l].value[i]) {//boxes
 					if (!iniProxy["BoxDisplay"_l]["TagSoku.CheckPlayerHidden"_l] || player->renderInfos.yRotation != 90.f)
-					layers.pushPlayer(*player, check_hurtbreak(This), invulMelee[i] << 0 | invulBullet[i] << 1 | invulGrab[i] << 2);
+					layers.pushPlayer(*player, check_hurtbreak(This), invulMelee << 0 | invulBullet << 1 | invulGrab << 2);
 				}
 			},
 			[this, This, pfocus, phover, time](int i, GameObject* object) {
@@ -242,13 +250,9 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 		for (int i = 0; i < PLAYERS_NUMBER; ++i) {
 			auto player = get_player(This, i);
 			if (!player) continue;
-			invulMelee[i] = player->meleeInvulTimer;
-			invulBullet[i] = player->projectileInvulTimer;
-			invulGrab[i] = player->grabInvulTimer;
-			unblockable[i] = player->blockDisabled;
-			gui::ValueSpec_PlayerClip::Insert(player);
+			Clipper::Insert(player);
 		}
-		gui::ValueSpec_PlayerClip::Swap();
+		Clipper::Swap();
 		return ogUpdateMovement(This);
 	}
 	static void __fastcall real_reconsider_counter_show(void* _counter, int hits) {
@@ -373,6 +377,7 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	else {
 		riv::box::closeWatcher();
 	}
+	riv::Clipper::Clear();
 	return This;
 }
 TC_INSTANTIATE(0); TC_INSTANTIATE(1); TC_INSTANTIATE(2); TC_INSTANTIATE(3);

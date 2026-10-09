@@ -641,22 +641,28 @@ void drawFloor() {
 
 	
 }
-void drawUntechBar(Player& player) {
+inline static bool showUntech(Player& player) {
+	if (50 <= player.frameState.actionId && player.frameState.actionId < 150) {
+		if (player.damageLimited) return false;
+		auto fd = player.gameData.frameData;
+		if (fd &&!fd->frameFlags.airborne) return false;
+
+		return true;
+	}
+	//if (player.untech == 0) return false;
+	//if (player.isGrounded() && player.speed.y < 0) return false;
+	return false;
+}
+void drawUntechBar(Player& player, bool force) {
 	int untech = player.untech;
 	if (untech > MAX_UNTECHBAR_SPAN) {
 		untech = MAX_UNTECHBAR_SPAN;
 	}
-
+	
 	float x = player.position.x;
 	float y = player.position.y;
 
-	if (player.isGrounded() && player.speed.y < 0
-	|| !(player.gameData.frameData && player.gameData.frameData->frameFlags.airborne)
-	|| player.damageLimited
-	|| !(50 <= player.frameState.actionId && player.frameState.actionId < 150)
-	) {
-		return;
-	}
+	if (!showUntech(player)) return;
 	float w_max = 300.0f;
 	float w = float(untech) / MAX_UNTECHBAR_SPAN * w_max;
 	float h = 6.0f;
@@ -673,12 +679,23 @@ void drawUntechBar(Player& player) {
 	FloatRect rect{
 		x - w / 2.0f,
 		-y,
-		0,
-		0
-	}; rect.x2 = rect.x1 + w; rect.y2 = rect.y1 + h;
+		x + w / 2.0f,
+		-y + h,
+	};
 
 	rectangle.setBorderColor(Color::Transparent);
-	rectangle.setRect(rect); rectangle.setFillColor(Color::Black);
+	if (force) {
+		rectangle.setRect({
+			x - w_max / 2.0f,
+			-y,
+			x + w_max / 2.0f,
+			-y + h,
+			});
+		rectangle.setFillColor(Color::Blue);
+	} else {
+		rectangle.setRect(rect);
+		rectangle.setFillColor(Color::Black);
+	}
 	rectangle.draw();
 	rect.y2 -= 1.5f;
 	rectangle.setRect(rect); rectangle.setFillColor(color);

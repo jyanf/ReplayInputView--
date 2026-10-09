@@ -8,6 +8,7 @@
 #include <GameData.hpp>
 
 #include "tex.hpp"
+#include "clipper.hpp"
 #include <variant>
 //#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -1011,44 +1012,16 @@ namespace gui {
 	public:
 		using Value::Value;
 		using Player = SokuLib::v2::Player;
-		using Clip = std::array<char, sizeof(Player)>;
-		using Clipper = std::unordered_map<Player*, Clip>;
-		static Clipper clipper, buffer;
-		inline static std::mutex fresh;
-		inline static void Insert(Player* p) {
-			if (!p) return;
-			buffer.emplace(p, *reinterpret_cast<Clip*>(p));
-		}
-		inline static void Swap() {
-			if (fresh.try_lock()) {
-				clipper.swap(buffer);
-				fresh.unlock();
-			} else puts("clip swap failed");
-			Clipper temp;
-			buffer.swap(temp);
-#ifdef _DEBUG
-			for (auto& [p,v] : clipper) {
-				auto& c = *reinterpret_cast<Player*>(&v);
-				//printf("clipped player %p, with %f\n", p, c.speedXMultiplier);
-			}
-#endif // _DEBUG
-
-		}
-		inline static void* get_clipped(Player* p) {
-			auto it = clipper.find(p);
-			if (it != clipper.end()) {
-				return (void*)&it->second;
-			}
-			return p;
-		}
+		
 		inline virtual void update(void* ctx) override {
+			using riv::Clipper;
 			val = 0;
 			bool illegal = offsets.size() > 1 //only once ref allowed
 						|| offsets.begin() != offsets.end() && *offsets.begin() + type / 10 > sizeof Player;
-			if (!illegal && fresh.try_lock()) {
-				ctx = get_clipped(reinterpret_cast<Player*>(ctx));
+			if (!illegal && Clipper::fresh.try_lock()) {
+				ctx = Clipper::get_clipped(reinterpret_cast<Player*>(ctx));
 				Value::update(ctx);
-				fresh.unlock();
+				Clipper::fresh.unlock();
 			} else {
 				puts("using clip failed");
 				Value::update(ctx);
