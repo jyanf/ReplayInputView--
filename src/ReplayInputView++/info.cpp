@@ -1045,7 +1045,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
 		if (!object || !object->frameData) return;
         
         RendererGuard guard;
-        guard.setRenderMode(0);//save mode
+        guard.setRenderMode(0).setFVF(D3DFVF_XYZRHW);//save mode and fvf(okuu case changes fvf)
         auto temp = object->renderInfos; auto& color = *reinterpret_cast<Color*>(&object->renderInfos.color);
         color.a = 0xFF;
         float interp = tanhf(sinf(time * 2 * 3.1416f));

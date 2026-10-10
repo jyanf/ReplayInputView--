@@ -126,6 +126,7 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 
 		std::unordered_map<DWORD, LPDIRECT3DBASETEXTURE9> orgTextures;
         int originalMode = -1;
+        int originalFVF = -1;
     public:
 		explicit RendererGuard() = default;
         explicit RendererGuard(LPDIRECT3DDEVICE9 pDevice) : mpd(pDevice) {
@@ -153,6 +154,17 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 				mpd->SetRenderState(state.first, state.second);
 			}
 			orgStates.clear();
+		}
+		inline RendererGuard& setFVF(DWORD fvf) & {
+			if (!mpd) return *this;
+			// Save original FVF once
+			if (originalFVF < 0) {
+				DWORD cur = 0;
+				if (SUCCEEDED(mpd->GetFVF(&cur))) originalFVF = static_cast<int>(cur);
+				else originalFVF = -2; // mark as failed to get
+			}
+			mpd->SetFVF(fvf);
+			return *this;
 		}
 		inline void resetRenderState(D3DRENDERSTATETYPE state) & {
 			if (!mpd) return;
@@ -187,6 +199,13 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
 			}
 			orgTextures.clear();
 		}
+       inline void resetFVF() & {
+			if (!mpd) return;
+			if (originalFVF >= 0) {
+				mpd->SetFVF(static_cast<DWORD>(originalFVF));
+			}
+			originalFVF = -1;
+		}
 		inline RendererGuard& setInvert() & {
 			return setRenderState(D3DRS_ALPHABLENDENABLE, TRUE)
 				.setRenderState(D3DRS_SRCBLEND, D3DBLEND_INVDESTCOLOR)
@@ -206,7 +225,8 @@ inline const auto& d3dpp = *reinterpret_cast<D3DPRESENT_PARAMETERS*>(0x8a0f68);
         inline void restore() & {
 			resetRenderState();
 			resetRenderMode();
-			resetTextures();
+            resetTextures();
+			resetFVF();
         }
     };
 
