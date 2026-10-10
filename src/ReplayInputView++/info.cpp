@@ -870,6 +870,7 @@ constexpr auto VICE_CLASSNAME = L"SokuDbgInfoPanel";
         using GetGameRect_t = BOOL(__cdecl*)(RECT*);
         static const GetGameRect_t dmGetGameRect = [] {
             HMODULE dm = GetModuleHandleW(L"DisplayManager.dll");
+            if (!dm) dm = GetModuleHandleW(L"WindowResizer.dll");
             return dm ? (GetGameRect_t)GetProcAddress(dm, "DisplayManager_GetGameRect") : nullptr;
         }();
         RECT g{};

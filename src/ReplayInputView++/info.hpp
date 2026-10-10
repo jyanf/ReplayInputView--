@@ -233,12 +233,15 @@ using Design = gui::RivDesign;
 			return proc();//no FreeMosule cuz it's not LoadLibrary...
 		}
 		inline static void delayedInit() {
-			//static bool inited = false;
-			//static std::mutex fvckskipintro;
+#ifdef _DEBUG
+			gui::xml::XmlHelper::gameCP = GetTextCodePage();
+			layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.txt");
+			return;
+#endif // _DEBUG
 			static std::once_flag skipintro_initialized;
 			std::call_once(skipintro_initialized, []() {
+				gui::xml::XmlHelper::gameCP = GetTextCodePage();
 				if (!layout) {
-					gui::xml::XmlHelper::gameCP = GetTextCodePage();
 					layout.emplace("rivpp/layout.dat", "rivpp/layout_plus.txt");
 				}
 			});

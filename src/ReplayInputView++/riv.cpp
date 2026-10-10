@@ -377,6 +377,9 @@ BattleManager* __fastcall CBattleManager_OnConstruct(BattleManager* This) {
 	else {
 		riv::box::closeWatcher();
 	}
+#ifdef _DEBUG
+	info::Vice::delayedInit();
+#endif // _DEBUG
 	riv::Clipper::Clear();
 	return This;
 }
