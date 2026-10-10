@@ -288,7 +288,7 @@
 			<link class="ptr-parentA" value_id="5" description="点击跳转[%s]&#10;A类父物体&#10; 判定框扩展相关"> <back ref_id="200"/>
 				<icon ref_id="102" tile="13,3,29"/>
 			</link>
-			<field class="forced-counter" hide_if="10=0"><icon ref_id="102" tile="13,3,15" description="强制打康（虎劲）"/></field>
+			<field class="forced-counter" hide_if="10=0"><icon ref_id="104" tile="13,3,15" description="强制打康（虎劲）"/></field>
 			<!--icon class="ptr-parentA" ref_id="100" tile="13,2,24" description="ParentA(box bounding)">
 				<link value_id="5" description="ParentA(box bounding) pointer: %s&#10;`click`"/>
 			</icon-->
@@ -704,6 +704,8 @@
 			<value id="69" class="has-spotlight" type="bool"><offset hex="0x4CD"/></value>
 			<value id="70" class="spotlight-strength" type="short"><offset hex="0x4CE"/></value>
 			
+			<value id="80" class="multi-dmg-counter" type="float"><offset hex="0x198"/></value>
+			
 			<value id="100" class="gpShort[0]" type="short"><offset hex="0x7d0"/></value>
 			<value id="101" class="gpShort[1]" type="short"><offset hex="0x7d2"/></value>
 			<value id="102" class="gpShort[2]" type="short"><offset hex="0x7d4"/></value>
@@ -838,6 +840,10 @@
 					<icon ref_id="102" tile="13,3,35" description="//+0x558 float&#10;反伤倍率：用于诹访子诅咒（蓝）"/>
 					<number number_id="315" value_id="38" xoffset="65" yoffset="-1"/>
 				</field>
+				<field class="multi-dmg-counter" hide_if="80=1"> <pad width="60" height="24"/> <back ref_id="202"/>
+					<icon ref_id="104" tile="13,3,15" description="//+0x198 float&#10;打康伤害倍率：用于美铃虎劲"/>
+					<number number_id="315" value_id="80" xoffset="65" yoffset="-1"/>
+				</field>
 				<field class="multi-speed" hide_if="40=1"> <pad width="60" height="24"/> <back ref_id="202"/>
 					<icon ref_id="102" tile="13,3,11" description="//+0x4D0 float&#10;移速倍率：用于风雨天等"/>
 					<number number_id="315" value_id="40" xoffset="65" yoffset="-1"/>
@@ -970,39 +976,451 @@
 			</grid>
 		</field>
 	</sublayout>
-	<sublayout class="suwako" inherit="Player"><!--lowercase first letter, i.e. keep the character name same as is in .dat path-->
-		<title font_id="" xoffset="0" yoffset="-25">Suwako
-			<back ref_id="214"/>
-		</title>
+	
+	<!--specify character; lowercase first letter, i.e. keep the character name same as is in .dat path-->
+	<sublayout class="reimu" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Reimu
+		&#32;</title>
+		<values>
+			<value id="200" class="fantasyHeavenTimer" type="ushort"><offset hex="0x8B4"/></value>
+			<value id="201" class="fantasyHeavenStacks" type="ushort"><offset hex="0x8B6"/></value>
+			<value id="202" class="fantasyHeavenAlreadyHit" type="ushort"><offset hex="0x8B8"/></value>
+			<value id="203" class="dsRiftUsed" type="bool"><offset hex="0x8BA"/></value>
+			<value id="204" class="rodSpawned" type="short"><offset hex="0x890"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="fantasy-heaven" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">
+				Fantasy Heaven
+			</textbox>
+			<field class="fh-hit-indicator" show_if="202=1" xoffset="110" yoffset="2">
+				<icon ref_id="104" tile="13,3,26" width="17" height="17" description="攻击已计入累积次数"/>
+			</field>
+			<number value_id="201" number_id="301" xoffset="130" yoffset="-2"/>
+			<field class="fh-timer" stack="false" xoffset="100">
+				<textbox font_id="10" xoffset="35" yoffset="2">timer:</textbox>
+				<number value_id="200" number_id="301" xoffset="111" yoffset="-2"/>
+			</field>
+		</field>
+		<field class="ds-rift" hide_if="203=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="2">
+				Demonic Sealing Rift
+			</textbox>
+			<icon ref_id="102" tile="13,3,22" xoffset="160" yoffset="0" description="已使用封魔亚空穴，落地前不可再次使用"/>
+		</field>
+	</sublayout>
+	<sublayout class="marisa" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Marisa
+		&#32;</title>
+		<values>
+			<value id="200" class="orreriesTimer" type="ushort"><offset hex="0x892"/></value>
+			<value id="201" class="orreriesActiveTimer" type="ushort"><offset hex="0x894"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="orreries" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">
+				Orreries Timer
+			</textbox>
+			<number value_id="201" number_id="301" xoffset="140" yoffset="-1"/>
+			<textbox font_id="10" xoffset="145" yoffset="3">in</textbox>
+			<number value_id="200" number_id="301" xoffset="210" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="sakuya" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Sakuya
+		&#32;</title>
+		<values>
+			<value id="200" class="worldTimer" type="short"><offset hex="0x890"/></value>
+			<value id="201" class="psTimer" type="short"><offset hex="0x892"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="worldstop" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">
+				Timestop
+			</textbox>
+			<number value_id="200" number_id="301" xoffset="130" yoffset="-1"/>
+		</field>
+		<field class="timeslow" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">
+				Timeslow
+			</textbox>
+			<number value_id="201" number_id="301" xoffset="130" yoffset="-1"/>
+		</field>
+	</sublayout>
+	
+	<sublayout class="patchouli" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Patchouli
+		&#32;</title>
+		<values>
+			<value id="200" class="philStoneTimer" type="short"><offset hex="0x890"/></value>
+			<value id="201" class="dHardnessTimer" type="short"><offset hex="0x8A0"/></value>
+			<value id="202" class="sBubbleHitCount" type="short"><offset hex="0x89E"/></value>
+			<value id="203" class="jfPrincessTimer" type="short"><offset hex="0x8A2"/></value>
+			<value id="204" class="sprWindSpeed" type="float"><offset hex="0x8A4"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="spring-wind" hide_if="204=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Spring Wind</textbox>
+			<number value_id="204" number_id="300" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="diamond-hardness" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Diamond Hardness</textbox>
+			<number value_id="201" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="sticky-bubble" hide_if="202=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Sticky Bubble</textbox>
+			<number value_id="202" number_id="301" xoffset="130" yoffset="-1"/>
+		</field>
+		<field class="jellyfish-princess" hide_if="203=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Jellyfish Princess</textbox>
+			<number value_id="203" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="philosophers-stone" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Philosopher's Stone</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="youmu" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Youmu
+		&#32;</title>
+		<values>
+			<value id="200" class="mediumBindTimer" type="short"><offset hex="0x8D4"/></value>
+			<value id="201" class="cloneTimer" type="short"><offset hex="0x8D6"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="medium-bind" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Medium Bind</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="myon-clone" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Myon Clone</textbox>
+			<number value_id="201" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="remilia" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Remilia
+		&#32;</title>
+		<values>
+			<value id="200" class="millVampireTimer" type="short"><offset hex="0x890"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="millennium-vampire" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Millennium Vampire</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="yuyuko" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Yuyuko
+		&#32;</title>
+		<values>
+			<value id="200" class="giftsCount" type="int"><offset hex="0x8A4"/></value>
+			<value id="201" class="giftsTimer" type="int"><offset hex="0x8A8"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="gifts" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Gifts</textbox>
+			<number value_id="200" number_id="301" xoffset="70" yoffset="-1"/>
+			<field class="gifts-timer" stack="false" xoffset="76">
+				<textbox font_id="10" xoffset="0" yoffset="3">active timer:</textbox>
+				<number value_id="201" number_id="301" xoffset="131" yoffset="-1"/>
+			</field>
+		</field>
+	</sublayout>
+	<sublayout class="yukari" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Yukari
+		&#32;</title>
+		<values>
+			<value id="200" class="gapAbsorbCount" type="short"><offset hex="0x892"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="gap-absorb" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Gap Absorbed</textbox>
+			<number value_id="200" number_id="301" xoffset="160" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="suika" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Suika
+		&#32;</title>
+		<values>
+			<value id="200" class="gakiBindTimer" type="short"><offset hex="0x890"/></value>
+			<value id="201" class="mppTimer" type="short"><offset hex="0x892"/></value>
+			<value id="202" class="upMistUsed" type="bool"><offset hex="0x894"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="gaki-bind" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Art of Gaki Binding</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="missing-purple-power" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Missing Purple Power</textbox>
+			<number value_id="201" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="unpleasant-mist" show_if="202=1"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Unpleasant Mist</textbox>
+			<icon ref_id="102" tile="13,3,22" xoffset="160" yoffset="0" description="已使用厌雾，落地前不可再次使用"/>
+		</field>
+	</sublayout>
+	<sublayout class="udonge" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Reisen
+		&#32;</title>
+		<values>
+			<value id="200" class="elixirUsed" type="int"><offset hex="0x8A0"/></value>
+			<value id="201" class="ocularSpectralUsed" type="bool"><offset hex="0x8B4"/></value>
+			<value id="202" class="urFieldActive" type="short"><offset hex="0x898"/></value>
+			<value id="203" class="uvFieldActive" type="short"><offset hex="0x89A"/></value>
+			<value id="204" class="xwaveTimeLeft" type="short"><offset hex="0x8B0"/></value>
+			<value id="205" class="uvCloneCount" type="short"><offset hex="0x8A8"/></value>
+			<value id="206" class="infraredMoonTimeLeft" type="short"><offset hex="0x8B2"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="elixir" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Grand Patriot's Elixir</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="ocular-spectral" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Ocular Spectral</textbox>
+			<icon ref_id="102" tile="13,3,22" xoffset="160" yoffset="0" description="已使用j22，落地前不可再次使用"/>
+		</field>
+		<field class="ultra-red-field" hide_if="202=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Ultra Red Field</textbox>
+			<number value_id="202" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="ultra-violet-field" hide_if="203=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Ultra Violet Field</textbox>
+			<number value_id="203" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="x-wave" hide_if="204=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">X-Wave</textbox>
+			<number value_id="204" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="clones" hide_if="205=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Clones</textbox>
+			<number value_id="205" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="infrared-moon" hide_if="206=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Infrared Moon</textbox>
+			<number value_id="206" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="aya" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Aya
+		&#32;</title>
+		<values>
+			<value id="200" class="pebbleCount" type="short"><offset hex="0x890"/></value>
+			<value id="201" class="routeForbiddenTimeLeft" type="short"><offset hex="0x894"/></value>
+			<value id="202" class="limitedSpecialTimeLeft" type="short"><offset hex="0x892"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="pebbles" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Tengu's Pebbles</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="route-forbidden" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Route Forbidden to Man</textbox>
+			<number value_id="201" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="limited-special" hide_if="202=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Tengu Limited Special</textbox>
+			<number value_id="202" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="komachi" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Komachi
+		&#32;</title>
+		<values>
+			<value id="200" class="wispActivationTime" type="int"><offset hex="0x894"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="wisp-activate" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Wisp Activating</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="iku" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Iku
+		&#32;</title>
+		<values>
+			<value id="200" class="veilsLikeSky" type="short"><offset hex="0x89C"/></value>
+			<value id="201" class="veilsLikeTime" type="short"><offset hex="0x89E"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="veils-like-sky" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Veils Like Sky</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+		<field class="veils-like-time" hide_if="201=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Veils Like Time</textbox>
+			<number value_id="201" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="tenshi" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Tenshi
+		&#32;</title>
+		<values>
+			<value id="200" class="guardingKeystonesCount" type="int"><offset hex="0x920"/></value>
+			<value id="202" class="guardingKeystonesTimer" type="short"><offset hex="0x91A"/></value>
+			<value id="203" class="skyAttackUsed" type="bool"><offset hex="0x92C"/></value>
+			<value id="204" class="stateOfEnlightenmentTimeLeft" type="int"><offset hex="0x924"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="guarding-keystones" > <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Guarding Keystones</textbox>
+			<number value_id="200" number_id="301" xoffset="158" yoffset="-1"/>
+			<field class="gk-timer" stack="false" xoffset="110">
+				<textbox font_id="10" xoffset="58" yoffset="3">in</textbox>
+				<number value_id="202" number_id="301" xoffset="108" yoffset="-1"/>
+			</field>
+		</field>
+		<field class="sky-attack" show_if="203=1"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Sky Attack</textbox>
+			<icon ref_id="102" tile="13,3,22" xoffset="160" yoffset="0" description="已使用升天突，落地前不可再次使用"/>
+		</field>
+		<field class="state-of-enlightenment" hide_if="204=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">State of Enlightenment</textbox>
+			<number value_id="204" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	
+	<sublayout class="sanae" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Sanae
+		&#32;</title>
+		<values>
+			<value id="200" class="windSpeed" type="float"><offset hex="0x890"/></value>
+			<value id="201" class="windAngle" type="float"><offset hex="0x894"/></value>
+			<value id="202" class="windDirection" type="char"><offset hex="0x898"/></value>
+			<value id="203" class="kanakoCooldown" type="int"><offset hex="0x89C"/></value>
+			<value id="204" class="suwakoCooldown" type="int"><offset hex="0x8A0"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="god-cooldown"> <pad width="208" height="44"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">God Summon Cooldown</textbox>
+			<field class="kanako-cd" stack="false" xoffset="20" yoffset="22">
+				<textbox font_id="10" xoffset="0" yoffset="3">kanako:</textbox>
+				<number value_id="203" number_id="301" xoffset="89" yoffset="-1"/>
+			</field>
+			<field class="suwako-cd" stack="false" xoffset="115" yoffset="22">
+				<textbox font_id="10" xoffset="-1" yoffset="3">suwako:</textbox>
+				<number value_id="204" number_id="301" xoffset="90" yoffset="-1"/>
+			</field>
+		</field>
+		<field class="flywind" hide_if="200=0"> <pad width="208" height="48"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Flight Wind</textbox>
+			<field class="fw-direction" stack="false" xoffset="120" hide_if="202=0">
+				<field class="dir-right" show_if="202=1" xoffset="0" yoffset="0"><icon ref_id="102" tile="13,3,3"/></field>
+				<field class="dir-left" show_if="202=-1" xoffset="0" yoffset="0"><icon ref_id="102" tile="13,3,4"/></field>
+			</field>
+			<field class="fw-angle" stack="false" xoffset="20" yoffset="22">
+				<textbox font_id="10" xoffset="0" yoffset="3">angle:</textbox>
+				<number value_id="201" number_id="320" xoffset="93" yoffset="-1"/>
+			</field>
+			<field class="fw-speed" stack="false" xoffset="120" yoffset="22">
+				<textbox font_id="10" xoffset="0" yoffset="3">speed:</textbox>
+				<number value_id="200" number_id="320" xoffset="90" yoffset="-1"/>
+			</field>
+		</field>
+	</sublayout>
+	<sublayout class="chirno" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Cirno
+		&#32;</title>
+		<values>
+			<value id="200" class="freezeAtmosphereTimeLeft" type="int"><offset hex="0x890"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="freeze-atmosphere" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Freeze Atmosphere</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="meirin" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Meiling
+		&#32;</title>
+		<values>
+			<value id="200" class="tigerEnergyReleaseTimeLeft" type="int"><offset hex="0x890"/></value>
+		</values>
+		<field><pad height="40"/></field>
+		<field class="tiger-energy-release" hide_if="200=0"> <pad width="208" height="24"/>
+			<textbox font_id="7" xoffset="3" yoffset="0">Tiger Energy Release</textbox>
+			<number value_id="200" number_id="301" xoffset="205" yoffset="-1"/>
+		</field>
+	</sublayout>
+	<sublayout class="suwako" inherit="Player">
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Suwako
+		&#32;</title>
 		<values>
 			<value id="1" class="curse-type" type="int"><offset hex="0x894"/></value>
 			<value id="2" class="curse-timer" type="int"><offset hex="0x8A0"/></value>
 			<value id="3" class="punish-type" type="int"><offset hex="0x898"/></value>
+			<value id="4" class="punish-timer" type="int"><offset hex="0x8A4"/></value>
 		</values>
+		<field><pad height="36"/> </field>
 		<field class="22-curse" hide_if="1=0"><!-- "1=0" means hide when value of id_1 is 0 -->
 			<pad width="208" height="20"/>
-			<field class="curse-type" stack="false" xoffset="5" description="Curse type: &#10;{0:None, 1:Red, 2:Green, 3:Blue}"><!--disable vertical stack and add offset to make group-->
+			<textbox font_id="7" xoffset="3" yoffset="">
+				Curse Type
+			</textbox>
+			<field class="curse-type" stack="false" xoffset="-5" description="Curse type: &#10;{0:None, 1:Red, 2:Green, 3:Blue}"><!--disable vertical stack and add offset to make group-->
 				<pad width="100" height="20"/>
 				<number value_id="1" number_id="301" xoffset="106" yoffset="-2"/>
 			</field>
 			<field class="curse-timer" stack="false" xoffset="100">
+				<textbox font_id="10" xoffset="10" yoffset="3">timer:</textbox>
 				<number value_id="2" number_id="301" xoffset="106" yoffset="-2"/>
 			</field>
 		</field>
+		<field class="22-punish" hide_if="3=0"> <pad width="208" height="20"/>
+			<textbox font_id="7" xoffset="3" yoffset="">
+				Punish Type
+			</textbox>
+			<field class="pubish-type" stack="false" xoffset="0" description="Punish type: &#10;{0:None, 1:Crush, 2:Block, 3:Attack, 4:Dash}">
+				<pad width="100" height="20"/>
+				<number value_id="3" number_id="301" xoffset="106" yoffset="-2"/>
+			</field>
+			<field class="punish-timer" stack="false" xoffset="95">
+				<textbox font_id="10" xoffset="10" yoffset="3">timer:</textbox>
+				<number value_id="4" number_id="301" xoffset="106" yoffset="-2"/>
+			</field>
+		</field>
 	</sublayout>
-	<sublayout class="common.1006" inherit="Object"> <back ref_id="220"/> <pad width="208" height="80"/><!--specify common object (actId>1000)-->
-		<title font_id="2">
-			&#32;Umbrella&#32;
-		</title>
+	
+	<!--specify common object (actId>1000)-->
+	<!--sublayout class="common.1006" inherit="Object"> <back ref_id="220"/> <pad width="208" height="80"/>
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Umbrella
+		&#32;</title>
 		
-	</sublayout>
+	</sublayout-->
+	<!--specify player object-->
 	<sublayout class="alice.805" inherit="Object">
-		<title font_id="2">
-			&#32;Alice doll&#32;
-		</title>
-		
+		<title font_id="2" xoffset="-8" yoffset="10">&#32;
+			Doll
+		&#32;</title>
+		<values>
+			<value id="1" class="doll-index" type="short"><offset hex="0x3AC"/></value>
+		</values>
+		<field><pad height="36"/> </field>
 		<field class="doll">
-			
+			<textbox font_id="7" xoffset="3" yoffset="">
+				Doll Index
+			</textbox>
+			<number value_id="1" number_id="301" xoffset="106" yoffset="-2"/>
 		</field>
 	</sublayout>
 	<!--sublayout class="Console" align="bottom">
