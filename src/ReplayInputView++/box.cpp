@@ -682,21 +682,23 @@ void drawUntechBar(Player& player, bool force) {
 		x + w / 2.0f,
 		-y + h,
 	};
-
 	rectangle.setBorderColor(Color::Transparent);
 	if (force) {
+		float wf = max(w, 60.0f);
 		rectangle.setRect({
-			x - w_max / 2.0f,
+			x - wf / 2.0f,
 			-y,
-			x + w_max / 2.0f,
+			x + wf / 2.0f,
 			-y + h,
 			});
 		rectangle.setFillColor(Color::Blue);
+		rectangle.setBorderColor(Color::Blue);
+		rectangle.draw();
 	} else {
 		rectangle.setRect(rect);
 		rectangle.setFillColor(Color::Black);
+		rectangle.draw();
 	}
-	rectangle.draw();
 	rect.y2 -= 1.5f;
 	rectangle.setRect(rect); rectangle.setFillColor(color);
 	rectangle.draw();
