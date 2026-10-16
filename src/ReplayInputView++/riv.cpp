@@ -179,12 +179,13 @@ inline static bool check_hurtbreak(const BattleManager* This) {
 					invulGrab = old.grabInvulTimer;
 				//const auto _CheckUntechEnd = reinterpret_cast<bool(__fastcall*)(Player*)>(0x46a200);
 				bool forcedUntech = old.position.y <= 0.0f;//!_CheckUntechEnd(&old);
+				bool isOnFloor = old.isGrounded();
 
 				if (hitboxes && iniProxy["BoxDisplay"_l]["ArmorMeter"_l])
 					layers.pushArmor(*player, !(player->blockDisabled || unblockable) && player->boxData.frameData && player->boxData.frameData->frameFlags.guardAvailable);
 				if (untech && iniProxy["BoxDisplay"_l]["JuggleMeter"_l]) {
 					//box::drawUntechBar(*player);
-					layers.pushUntech(*player, forcedUntech);
+					layers.pushUntech(*player, forcedUntech, isOnFloor);
 				}
 				if (panels[i]) {
 					//panels[i]->render();

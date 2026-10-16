@@ -641,28 +641,21 @@ void drawFloor() {
 
 	
 }
-inline static bool showUntech(Player& player) {
-	if (50 <= player.frameState.actionId && player.frameState.actionId < 150) {
-		if (player.damageLimited) return false;
-		auto fd = player.gameData.frameData;
-		if (fd &&!fd->frameFlags.airborne) return false;
 
-		return true;
-	}
-	//if (player.untech == 0) return false;
+void drawUntechBar(Player& player, bool force, bool isOnFloor) {
+	if (player.frameState.actionId < 50 || player.frameState.actionId >= 150) return;
+	if (player.damageLimited) return;
 	//if (player.isGrounded() && player.speed.y < 0) return false;
-	return false;
-}
-void drawUntechBar(Player& player, bool force) {
+	auto fd = player.gameData.frameData;
+	if (isOnFloor && fd && !fd->frameFlags.airborne) return;
+	//if (player.untech == 0) return false;
+
 	int untech = player.untech;
 	if (untech > MAX_UNTECHBAR_SPAN) {
 		untech = MAX_UNTECHBAR_SPAN;
 	}
-	
 	float x = player.position.x;
 	float y = player.position.y;
-
-	if (!showUntech(player)) return;
 	float w_max = 300.0f;
 	float w = float(untech) / MAX_UNTECHBAR_SPAN * w_max;
 	float h = 6.0f;
